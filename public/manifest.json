@@ -1,0 +1,19 @@
+{
+  "name": "AppHub — دليل التطبيقات العربي",
+  "short_name": "AppHub",
+  "description": "اكتشف أفضل التطبيقات وقارن الأسعار",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
