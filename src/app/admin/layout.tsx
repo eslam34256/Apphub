@@ -25,11 +25,12 @@ export default async function AdminLayout({
         <SidebarLink href="/admin/brands" icon="🏪" label="البراندات" />
         <SidebarLink href="/admin/users" icon="👥" label="المستخدمين" />
         <SidebarLink href="/admin/comments" icon="💬" label="التعليقات" />
-     <SidebarLink href="/admin/messages" icon="📨" label="الرسائل" />
+        <SidebarLink href="/admin/messages" icon="📨" label="الرسائل" />
         <SidebarLink href="/admin/blog" icon="📝" label="المدونة" />
+        <SidebarLink href="/admin/prices" icon="💰" label="أسعار المشاوير" />
         <SidebarLink href="/admin/settings" icon="⚙️" label="الإعدادات" />
         <SidebarLink href="/admin/logs" icon="📋" label="السجلات" />
-     <SidebarLink href="/admin/migrate" icon="🚀" label="نقل التطبيقات" />
+        <SidebarLink href="/admin/migrate" icon="🚀" label="نقل التطبيقات" />
 
         <div className="mt-6 border-t border-white/10 pt-4">
           <Link
