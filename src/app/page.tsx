@@ -92,43 +92,43 @@ export default async function HomePage() {
   return (
     <div className="space-y-16 animate-fade-in">
       {/* Hero Section */}
-<section className="relative overflow-hidden rounded-2xl sm:rounded-3xl">
+<section className="relative overflow-hidden rounded-2xl md:rounded-3xl">
   <div className="absolute inset-0 gradient-brand"></div>
 
-  <div className="relative px-4 py-10 sm:px-6 sm:py-16 md:px-12 md:py-24 text-white">
+  <div className="relative px-5 py-10 sm:px-8 sm:py-16 md:px-12 md:py-24 text-white">
     <div className="max-w-3xl">
       <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-xs sm:text-sm mb-4 sm:mb-6">
         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span>منصة عربية رائدة</span>
       </div>
 
-      <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-4 sm:mb-6 leading-tight">
+      <h1 className="text-2xl sm:text-4xl md:text-6xl font-extrabold mb-3 sm:mb-6 leading-snug sm:leading-tight">
         اكتشف أفضل التطبيقات
         <br />
-        <span className="bg-gradient-to-l from-accent-300 to-amber-300 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-l from-accent-300 to-amber-300 bg-clip-text text-transparent block mt-1 sm:mt-2">
           وقارن الأسعار بسهولة
         </span>
       </h1>
 
-      <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 max-w-2xl">
+      <p className="text-sm sm:text-lg md:text-xl text-white/90 mb-5 sm:mb-8 max-w-2xl leading-relaxed">
         منصة عربية تساعدك تختار التطبيق المناسب حسب بلدك وميزانيتك واحتياجك.
         <span className="text-amber-300 font-bold"> {allApps.length}+ تطبيق</span> في انتظارك.
       </p>
 
-      <div className="flex flex-wrap gap-2 sm:gap-3">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <Link
           href="/apps"
-          className="group inline-flex items-center gap-2 rounded-xl sm:rounded-2xl bg-white px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-brand-700 hover:scale-105 transition shadow-xl"
+          className="inline-flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-brand-700 hover:scale-105 transition shadow-xl"
         >
           <span>تصفح التطبيقات</span>
           <span>←</span>
         </Link>
         <Link
           href="/compare-hub"
-          className="inline-flex items-center gap-2 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur border border-white/30 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-white hover:bg-white/20 transition"
+          className="inline-flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur border border-white/30 px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-white hover:bg-white/20 transition"
         >
           <span>🔍</span>
-          <span>المقارنات</span>
+          <span>المقارنات الذكية</span>
         </Link>
       </div>
     </div>
