@@ -63,7 +63,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" className={cairo.variable}>
       <body className={`${cairo.className} min-h-screen flex flex-col`}>
         <Navbar />
-        <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8">
+        <main id="main-content" className="flex-1 mx-auto max-w-7xl w-full px-3 sm:px-4 py-4 sm:py-8">
           {children}
         </main>
         <Footer />

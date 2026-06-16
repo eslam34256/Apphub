@@ -92,49 +92,48 @@ export default async function HomePage() {
   return (
     <div className="space-y-16 animate-fade-in">
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl">
-        <div className="absolute inset-0 gradient-brand"></div>
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+<section className="relative overflow-hidden rounded-2xl sm:rounded-3xl">
+  <div className="absolute inset-0 gradient-brand"></div>
 
-        <div className="relative px-6 py-16 md:px-12 md:py-24 text-white">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur px-4 py-1 text-sm mb-6 animate-slide-up">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>منصة عربية رائدة</span>
-            </div>
+  <div className="relative px-4 py-10 sm:px-6 sm:py-16 md:px-12 md:py-24 text-white">
+    <div className="max-w-3xl">
+      <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-xs sm:text-sm mb-4 sm:mb-6">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>منصة عربية رائدة</span>
+      </div>
 
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight animate-slide-up">
-              اكتشف أفضل التطبيقات
-              <br />
-              <span className="bg-gradient-to-l from-accent-300 to-amber-300 bg-clip-text text-transparent">
-                وقارن الأسعار بسهولة
-              </span>
-            </h1>
+      <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-4 sm:mb-6 leading-tight">
+        اكتشف أفضل التطبيقات
+        <br />
+        <span className="bg-gradient-to-l from-accent-300 to-amber-300 bg-clip-text text-transparent">
+          وقارن الأسعار بسهولة
+        </span>
+      </h1>
 
-            <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl animate-slide-up">
-              منصة عربية تساعدك تختار التطبيق المناسب حسب بلدك وميزانيتك واحتياجك. 
-              <span className="text-amber-300 font-bold"> {allApps.length}+ تطبيق</span> في انتظارك.
-            </p>
+      <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 max-w-2xl">
+        منصة عربية تساعدك تختار التطبيق المناسب حسب بلدك وميزانيتك واحتياجك.
+        <span className="text-amber-300 font-bold"> {allApps.length}+ تطبيق</span> في انتظارك.
+      </p>
 
-            <div className="flex flex-wrap gap-3 animate-slide-up">
-              <Link
-                href="/apps"
-                className="group inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-4 font-bold text-brand-700 hover:scale-105 transition shadow-xl"
-              >
-                <span>تصفح التطبيقات</span>
-                <span className="group-hover:translate-x-[-4px] transition">←</span>
-              </Link>
-              <Link
-                href="/compare-hub"
-                className="inline-flex items-center gap-2 rounded-2xl bg-white/10 backdrop-blur border border-white/30 px-6 py-4 font-bold text-white hover:bg-white/20 transition"
-              >
-                <span>🔍</span>
-                <span>المقارنات الذكية</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div className="flex flex-wrap gap-2 sm:gap-3">
+        <Link
+          href="/apps"
+          className="group inline-flex items-center gap-2 rounded-xl sm:rounded-2xl bg-white px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-brand-700 hover:scale-105 transition shadow-xl"
+        >
+          <span>تصفح التطبيقات</span>
+          <span>←</span>
+        </Link>
+        <Link
+          href="/compare-hub"
+          className="inline-flex items-center gap-2 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur border border-white/30 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-white hover:bg-white/20 transition"
+        >
+          <span>🔍</span>
+          <span>المقارنات</span>
+        </Link>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Stats Section */}
       <section className="grid gap-4 grid-cols-2 md:grid-cols-4">

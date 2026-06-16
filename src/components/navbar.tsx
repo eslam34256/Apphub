@@ -32,29 +32,29 @@ export async function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/60 glass">
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4">
         {/* Top Bar */}
-        <div className="flex items-center gap-4 py-3">
+        <div className="flex items-center gap-2 sm:gap-4 py-2 sm:py-3">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0 group">
-            <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center text-white font-extrabold text-xl shadow-glow group-hover:scale-110 transition">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl gradient-brand flex items-center justify-center text-white font-extrabold text-lg sm:text-xl shadow-glow group-hover:scale-110 transition">
               A
             </div>
             <div className="hidden sm:block">
-              <p className="text-xl font-extrabold bg-gradient-to-l from-brand-600 to-accent-500 bg-clip-text text-transparent">
+              <p className="text-lg sm:text-xl font-extrabold bg-gradient-to-l from-brand-600 to-accent-500 bg-clip-text text-transparent">
                 AppHub
               </p>
-              <p className="text-[10px] text-slate-500 -mt-1">دليل التطبيقات العربي</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 -mt-1">دليل التطبيقات العربي</p>
             </div>
           </Link>
 
-          {/* Search Bar */}
+          {/* Search Bar - Desktop */}
           <div className="flex-1 max-w-2xl hidden md:block">
             <SearchBar />
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2 shrink-0 mr-auto">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 mr-auto">
             {user ? (
               <>
                 <NotificationBell />
@@ -80,19 +80,18 @@ export async function Navbar() {
             ) : (
               <Link
                 href="/auth"
-                className="rounded-full gradient-brand px-5 py-2 text-sm font-bold text-white shadow-md hover:scale-105 transition"
+                className="rounded-full gradient-brand px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-white shadow-md hover:scale-105 transition"
               >
                 دخول
               </Link>
             )}
 
-            {/* Mobile Menu Button */}
             <MobileMenu links={links} user={user} isAdmin={isAdmin} userName={userName} />
           </div>
         </div>
 
         {/* Mobile Search */}
-        <div className="pb-3 md:hidden">
+        <div className="pb-2 sm:pb-3 md:hidden">
           <SearchBar />
         </div>
 
@@ -109,7 +108,7 @@ export async function Navbar() {
             </Link>
           ))}
 
-          <div className="mr-auto flex items-center gap-2">
+          <div className="mr-auto">
             <Link
               href="/advertise"
               className="flex items-center gap-1 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 px-3 py-2 text-sm font-bold text-white hover:scale-105 transition shadow-sm"
