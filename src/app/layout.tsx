@@ -47,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: true
     },
     verification: {
-      google: "arX_QpKhnk4JQ5ral"  // ⚠️ ضع الكود اللي نسخته
+      google: "arX_QpKhnk4JQ5ralkUg3AynQ7yUnrVXpBangC7e5eU" // ⚠️ ضع الكود اللي نسخته
 },
     icons: {
       icon: "/favicon.svg"
