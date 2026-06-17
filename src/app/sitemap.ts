@@ -3,8 +3,10 @@ import { apps as staticApps } from "@/data/apps";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // استخدم الرابط الصح من Environment Variable
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app";
+  // احذف أي / من نهاية الـ URL
+  const rawUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app";
+  const baseUrl = rawUrl.replace(/\/$/, ""); // يشيل / من الآخر لو موجودة
+  
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
