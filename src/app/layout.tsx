@@ -46,6 +46,9 @@ export async function generateMetadata(): Promise<Metadata> {
       index: true,
       follow: true
     },
+    verification: {
+      google: "arX_QpKhnk4JQ5ral"  // ⚠️ ضع الكود اللي نسخته
+},
     icons: {
       icon: "/favicon.svg"
     }
