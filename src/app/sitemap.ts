@@ -3,7 +3,8 @@ import { apps as staticApps } from "@/data/apps";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://apphub.eg";
+  // استخدم الرابط الصح من Environment Variable
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app";
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -29,7 +30,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select("slug, updated_at")
       .eq("is_active", true);
     dbApps = data ?? [];
-  } catch (err) {}
+  } catch (err) {
+    console.error("Sitemap DB error:", err);
+  }
 
   const appPages: MetadataRoute.Sitemap = dbApps.map((app: any) => ({
     url: `${baseUrl}/apps/${app.slug}`,

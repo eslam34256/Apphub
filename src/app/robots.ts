@@ -1,6 +1,8 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app";
+
   return {
     rules: [
       {
@@ -9,7 +11,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin/", "/api/", "/auth/", "/profile", "/advertiser-dashboard"]
       }
     ],
-    sitemap: "https://apphub.eg/sitemap.xml",
-    host: "https://apphub.eg"
+    sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl
   };
 }
