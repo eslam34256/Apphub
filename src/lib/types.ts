@@ -44,3 +44,10 @@ export type ReviewItem = {
   user_name: string; rating: number; comment: string;
   created_at: string; likes: number;
 };
+
+export type AppItem = {
+  // ... باقي الحقول
+  googlePlay?: string;
+  appStore?: string;
+  website?: string;
+};

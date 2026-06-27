@@ -1,301 +1,287 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { AppCard } from "@/components/app-card";
 import { apps as staticApps } from "@/data/apps";
 import { deals } from "@/data/deals";
-import { createClient } from "@/lib/supabase/server";
+import { NewsletterForm } from "@/components/newsletter-form";
+import { createClient } from "@/lib/supabase/client";
 import { AppItem } from "@/lib/types";
-import { categoryLabels, categoryIcons } from "@/lib/constants";
-import type { Metadata } from "next";
+import { useLanguage } from "@/contexts/language-context";
 
-export const metadata: Metadata = {
-  title: "AppHub — دليل التطبيقات العربي الأول | مقارنة أسعار وعروض",
-  description: "اكتشف أفضل 163+ تطبيق عربي في مصر والسعودية والإمارات. قارن الأسعار، اقرا المراجعات الحقيقية، ووفر فلوسك مع أحدث العروض والخصومات اليومية على AppHub.",
-  keywords: [
-    "تطبيقات",
-    "أفضل التطبيقات",
-    "مقارنة أسعار",
-    "عروض",
-    "خصومات",
-    "تطبيقات مصرية",
-    "تطبيقات عربية",
-    "دليل تطبيقات"
-  ],
-  openGraph: {
-    title: "AppHub — دليل التطبيقات العربي",
-    description: "اكتشف وقارن أفضل التطبيقات في الدول العربية. أسعار، مراجعات، عروض حصرية.",
-    url: "https://apphub.eg",
-    siteName: "AppHub",
-    locale: "ar_EG",
-    type: "website"
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "AppHub — دليل التطبيقات العربي",
-    description: "اكتشف وقارن أفضل التطبيقات في الدول العربية"
-  },
-  alternates: {
-    canonical: "https://apphub.eg"
-  }
-};
+export default function HomePage() {
+  const { t, lang } = useLanguage();
+  const [dbApps, setDbApps] = useState<AppItem[]>([]);
 
-// Lazy load NewsletterForm
-const NewsletterForm = dynamic(() => 
-  import("@/components/newsletter-form").then(mod => ({ default: mod.NewsletterForm })),
-  { ssr: true }
-);
+  useEffect(() => {
+    async function loadApps() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("managed_apps")
+        .select("*")
+        .eq("is_active", true);
 
+      const mapped: AppItem[] = (data ?? []).map((app: any) => ({
+        id: `db-${app.id}`,
+        slug: app.slug,
+        name: app.name,
+        icon: app.icon,
+        category: app.category,
+        shortDescription: app.short_description || "",
+        description: app.description || "",
+        rating: parseFloat(app.rating) || 0,
+        pros: Array.isArray(app.pros) ? app.pros : [],
+        cons: Array.isArray(app.cons) ? app.cons : [],
+        countries: Array.isArray(app.countries) ? app.countries : [],
+        pricing: Array.isArray(app.pricing) ? app.pricing : [],
+        tags: Array.isArray(app.tags) ? app.tags : [],
+        businessUse: Array.isArray(app.business_use) ? app.business_use : []
+      }));
 
+      setDbApps(mapped);
+    }
+    loadApps();
+  }, []);
 
-export const revalidate = 60; // Cache for 60 seconds
-
-export default async function HomePage() {
-  const supabase = createClient();
-
-  const { data: dbApps } = await supabase
-    .from("managed_apps")
-    .select("*")
-    .eq("is_active", true);
-
-  const dbAppsMapped: AppItem[] = (dbApps ?? []).map((app: any) => ({
-    id: `db-${app.id}`,
-    slug: app.slug,
-    name: app.name,
-    icon: app.icon,
-    category: app.category,
-    shortDescription: app.short_description || "",
-    description: app.description || "",
-    rating: parseFloat(app.rating) || 0,
-    pros: Array.isArray(app.pros) ? app.pros : [],
-    cons: Array.isArray(app.cons) ? app.cons : [],
-    countries: Array.isArray(app.countries) ? app.countries : [],
-    pricing: Array.isArray(app.pricing) ? app.pricing : [],
-    tags: Array.isArray(app.tags) ? app.tags : [],
-    businessUse: Array.isArray(app.business_use) ? app.business_use : []
-  }));
-
-  const dbSlugs = new Set(dbAppsMapped.map((a) => a.slug));
+  const dbSlugs = new Set(dbApps.map((a) => a.slug));
   const filteredStatic = staticApps.filter((a) => !dbSlugs.has(a.slug));
-  const allApps = [...dbAppsMapped, ...filteredStatic];
+  const allApps = [...dbApps, ...filteredStatic];
 
   const topApps = [...allApps].sort((a, b) => b.rating - a.rating).slice(0, 6);
   const topDeals = [...deals].sort((a, b) => b.discount - a.discount).slice(0, 4);
 
-  // عد التطبيقات في كل فئة
-  const categoriesStats = Object.entries(categoryLabels).map(([slug, label]) => ({
-    slug,
-    label,
-    icon: categoryIcons[slug as keyof typeof categoryIcons] || "📱",
-    count: allApps.filter((a) => a.category === slug).length
-  })).filter((c) => c.count > 0);
-
   return (
-    <div className="space-y-16 animate-fade-in">
-      {/* Hero Section */}
-<section className="relative overflow-hidden rounded-2xl md:rounded-3xl">
-  <div className="absolute inset-0 gradient-brand"></div>
-
-  <div className="relative px-5 py-10 sm:px-8 sm:py-16 md:px-12 md:py-24 text-white">
-    <div className="max-w-3xl">
-      <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-xs sm:text-sm mb-4 sm:mb-6">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>منصة عربية رائدة</span>
-      </div>
-
-      <h1 className="text-2xl sm:text-4xl md:text-6xl font-extrabold mb-3 sm:mb-6 leading-snug sm:leading-tight">
-        اكتشف أفضل التطبيقات
-        <br />
-        <span className="bg-gradient-to-l from-accent-300 to-amber-300 bg-clip-text text-transparent block mt-1 sm:mt-2">
-          وقارن الأسعار بسهولة
-        </span>
-      </h1>
-
-      <p className="text-sm sm:text-lg md:text-xl text-white/90 mb-5 sm:mb-8 max-w-2xl leading-relaxed">
-        منصة عربية تساعدك تختار التطبيق المناسب حسب بلدك وميزانيتك واحتياجك.
-        <span className="text-amber-300 font-bold"> {allApps.length}+ تطبيق</span> في انتظارك.
-      </p>
-
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-        <Link
-          href="/apps"
-          className="inline-flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-brand-700 hover:scale-105 transition shadow-xl"
-        >
-          <span>تصفح التطبيقات</span>
-          <span>←</span>
-        </Link>
-        <Link
-          href="/compare-hub"
-          className="inline-flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur border border-white/30 px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-white hover:bg-white/20 transition"
-        >
-          <span>🔍</span>
-          <span>المقارنات الذكية</span>
-        </Link>
-      </div>
-    </div>
-  </div>
-</section>
-
-      {/* Stats Section */}
-      <section className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        {[
-          { label: "تطبيق", value: allApps.length, icon: "📱", color: "from-brand-500 to-brand-700" },
-          { label: "فئة", value: 15, icon: "📂", color: "from-emerald-500 to-emerald-700" },
-          { label: "عرض نشط", value: deals.length, icon: "🔥", color: "from-amber-500 to-orange-600" },
-          { label: "دولة", value: 3, icon: "🌍", color: "from-accent-500 to-pink-600" }
-        ].map((stat) => (
-          <div key={stat.label} className="card-hover rounded-3xl bg-white p-6 shadow-soft">
-            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-2xl mb-3 shadow-md`}>
-              {stat.icon}
-            </div>
-            <p className="text-3xl md:text-4xl font-extrabold text-slate-900">{stat.value}+</p>
-            <p className="text-sm text-slate-500 mt-1">{stat.label}</p>
+    <div className="-mx-4 -mt-8">
+      {/* ═══════════════════════════════════════ */}
+      {/* HERO SECTION                            */}
+      {/* ═══════════════════════════════════════ */}
+      <section className="relative hero-bg flex items-center justify-center min-h-[600px] md:min-h-[700px]">
+        <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 text-center text-white animate-fade-in">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 px-5 py-2 text-sm mb-8 animate-slide-up">
+            <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse"></span>
+            <span className="font-medium tracking-wider">{t("hero_badge")}</span>
           </div>
-        ))}
+
+          {/* Main Heading */}
+          <h1 className="heading-display text-6xl md:text-8xl lg:text-9xl mb-8 text-shadow-strong animate-slide-up">
+            {t("hero_title_1")}
+            <br />
+            <span className="text-accent-400 italic">{t("hero_title_2")}</span>
+          </h1>
+
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-10 leading-relaxed text-shadow-soft animate-slide-up">
+            {t("hero_description")}
+          </p>
+
+          {/* Buttons */}
+          <div className="flex flex-wrap gap-4 justify-center animate-slide-up">
+            <Link href="/apps" className="btn-gold">
+              <span>{t("btn_browse_apps")}</span>
+              <span>{lang === "ar" ? "←" : "→"}</span>
+            </Link>
+            <Link href="/compare-hub" className="btn-outline">
+              <span>🔍</span>
+              <span>{t("btn_smart_compare")}</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Stats Bar */}
+        <div className="absolute bottom-0 left-0 right-0 stats-bar">
+          <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <p className="heading-elegant text-4xl text-accent-400">{allApps.length}+</p>
+              <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_apps")}</p>
+            </div>
+            <div className="text-center">
+              <p className="heading-elegant text-4xl text-accent-400">15</p>
+              <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_categories")}</p>
+            </div>
+            <div className="text-center">
+              <p className="heading-elegant text-4xl text-accent-400">3</p>
+              <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_countries")}</p>
+            </div>
+            <div className="text-center">
+              <p className="heading-elegant text-4xl text-accent-400">{deals.length}+</p>
+              <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_deals")}</p>
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* Compare Hub CTA */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-l from-emerald-500 to-teal-600 p-8 md:p-12 text-white">
-        <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <div className="inline-block bg-white/20 rounded-full px-3 py-1 text-xs font-bold mb-3">
-              🆕 ميزة حصرية
-            </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-3">
-              قارن قبل ما تختار 🎯
+      {/* ═══════════════════════════════════════ */}
+      {/* FEATURED APPS SECTION                   */}
+      {/* ═══════════════════════════════════════ */}
+      <section className="bg-cream-50 section-padding">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
+              {lang === "ar" ? "الأكثر شعبية" : "Most Popular"}
+            </p>
+            <h2 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
+              {lang === "ar" ? "تطبيقات مختارة" : "Featured Apps"}
             </h2>
-            <p className="text-white/90 max-w-xl">
-              مقارنات ذكية للمشاوير، توصيل الأكل، الستريمنج، والتقسيط — كله في مكان واحد.
+            <div className="divider-gold"></div>
+            <p className="text-charcoal-500 max-w-xl mx-auto">
+              {lang === "ar"
+                ? "أفضل التطبيقات اللي اختارها المستخدمين بناءً على التقييم والشعبية"
+                : "Top apps chosen by users based on ratings and popularity"}
             </p>
           </div>
-          <Link
-            href="/compare-hub"
-            className="inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-4 font-bold text-emerald-700 hover:scale-105 transition shadow-xl whitespace-nowrap"
-          >
-            <span>ابدأ المقارنة</span>
-            <span>←</span>
-          </Link>
-        </div>
-      </section>
 
-      {/* Categories Grid */}
-      <section>
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-extrabold">تصفح حسب الفئة 📂</h2>
-            <p className="text-slate-500 mt-1">اختار اللي يهمك من 15 فئة مختلفة</p>
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
+            {topApps.map((app) => (
+              <AppCard key={app.id} app={app} />
+            ))}
           </div>
-          <Link href="/apps" className="text-brand-600 font-bold hover:underline hidden md:block">
-            عرض الكل ←
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {categoriesStats.slice(0, 15).map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/apps?category=${cat.slug}`}
-              className="card-hover group rounded-2xl bg-white p-4 shadow-soft text-center"
-            >
-              <div className="text-4xl mb-2 group-hover:scale-110 transition inline-block">
-                {cat.icon}
-              </div>
-              <p className="font-bold text-sm">{cat.label}</p>
-              <p className="text-xs text-slate-500 mt-1">{cat.count} تطبيق</p>
+          <div className="text-center">
+            <Link href="/apps" className="btn-outline-dark">
+              <span>{t("view_all")}</span>
+              <span>{lang === "ar" ? "←" : "→"}</span>
             </Link>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* Top Apps */}
-      <section>
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-extrabold">⭐ الأكثر شعبية</h2>
-            <p className="text-slate-500 mt-1">التطبيقات اللي اختارها المستخدمين</p>
-          </div>
-          <Link href="/apps" className="text-brand-600 font-bold hover:underline hidden md:block">
-            شوف كل التطبيقات ←
-          </Link>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {topApps.map((app) => (
-            <AppCard key={app.id} app={app} />
-          ))}
-        </div>
-      </section>
-
-      {/* Top Deals */}
-      <section>
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-extrabold">🔥 عروض حصرية</h2>
-            <p className="text-slate-500 mt-1">وفّر فلوسك مع أحدث العروض</p>
-          </div>
-          <Link href="/deals" className="text-brand-600 font-bold hover:underline hidden md:block">
-            كل العروض ←
-          </Link>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {topDeals.map((deal) => (
-            <div
-              key={deal.id}
-              className="card-hover rounded-2xl bg-white p-5 shadow-soft border border-slate-100"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-                  خصم {deal.discount}%
-                </span>
-                <span className="text-xs text-slate-400">{deal.views} مشاهدة</span>
-              </div>
-              <p className="text-xs text-slate-500 mb-2">{deal.brand}</p>
-              <h3 className="font-bold mb-3 line-clamp-2">{deal.title}</h3>
-              {deal.code && (
-                <div className="rounded-xl bg-slate-50 px-3 py-2 text-center">
-                  <p className="text-xs text-slate-500 mb-1">كود الخصم</p>
-                  <p className="font-mono font-bold text-brand-600">{deal.code}</p>
+      {/* ═══════════════════════════════════════ */}
+      {/* SPLIT SECTION - Discover                */}
+      {/* ═══════════════════════════════════════ */}
+      <section className="bg-cream-100 section-padding">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Image */}
+            <div className="order-2 lg:order-1">
+              <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-brand-900 to-charcoal-800">
+                <div className="absolute inset-0 flex items-center justify-center text-9xl opacity-30">
+                  📱
                 </div>
-              )}
+                <div className="absolute bottom-6 right-6 left-6 glass-light rounded-2xl p-6">
+                  <p className="heading-elegant text-2xl text-brand-900 mb-2">
+                    {lang === "ar" ? "163+ تطبيق" : "163+ Apps"}
+                  </p>
+                  <p className="text-sm text-charcoal-500">
+                    {lang === "ar" ? "في 15 فئة مختلفة" : "Across 15 categories"}
+                  </p>
+                </div>
+              </div>
             </div>
-          ))}
+
+            {/* Content */}
+            <div className="order-1 lg:order-2 space-y-6">
+              <div className="divider-gold-left"></div>
+              <p className="text-accent-600 text-sm uppercase tracking-[0.3em]">
+                {lang === "ar" ? "اكتشف" : "Discover"}
+              </p>
+              <h2 className="heading-display text-5xl md:text-6xl text-brand-900">
+                {lang === "ar" ? "أناقة" : "Elegant"}
+                <br />
+                <span className="italic text-accent-600">
+                  {lang === "ar" ? "في الاختيار" : "Selection"}
+                </span>
+              </h2>
+              <p className="text-lg text-charcoal-500 leading-relaxed">
+                {lang === "ar"
+                  ? "تصفّح مكتبة ضخمة من التطبيقات المختارة بعناية. قارن الأسعار، اقرا المراجعات، واختار الأفضل لاحتياجاتك."
+                  : "Browse a curated library of carefully selected apps. Compare prices, read reviews, and choose what fits your needs."}
+              </p>
+              <Link href="/apps" className="btn-primary">
+                <span>{lang === "ar" ? "ابدأ الاستكشاف" : "Start Exploring"}</span>
+                <span>{lang === "ar" ? "←" : "→"}</span>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="rounded-3xl bg-gradient-to-br from-slate-900 to-brand-900 p-8 md:p-12 text-white">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-3">
-            ليه AppHub؟ 🎯
+      {/* ═══════════════════════════════════════ */}
+      {/* DEALS SECTION                           */}
+      {/* ═══════════════════════════════════════ */}
+      <section className="bg-cream-50 section-padding">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
+              {lang === "ar" ? "عروض حصرية" : "Exclusive Deals"}
+            </p>
+            <h2 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
+              {lang === "ar" ? "وفّر أكتر" : "Save More"}
+            </h2>
+            <div className="divider-gold"></div>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {topDeals.map((deal) => (
+              <div key={deal.id} className="card-elegant p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <p className="text-xs text-accent-600 font-bold uppercase tracking-wider">
+                    {deal.brand}
+                  </p>
+                  <span className="rounded-full bg-brand-900 text-white px-3 py-1 text-xs font-bold">
+                    -{deal.discount}%
+                  </span>
+                </div>
+
+                <h3 className="heading-elegant text-lg text-brand-900 mb-4 line-clamp-2 min-h-[3rem]">
+                  {deal.title}
+                </h3>
+
+                {deal.code && (
+                  <div className="rounded-xl bg-cream-100 px-4 py-3 text-center border border-dashed border-accent-400">
+                    <p className="text-xs text-charcoal-500 mb-1">
+                      {lang === "ar" ? "كود الخصم" : "Promo Code"}
+                    </p>
+                    <p className="text-base font-bold text-brand-900 tracking-widest">
+                      {deal.code}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-cream-200">
+                  <span className="text-xs text-charcoal-500">
+                    👁️ {deal.views} {lang === "ar" ? "مشاهدة" : "views"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════ */}
+      {/* CTA SECTION                             */}
+      {/* ═══════════════════════════════════════ */}
+      <section className="bg-brand-900 section-padding">
+        <div className="max-w-4xl mx-auto px-6 text-center text-white">
+          <div className="divider-gold"></div>
+          <h2 className="heading-display text-5xl md:text-6xl mb-6">
+            {lang === "ar" ? "جاهز للبدء؟" : "Ready to Start?"}
           </h2>
-          <p className="text-white/80 max-w-2xl mx-auto">
-            منصة شاملة بكل اللي تحتاجه عشان تختار صح وتوفر فلوسك
+          <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
+            {lang === "ar"
+              ? "انضم لآلاف المستخدمين اللي بيستخدموا AppHub لاختيار أفضل التطبيقات"
+              : "Join thousands of users using AppHub to find the best apps"}
           </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {[
-            { icon: "🤖", title: "ترشيحات ذكية", desc: "AI يرشحلك التطبيق المناسب ليك بناءً على احتياجاتك" },
-            { icon: "💰", title: "مقارنة أسعار", desc: "قارن أسعار التطبيقات في مصر والسعودية والإمارات" },
-            { icon: "💎", title: "محتوى عربي", desc: "كل المعلومات بالعربي ومحدّثة باستمرار" },
-            { icon: "🔍", title: "بحث متقدم", desc: "ابحث بسهولة وفلتر حسب البلد والفئة والميزانية" },
-            { icon: "👥", title: "مجتمع تفاعلي", desc: "اقرا تجارب المستخدمين الحقيقية وشارك تجربتك" },
-            { icon: "📊", title: "بيانات دقيقة", desc: "أسعار وميزات محدثة من مصادر موثوقة" }
-          ].map((feature) => (
-            <div key={feature.title} className="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
-              <div className="text-4xl mb-3">{feature.icon}</div>
-              <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
-              <p className="text-white/70 text-sm">{feature.desc}</p>
-            </div>
-          ))}
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/auth" className="btn-gold">
+              {lang === "ar" ? "سجّل مجانًا" : "Sign Up Free"}
+            </Link>
+            <Link href="/apps" className="btn-outline">
+              {lang === "ar" ? "تصفّح أولاً" : "Browse First"}
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <NewsletterForm />
+      {/* ═══════════════════════════════════════ */}
+      {/* NEWSLETTER                              */}
+      {/* ═══════════════════════════════════════ */}
+      <section className="bg-cream-50 section-padding">
+        <div className="max-w-7xl mx-auto px-6">
+          <NewsletterForm />
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,13 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Cairo } from "next/font/google";
+import { Cairo, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { getSiteSettings } from "@/lib/settings";
+import { LanguageProvider } from "@/contexts/language-context";
 
-
-// خط Cairo محسّن من Next.js
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
@@ -15,59 +14,48 @@ const cairo = Cairo({
   variable: "--font-cairo"
 });
 
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
+  variable: "--font-playfair"
+});
+
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
-
   return {
-    metadataBase: new URL("https://apphub.eg"),
+    metadataBase: new URL("https://apphub-eight.vercel.app"),
     title: {
       default: `${settings.site_name} — دليل التطبيقات العربي الأول`,
       template: `%s | ${settings.site_name}`
     },
     description: settings.site_description,
-    keywords: [
-      "تطبيقات", "عروض", "خصومات", "مصر", "السعودية",
-      "الإمارات", "مقارنة أسعار", "AppHub"
-    ],
+    keywords: ["تطبيقات", "عروض", "خصومات", "مصر", "السعودية", "الإمارات"],
     openGraph: {
       type: "website",
       locale: "ar_EG",
-      url: "https://apphub.eg",
       siteName: settings.site_name,
       title: settings.site_name,
       description: settings.site_description
     },
-    twitter: {
-      card: "summary_large_image",
-      title: settings.site_name,
-      description: settings.site_description
-    },
-    robots: {
-      index: true,
-      follow: true
-    },
-    verification: {
-      google: "arX_QpKhnk4JQ5ralkUg3AynQ7yUnrVXpBangC7e5eU" // ⚠️ ضع الكود اللي نسخته
-},
-    icons: {
-      icon: "/favicon.svg"
-    }
+    robots: { index: true, follow: true },
+    icons: { icon: "/favicon.svg" }
   };
 }
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#6366f1"
+  themeColor: "#1a2942"
 };
 
 export default function RootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl" className={cairo.variable}>
-      <body className={`${cairo.className} min-h-screen flex flex-col`}>
-      {process.env.NEXT_PUBLIC_GA_ID && (
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable}`}>
+      <body className={`${cairo.className} min-h-screen flex flex-col bg-cream-50`}>
+        {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
@@ -78,19 +66,18 @@ export default function RootLayout({
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-                  page_path: window.location.pathname,
-                });
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
               `}
             </Script>
           </>
         )}
-        <Navbar />
-        <main id="main-content" className="flex-1 mx-auto max-w-7xl w-full px-3 sm:px-4 py-4 sm:py-8">
-          {children}
-        </main>
-        <Footer />
-        
+        <LanguageProvider>
+          <Navbar />
+          <main className="flex-1 w-full">
+            {children}
+          </main>
+          <Footer />
+        </LanguageProvider>
       </body>
     </html>
   );

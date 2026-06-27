@@ -1,65 +1,101 @@
+"use client";
+
 import Link from "next/link";
 import { AppItem } from "@/lib/types";
-import { categoryLabels, countryLabels } from "@/lib/constants";
+import { useLanguage } from "@/contexts/language-context";
+
+const categoryTranslations: Record<string, { ar: string; en: string }> = {
+  food: { ar: "أكل وتوصيل", en: "Food & Delivery" },
+  streaming: { ar: "ستريمنج", en: "Streaming" },
+  shopping: { ar: "تسوق", en: "Shopping" },
+  health: { ar: "صحة", en: "Health" },
+  transport: { ar: "مواصلات", en: "Transport" },
+  education: { ar: "تعليم", en: "Education" },
+  finance: { ar: "فلوس وبنوك", en: "Finance" },
+  "real-estate": { ar: "عقارات", en: "Real Estate" },
+  travel: { ar: "سفر", en: "Travel" },
+  gaming: { ar: "ألعاب", en: "Gaming" },
+  kids: { ar: "أطفال", en: "Kids" },
+  tools: { ar: "أدوات", en: "Tools" },
+  religious: { ar: "ديني", en: "Religious" },
+  government: { ar: "حكومي", en: "Government" },
+  freelance: { ar: "فريلانس", en: "Freelance" }
+};
+
+const countryTranslations: Record<string, { ar: string; en: string }> = {
+  EG: { ar: "مصر", en: "Egypt" },
+  SA: { ar: "السعودية", en: "Saudi Arabia" },
+  AE: { ar: "الإمارات", en: "UAE" }
+};
 
 export function AppCard({ app }: { app: AppItem }) {
+  const { lang, t } = useLanguage();
+
+  function getCategoryLabel(cat: string) {
+    return categoryTranslations[cat]?.[lang] || cat;
+  }
+
+  function getCountryLabel(country: string) {
+    return countryTranslations[country]?.[lang] || country;
+  }
+
   return (
-    <Link href={`/apps/${app.slug}`} className="block">
-      <div className="card-hover rounded-2xl bg-white p-5 shadow-soft border border-slate-100 h-full">
-        {/* Header */}
-        <div className="flex items-start gap-3 mb-3">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center text-3xl shadow-sm shrink-0">
-            {app.icon}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-bold text-lg text-slate-900 truncate">{app.name}</h3>
-              <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-700 shrink-0">
-                <span>⭐</span>
-                <span>{app.rating}</span>
-              </div>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">{categoryLabels[app.category]}</p>
-          </div>
+    <div className="card-elegant p-6 hover-lift">
+      <div className="flex items-start gap-4 mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-cream-100 flex items-center justify-center text-4xl shrink-0">
+          {app.icon}
         </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="heading-elegant text-xl text-brand-900 truncate">
+            {app.name}
+          </h3>
+          <p className="text-xs text-charcoal-500 mt-1">
+            {getCategoryLabel(app.category)}
+          </p>
+        </div>
+        <div className="flex items-center gap-1 bg-accent-100 px-2 py-1 rounded-full">
+          <span className="text-accent-600">⭐</span>
+          <span className="text-xs font-bold text-brand-900">{app.rating}</span>
+        </div>
+      </div>
 
-        {/* Description */}
-        <p className="text-sm text-slate-600 mb-4 line-clamp-2 leading-relaxed">
-          {app.shortDescription}
-        </p>
+      <p className="text-sm text-charcoal-500 leading-relaxed mb-4 line-clamp-2">
+        {app.shortDescription}
+      </p>
 
-        {/* Countries */}
-        <div className="flex flex-wrap gap-1 mb-4">
-          {app.countries.slice(0, 3).map((country) => (
+      {/* Countries */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {app.countries.slice(0, 3).map((country) => (
+          <span
+            key={country}
+            className="text-xs bg-sage-50 text-sage-700 px-2 py-0.5 rounded-full font-medium"
+          >
+            {getCountryLabel(country)}
+          </span>
+        ))}
+      </div>
+
+      {/* Tags */}
+      {app.tags && app.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {app.tags.slice(0, 2).map((tag) => (
             <span
-              key={country}
-              className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700"
+              key={tag}
+              className="text-xs bg-cream-100 text-charcoal-800 px-2 py-0.5 rounded-full"
             >
-              {countryLabels[country]}
+              #{tag}
             </span>
           ))}
         </div>
+      )}
 
-        {/* Tags */}
-        {app.tags && app.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-4">
-            {app.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-          <span className="text-xs text-slate-500">عرض التفاصيل</span>
-          <span className="text-brand-600 group-hover:translate-x-[-4px] transition">←</span>
-        </div>
-      </div>
-    </Link>
+      <Link
+        href={`/apps/${app.slug}`}
+        className="flex items-center justify-between text-accent-600 hover:text-accent-700 transition pt-3 border-t border-cream-100"
+      >
+        <span className="font-semibold text-sm">{t("view_details")}</span>
+        <span>{lang === "ar" ? "←" : "→"}</span>
+      </Link>
+    </div>
   );
 }

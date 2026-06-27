@@ -1,25 +1,96 @@
 "use client";
+
 import { useState } from "react";
-import { subscribeNewsletter } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/contexts/language-context";
+
 export function NewsletterForm() {
+  const { t, lang } = useLanguage();
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle"|"loading"|"success"|"error">("idle");
-  const [message, setMessage] = useState("");
-  async function handleSubmit() {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     if (!email) return;
-    setStatus("loading");
-    try { await subscribeNewsletter(email); setStatus("success"); setMessage("اشتركت بنجاح! هنبعتلك أفضل العروض كل أسبوع"); setEmail(""); }
-    catch (err: any) { setStatus("error"); setMessage(err.message ?? "حصل خطأ"); }
+
+    setLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { error: dbError } = await supabase
+      .from("newsletter")
+      .insert({ email });
+
+    if (dbError) {
+      if (dbError.code === "23505") {
+        setError(lang === "ar" ? "أنت مسجّل بالفعل" : "You're already subscribed");
+      } else {
+        setError(lang === "ar" ? "حصل خطأ" : "An error occurred");
+      }
+    } else {
+      setSuccess(true);
+      setEmail("");
+    }
+
+    setLoading(false);
   }
+
   return (
-    <div className="rounded-3xl bg-slate-900 p-6 text-white">
-      <h2 className="mb-2 text-xl font-bold">اشترك في النشرة الأسبوعية</h2>
-      <p className="mb-4 text-slate-300">هنوصلك أفضل 5 عروض وأحدث التطبيقات كل أسبوع</p>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <input className="flex-1 rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 text-white outline-none focus:border-brand-500" placeholder="بريدك الإلكتروني" value={email} onChange={e => setEmail(e.target.value)} />
-        <button disabled={status==="loading"} onClick={handleSubmit} className="rounded-2xl bg-brand-600 px-5 py-3 font-bold text-white disabled:opacity-60">{status==="loading" ? "جاري..." : "اشترك"}</button>
+    <div className="rounded-3xl bg-gradient-navy p-8 md:p-12 text-white">
+      <div className="max-w-2xl mx-auto text-center">
+        <h2 className="heading-elegant text-3xl md:text-4xl mb-3">
+          {lang === "ar" ? "اشترك في النشرة الأسبوعية" : "Subscribe to Newsletter"}
+        </h2>
+        <p className="text-white/80 mb-8">
+          {lang === "ar"
+            ? "هنوصلك أفضل 5 عروض وأحدث التطبيقات كل أسبوع"
+            : "Get the best 5 deals and latest apps every week"}
+        </p>
+
+        {success ? (
+          <div className="bg-sage-500/20 border border-sage-400 rounded-2xl p-6">
+            <p className="text-2xl mb-2">✅</p>
+            <p className="text-lg font-bold">
+              {lang === "ar" ? "تم الاشتراك بنجاح!" : "Subscribed Successfully!"}
+            </p>
+            <p className="text-sm text-white/80 mt-1">
+              {lang === "ar"
+                ? "هنبعتلك أول نشرة قريبًا"
+                : "We'll send you the first newsletter soon"}
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={lang === "ar" ? "بريدك الإلكتروني" : "Your email address"}
+              required
+              className="flex-1 rounded-full bg-white/10 border border-white/20 px-6 py-3 text-white placeholder:text-white/50 focus:outline-none focus:border-accent-400 focus:bg-white/20"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-gold"
+            >
+              {loading
+                ? lang === "ar"
+                  ? "جاري الاشتراك..."
+                  : "Subscribing..."
+                : lang === "ar"
+                ? "اشترك"
+                : "Subscribe"}
+            </button>
+          </form>
+        )}
+
+        {error && (
+          <p className="mt-4 text-sm text-rose-300">{error}</p>
+        )}
       </div>
-      {message && <p className={`mt-3 rounded-xl px-4 py-3 ${status==="success" ? "bg-emerald-900 text-emerald-100" : "bg-rose-900 text-rose-100"}`}>{message}</p>}
     </div>
   );
 }

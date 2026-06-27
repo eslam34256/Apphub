@@ -3,7 +3,7 @@ import { apps as staticApps } from "@/data/apps";
 import { countryLabels, categoryLabels } from "@/lib/constants";
 import { formatMoney, getCheapestCountry } from "@/lib/helpers";
 import { ReviewsSection } from "@/components/reviews-section";
-import { AffiliateButton } from "@/components/affiliate-button";
+import { AppStoreButtons } from "@/components/app-store-buttons";
 import { CommentsSection } from "@/components/comments-section";
 import { createClient } from "@/lib/supabase/server";
 import { AppItem } from "@/lib/types";
@@ -163,7 +163,12 @@ export default async function AppDetailsPage({ params }: Props) {
                 ))}
               </div>
 
-              <AffiliateButton appSlug={app.slug} />
+              <AppStoreButtons
+                  googlePlay={app.googlePlay}
+                  appStore={app.appStore}
+                  website={app.website}
+                  appName={app.name}
+                  />
             </div>
           </div>
 

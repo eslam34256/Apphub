@@ -1,47 +1,60 @@
+"use client";
+
 import Link from "next/link";
-import { getSiteSettings, getWhatsAppLink } from "@/lib/settings";
+import { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/language-context";
+import { createClient } from "@/lib/supabase/client";
 
-export async function Footer() {
-  const settings = await getSiteSettings();
+export function Footer() {
+  const { t, lang } = useLanguage();
+  const [settings, setSettings] = useState<any>({
+    site_name: "AppHub",
+    contact_email: "Eslam34256@gmail.com",
+    whatsapp_number: "+201155572676",
+    phone_number: "01155572676",
+    address: lang === "ar" ? "القاهرة، مصر" : "Cairo, Egypt"
+  });
 
-  const socials = [
-    { url: settings.facebook_url, icon: "📘", label: "Facebook" },
-    { url: settings.instagram_url, icon: "📷", label: "Instagram" },
-    { url: settings.twitter_url, icon: "🐦", label: "Twitter" },
-    { url: settings.youtube_url, icon: "📺", label: "YouTube" },
-    { url: settings.linkedin_url, icon: "💼", label: "LinkedIn" },
-    { url: settings.tiktok_url, icon: "🎵", label: "TikTok" }
-  ].filter((s) => s.url && s.url.trim() !== "");
+  useEffect(() => {
+    async function loadSettings() {
+      const supabase = createClient();
+      const { data } = await supabase.from("site_settings").select("*");
+      if (data) {
+        const map: any = {};
+        data.forEach((s: any) => {
+          map[s.key] = typeof s.value === "string" ? s.value : JSON.parse(JSON.stringify(s.value));
+        });
+        setSettings({ ...settings, ...map });
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const cleanWhatsApp = settings.whatsapp_number?.replace(/[^0-9]/g, "") || "";
 
   return (
-    <footer className="mt-20 border-t border-slate-200 bg-gradient-to-b from-white to-slate-50">
+    <footer className="bg-cream-100 border-t border-cream-200 mt-20">
       <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid gap-6 sm:gap-8 grid-cols-2 md:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center text-white font-extrabold text-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-navy flex items-center justify-center text-white heading-elegant text-2xl">
                 A
               </div>
               <div>
-                <p className="text-xl font-extrabold bg-gradient-to-l from-brand-600 to-accent-500 bg-clip-text text-transparent">
-                  {settings.site_name}
-                </p>
-                <p className="text-[10px] text-slate-500 -mt-1">
-                  دليل التطبيقات العربي
+                <p className="heading-elegant text-2xl text-brand-900">AppHub</p>
+                <p className="text-[10px] text-charcoal-500 tracking-wider">
+                  {t("site_tagline")}
                 </p>
               </div>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed mb-4">
-              {settings.site_description}
-            </p>
 
-            {/* Contact Info */}
-            <div className="space-y-2 text-sm text-slate-600 mb-4">
+            <div className="space-y-2 text-sm text-charcoal-500">
               {settings.contact_email && (
                 <a
                   href={`mailto:${settings.contact_email}`}
-                  className="flex items-center gap-2 hover:text-brand-600 transition"
+                  className="flex items-center gap-2 hover:text-accent-600 transition"
                 >
                   <span>📧</span>
                   <span>{settings.contact_email}</span>
@@ -49,19 +62,18 @@ export async function Footer() {
               )}
               {settings.whatsapp_number && (
                 <a
-                  href={getWhatsAppLink(settings.whatsapp_number)}
+                  href={`https://wa.me/${cleanWhatsApp}`}
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-brand-600 transition"
+                  className="flex items-center gap-2 hover:text-accent-600 transition"
                 >
                   <span>💬</span>
                   <span>{settings.whatsapp_number}</span>
                 </a>
               )}
-              {settings.phone_number && settings.phone_number !== settings.whatsapp_number && (
+              {settings.phone_number && (
                 <a
                   href={`tel:${settings.phone_number}`}
-                  className="flex items-center gap-2 hover:text-brand-600 transition"
+                  className="flex items-center gap-2 hover:text-accent-600 transition"
                 >
                   <span>📞</span>
                   <span>{settings.phone_number}</span>
@@ -70,89 +82,118 @@ export async function Footer() {
               {settings.address && (
                 <div className="flex items-center gap-2">
                   <span>📍</span>
-                  <span>{settings.address}</span>
+                  <span>{lang === "ar" ? "القاهرة، مصر" : "Cairo, Egypt"}</span>
                 </div>
               )}
             </div>
-
-            {/* Social Icons */}
-            {socials.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                {socials.map((social) => (
-                  <a
-                    key={social.label}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={social.label}
-                    className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center hover:border-brand-300 hover:scale-110 transition"
-                  >
-                    <span className="text-lg">{social.icon}</span>
-                  </a>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Links */}
+          {/* Platform */}
           <div>
-            <h3 className="font-bold mb-3 text-slate-900">المنصة</h3>
+            <h3 className="heading-elegant text-lg text-brand-900 mb-4">
+              {t("footer_platform")}
+            </h3>
             <ul className="space-y-2 text-sm">
-              <FooterLink href="/apps" label="التطبيقات" />
-              <FooterLink href="/compare-hub" label="المقارنات" />
-              <FooterLink href="/deals" label="العروض" />
-              <FooterLink href="/blog" label="المدونة" />
-              <FooterLink href="/ai" label="الترشيحات الذكية" />
+              <li>
+                <Link href="/apps" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_apps")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare-hub" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_compare")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/deals" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_deals")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_blog")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/ai" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_ai")}
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Company */}
           <div>
-            <h3 className="font-bold mb-3 text-slate-900">الشركة</h3>
+            <h3 className="heading-elegant text-lg text-brand-900 mb-4">
+              {t("footer_company")}
+            </h3>
             <ul className="space-y-2 text-sm">
-              <FooterLink href="/about" label="من نحن" />
-              <FooterLink href="/contact" label="تواصل معانا" />
-              <FooterLink href="/advertise" label="اعلن معانا" />
-              <FooterLink href="/business" label="للبيزنس" />
-              <FooterLink href="/careers" label="وظائف" />
+              <li>
+                <Link href="/about" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_about")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_contact")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/advertise" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_advertise")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/business" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_business")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/careers" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_careers")}
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h3 className="font-bold mb-3 text-slate-900">القانونية</h3>
+            <h3 className="heading-elegant text-lg text-brand-900 mb-4">
+              {t("footer_legal")}
+            </h3>
             <ul className="space-y-2 text-sm">
-              <FooterLink href="/privacy" label="سياسة الخصوصية" />
-              <FooterLink href="/terms" label="الشروط والأحكام" />
-              <FooterLink href="/cookies" label="سياسة الكوكيز" />
-              <FooterLink href="/disclaimer" label="إخلاء المسؤولية" />
+              <li>
+                <Link href="/privacy" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_privacy")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_terms")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/cookies" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_cookies")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/disclaimer" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_disclaimer")}
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-10 pt-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-500">
-            © {new Date().getFullYear()} {settings.site_name}. كل الحقوق محفوظة.
+        {/* Bottom */}
+        <div className="border-t border-cream-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-charcoal-500">
+            © {new Date().getFullYear()} AppHub. {t("footer_rights")}
           </p>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span>صُنع بـ</span>
-            <span className="text-rose-500">❤️</span>
-            <span>في مصر</span>
-            <span className="text-2xl">🇪🇬</span>
-          </div>
+          <p className="text-sm text-charcoal-500">{t("footer_made_in")}</p>
         </div>
       </div>
     </footer>
-  );
-}
-
-function FooterLink({ href, label }: { href: string; label: string }) {
-  return (
-    <li>
-      <Link href={href} className="text-slate-600 hover:text-brand-600 transition">
-        {label}
-      </Link>
-    </li>
   );
 }
