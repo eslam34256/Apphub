@@ -26,7 +26,6 @@ body {
   color: var(--foreground);
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -50,10 +49,6 @@ button, a {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ═══════════════════════════════════════ */
-/* Headings Style                          */
-/* ═══════════════════════════════════════ */
-
 .heading-display {
   font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
   font-weight: 900;
@@ -68,32 +63,12 @@ button, a {
   line-height: 1.1;
 }
 
-/* ═══════════════════════════════════════ */
-/* Hero Background                         */
-/* ═══════════════════════════════════════ */
-
 .hero-bg {
-  background: linear-gradient(
-    135deg,
-    rgba(26, 41, 66, 0.7) 0%,
-    rgba(26, 26, 26, 0.5) 100%
-  ),
-  url('https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?q=80&w=2070') center/cover;
+  background:
+    linear-gradient(135deg, rgba(26, 41, 66, 0.85) 0%, rgba(26, 26, 26, 0.6) 100%),
+    url('https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?q=80&w=2070') center/cover;
   min-height: 600px;
 }
-
-.hero-bg-light {
-  background: linear-gradient(
-    to bottom,
-    rgba(245, 241, 234, 0) 0%,
-    rgba(245, 241, 234, 0.3) 50%,
-    rgba(245, 241, 234, 1) 100%
-  );
-}
-
-/* ═══════════════════════════════════════ */
-/* Glass Effects                           */
-/* ═══════════════════════════════════════ */
 
 .glass-dark {
   background: rgba(26, 41, 66, 0.4);
@@ -108,10 +83,6 @@ button, a {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(201, 168, 118, 0.2);
 }
-
-/* ═══════════════════════════════════════ */
-/* Buttons                                  */
-/* ═══════════════════════════════════════ */
 
 .btn-primary {
   background: #1a1a1a;
@@ -160,7 +131,6 @@ button, a {
 .btn-outline:hover {
   background: white;
   color: #1a1a1a;
-  border-color: white;
 }
 
 .btn-outline-dark {
@@ -178,10 +148,6 @@ button, a {
   color: white;
 }
 
-/* ═══════════════════════════════════════ */
-/* Cards                                    */
-/* ═══════════════════════════════════════ */
-
 .card-elegant {
   background: white;
   border-radius: 20px;
@@ -196,33 +162,11 @@ button, a {
   border-color: rgba(201, 168, 118, 0.3);
 }
 
-.card-image {
-  background: white;
-  border-radius: 24px;
-  overflow: hidden;
-  transition: all 0.4s ease;
-  box-shadow: 0 4px 30px -8px rgba(26, 41, 66, 0.1);
-}
-
-.card-image:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 30px 60px -15px rgba(26, 41, 66, 0.25);
-}
-
-/* ═══════════════════════════════════════ */
-/* Stats Bar                                */
-/* ═══════════════════════════════════════ */
-
 .stats-bar {
   background: rgba(26, 26, 26, 0.85);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   color: white;
 }
-
-/* ═══════════════════════════════════════ */
-/* Decorative Elements                      */
-/* ═══════════════════════════════════════ */
 
 .divider-gold {
   height: 1px;
@@ -237,10 +181,6 @@ button, a {
   width: 60px;
 }
 
-/* ═══════════════════════════════════════ */
-/* Animations                               */
-/* ═══════════════════════════════════════ */
-
 .animate-fade-in {
   animation: fadeIn 0.6s ease-out;
 }
@@ -249,61 +189,26 @@ button, a {
   animation: slideUp 0.8s ease-out;
 }
 
-.animate-zoom-in {
-  animation: zoomIn 1s ease-out;
-}
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from { 
-    opacity: 0; 
-    transform: translateY(40px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* ═══════════════════════════════════════ */
-/* Skeleton Loading                         */
-/* ═══════════════════════════════════════ */
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    #f5f1ea 25%,
-    #e8dfd3 50%,
-    #f5f1ea 75%
-  );
+  background: linear-gradient(90deg, #f5f1ea 25%, #e8dfd3 50%, #f5f1ea 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
-  border-radius: 12px;
 }
 
 @keyframes skeleton-loading {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
-
-/* ═══════════════════════════════════════ */
-/* Line Clamps                              */
-/* ═══════════════════════════════════════ */
 
 .line-clamp-1 {
   display: -webkit-box;
@@ -319,35 +224,19 @@ button, a {
   overflow: hidden;
 }
 
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* ═══════════════════════════════════════ */
-/* Mobile                                   */
-/* ═══════════════════════════════════════ */
-
 @media (max-width: 768px) {
   button, a {
     -webkit-tap-highlight-color: transparent;
   }
-
   input, select, textarea {
     font-size: 16px !important;
   }
-
   h1 {
     line-height: 1.1 !important;
-    word-wrap: break-word;
   }
-
   body {
     overflow-x: hidden;
   }
-
   .hero-bg {
     min-height: 500px;
   }
@@ -361,16 +250,12 @@ header {
   z-index: 50;
 }
 
-/* ═══════════════════════════════════════ */
-/* Utility Classes                          */
-/* ═══════════════════════════════════════ */
+.text-shadow-strong {
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
 
 .text-shadow-soft {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.text-shadow-strong {
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .section-padding {
@@ -383,4 +268,17 @@ header {
     padding-top: 50px;
     padding-bottom: 50px;
   }
+}
+
+.card-image {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 30px -8px rgba(26, 41, 66, 0.1);
+}
+
+.card-image:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 30px 60px -15px rgba(26, 41, 66, 0.25);
 }
