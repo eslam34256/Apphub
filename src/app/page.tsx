@@ -56,60 +56,68 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════ */}
       {/* HERO SECTION                            */}
       {/* ═══════════════════════════════════════ */}
-      <section className="relative hero-bg flex items-center justify-center min-h-[600px] md:min-h-[700px]">
-        <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 text-center text-white animate-fade-in">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 px-5 py-2 text-sm mb-8 animate-slide-up">
-            <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse"></span>
-            <span className="font-medium tracking-wider">{t("hero_badge")}</span>
-          </div>
+      {/* HERO SECTION */}
+<section className="relative hero-bg flex items-center justify-center">
+  <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24 text-center text-white animate-fade-in w-full">
+    {/* Badge */}
+    <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 px-4 sm:px-5 py-2 text-xs sm:text-sm mb-6 sm:mb-8 animate-slide-up">
+      <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse"></span>
+      <span className="font-medium tracking-wider">{t("hero_badge")}</span>
+    </div>
 
-          {/* Main Heading */}
-          <h1 className="heading-display text-6xl md:text-8xl lg:text-9xl mb-8 text-shadow-strong animate-slide-up">
-            {t("hero_title_1")}
-            <br />
-            <span className="text-accent-400 italic">{t("hero_title_2")}</span>
-          </h1>
+    {/* Main Heading */}
+    <h1 className="heading-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl mb-6 sm:mb-8 text-shadow-strong animate-slide-up leading-tight">
+      <span className="block mb-2">{t("hero_title_1")}</span>
+      <span className="text-accent-400 italic block">{t("hero_title_2")}</span>
+    </h1>
 
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-10 leading-relaxed text-shadow-soft animate-slide-up">
-            {t("hero_description")}
-          </p>
+    <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed text-shadow-soft animate-slide-up px-4">
+      {t("hero_description")}
+    </p>
 
-          {/* Buttons */}
-          <div className="flex flex-wrap gap-4 justify-center animate-slide-up">
-            <Link href="/apps" className="btn-gold">
-              <span>{t("btn_browse_apps")}</span>
-              <span>{lang === "ar" ? "←" : "→"}</span>
-            </Link>
-            <Link href="/compare-hub" className="btn-outline">
-              <span>🔍</span>
-              <span>{t("btn_smart_compare")}</span>
-            </Link>
-          </div>
+    {/* Buttons */}
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center animate-slide-up px-4">
+      <Link 
+        href="/apps" 
+        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent-400 text-brand-900 px-8 py-4 rounded-full font-bold text-sm sm:text-base hover:bg-accent-500 transition shadow-xl"
+      >
+        <span>{t("btn_browse_apps")}</span>
+        <span>{lang === "ar" ? "←" : "→"}</span>
+      </Link>
+      <Link 
+        href="/compare-hub" 
+        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-full font-semibold text-sm sm:text-base hover:bg-white/20 transition"
+      >
+        <span>🔍</span>
+        <span>{t("btn_smart_compare")}</span>
+      </Link>
+    </div>
+  </div>
+
+  {/* Stats Bar - في النهاية */}
+  <div className="absolute bottom-0 left-0 right-0 stats-bar">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+        <div className="text-center">
+          <p className="heading-elegant text-2xl sm:text-3xl md:text-4xl text-accent-400">+{allApps.length}</p>
+          <p className="text-[10px] sm:text-xs text-white/70 uppercase tracking-wider sm:tracking-widest mt-1">{t("stat_apps")}</p>
         </div>
-
-        {/* Stats Bar */}
-        <div className="absolute bottom-0 left-0 right-0 stats-bar">
-          <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <p className="heading-elegant text-4xl text-accent-400">{allApps.length}+</p>
-              <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_apps")}</p>
-            </div>
-            <div className="text-center">
-              <p className="heading-elegant text-4xl text-accent-400">15</p>
-              <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_categories")}</p>
-            </div>
-            <div className="text-center">
-              <p className="heading-elegant text-4xl text-accent-400">3</p>
-              <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_countries")}</p>
-            </div>
-            <div className="text-center">
-              <p className="heading-elegant text-4xl text-accent-400">{deals.length}+</p>
-              <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_deals")}</p>
-            </div>
-          </div>
+        <div className="text-center">
+          <p className="heading-elegant text-2xl sm:text-3xl md:text-4xl text-accent-400">15</p>
+          <p className="text-[10px] sm:text-xs text-white/70 uppercase tracking-wider sm:tracking-widest mt-1">{t("stat_categories")}</p>
         </div>
-      </section>
+        <div className="text-center">
+          <p className="heading-elegant text-2xl sm:text-3xl md:text-4xl text-accent-400">3</p>
+          <p className="text-[10px] sm:text-xs text-white/70 uppercase tracking-wider sm:tracking-widest mt-1">{t("stat_countries")}</p>
+        </div>
+        <div className="text-center">
+          <p className="heading-elegant text-2xl sm:text-3xl md:text-4xl text-accent-400">+{deals.length}</p>
+          <p className="text-[10px] sm:text-xs text-white/70 uppercase tracking-wider sm:tracking-widest mt-1">{t("stat_deals")}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* ═══════════════════════════════════════ */}
       {/* FEATURED APPS SECTION                   */}

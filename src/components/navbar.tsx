@@ -61,33 +61,34 @@ export function Navbar() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0 group">
-            <div
-              className={`w-11 h-11 rounded-xl flex items-center justify-center heading-elegant text-2xl shadow-elegant group-hover:scale-110 transition ${
-                scrolled
-                  ? "bg-brand-900 text-white"
-                  : "bg-white/10 backdrop-blur border border-white/20 text-white"
-              }`}
-            >
-              A
-            </div>
-            <div className="hidden sm:block">
-              <p
-                className={`heading-elegant text-2xl ${
-                  scrolled ? "text-brand-900" : "text-white"
-                }`}
-              >
-                AppHub
-              </p>
-              <p
-                className={`text-[10px] -mt-1 tracking-wider ${
-                  scrolled ? "text-charcoal-500" : "text-white/70"
-                }`}
-              >
-                {t("site_tagline")}
-              </p>
-            </div>
-          </Link>
+          {/* Logo */}
+<Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
+  <div
+    className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center heading-elegant text-lg sm:text-2xl shadow-elegant group-hover:scale-110 transition ${
+      scrolled
+        ? "bg-brand-900 text-white"
+        : "bg-white/10 backdrop-blur border border-white/20 text-white"
+    }`}
+  >
+    A
+  </div>
+  <div className="block">
+    <p
+      className={`heading-elegant text-lg sm:text-2xl ${
+        scrolled ? "text-brand-900" : "text-white"
+      }`}
+    >
+      AppHub
+    </p>
+    <p
+      className={`text-[8px] sm:text-[10px] -mt-1 tracking-wider hidden sm:block ${
+        scrolled ? "text-charcoal-500" : "text-white/70"
+      }`}
+    >
+      {t("site_tagline")}
+    </p>
+  </div>
+</Link>
 
           {/* Center Links - Desktop */}
           <nav className="hidden md:flex items-center gap-1">

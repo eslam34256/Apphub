@@ -65,9 +65,16 @@ button, a {
 
 .hero-bg {
   background:
-    linear-gradient(135deg, rgba(26, 41, 66, 0.85) 0%, rgba(26, 26, 26, 0.6) 100%),
-    url('https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?q=80&w=2070') center/cover;
-  min-height: 600px;
+    linear-gradient(135deg, rgba(26, 41, 66, 0.9) 0%, rgba(26, 26, 26, 0.7) 100%),
+    url('https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+  min-height: 700px;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .hero-bg {
+    min-height: 600px;
+  }
 }
 
 .glass-dark {
@@ -281,4 +288,21 @@ header {
 .card-image:hover {
   transform: translateY(-6px);
   box-shadow: 0 30px 60px -15px rgba(26, 41, 66, 0.25);
+}
+
+@media (max-width: 640px) {
+  .heading-display {
+    font-size: 2.5rem !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.02em;
+  }
+
+  .stats-bar {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .hero-bg {
+    padding-bottom: 100px;
+  }
 }
