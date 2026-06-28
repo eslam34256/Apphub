@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AppItem } from "@/lib/types";
 import { useLanguage } from "@/contexts/language-context";
+import { useTranslatedText, useTranslatedArray } from "@/hooks/use-translated-text";
 
 const categoryTranslations: Record<string, { ar: string; en: string }> = {
   food: { ar: "أكل وتوصيل", en: "Food & Delivery" },
@@ -30,6 +31,8 @@ const countryTranslations: Record<string, { ar: string; en: string }> = {
 
 export function AppCard({ app }: { app: AppItem }) {
   const { lang, t } = useLanguage();
+  const translatedDescription = useTranslatedText(app.shortDescription);
+  const translatedTags = useTranslatedArray(app.tags || []);
 
   function getCategoryLabel(cat: string) {
     return categoryTranslations[cat]?.[lang] || cat;
@@ -60,10 +63,9 @@ export function AppCard({ app }: { app: AppItem }) {
       </div>
 
       <p className="text-sm text-charcoal-500 leading-relaxed mb-4 line-clamp-2">
-        {app.shortDescription}
+        {translatedDescription}
       </p>
 
-      {/* Countries */}
       <div className="flex flex-wrap gap-1.5 mb-3">
         {app.countries.slice(0, 3).map((country) => (
           <span
@@ -75,12 +77,11 @@ export function AppCard({ app }: { app: AppItem }) {
         ))}
       </div>
 
-      {/* Tags */}
-      {app.tags && app.tags.length > 0 && (
+      {translatedTags && translatedTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {app.tags.slice(0, 2).map((tag) => (
+          {translatedTags.slice(0, 2).map((tag, i) => (
             <span
-              key={tag}
+              key={i}
               className="text-xs bg-cream-100 text-charcoal-800 px-2 py-0.5 rounded-full"
             >
               #{tag}
