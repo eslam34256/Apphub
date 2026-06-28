@@ -3,19 +3,17 @@ import { apps as staticApps } from "@/data/apps";
 import { createClient } from "@/lib/supabase/server";
 import { AppItem } from "@/lib/types";
 
-export const revalidate = 0; // عشان يجيب أحدث البيانات دائمًا
+export const revalidate = 0;
 
 export default async function AppsPage() {
   const supabase = createClient();
-  
-  // جيب التطبيقات من Supabase
+
   const { data: dbApps } = await supabase
     .from("managed_apps")
     .select("*")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
-  // حوّل التطبيقات من Supabase لنفس شكل التطبيقات الثابتة
   const dbAppsMapped: AppItem[] = (dbApps ?? []).map((app: any) => ({
     id: `db-${app.id}`,
     slug: app.slug,
@@ -33,11 +31,30 @@ export default async function AppsPage() {
     businessUse: Array.isArray(app.business_use) ? app.business_use : []
   }));
 
-  // ادمج التطبيقات (Supabase الأول، بعدين الثابتة)
-  // لو فيه تطبيق بنفس الـ slug في الاتنين، اللي من Supabase ياخد الأولوية
   const dbSlugs = new Set(dbAppsMapped.map((a) => a.slug));
   const filteredStaticApps = staticApps.filter((a) => !dbSlugs.has(a.slug));
   const allApps = [...dbAppsMapped, ...filteredStaticApps];
 
-  return <AppsDirectory apps={allApps} />;
+  return (
+    <div className="bg-cream-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
+            اكتشف
+          </p>
+          <h1 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
+            كل التطبيقات
+          </h1>
+          <div className="divider-gold"></div>
+          <p className="text-charcoal-500 max-w-xl mx-auto">
+            تصفّح مكتبة ضخمة من التطبيقات المختارة بعناية
+          </p>
+        </div>
+
+        {/* Apps Directory */}
+        <AppsDirectory apps={allApps} />
+      </div>
+    </div>
+  );
 }

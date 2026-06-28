@@ -8,65 +8,76 @@ import {
 } from "@/lib/ride-calculator";
 import { calculateFoodOrder, getAllCuisines } from "@/lib/food-delivery-calculator";
 import { LocationSearch } from "@/components/location-search";
+import { useLanguage } from "@/contexts/language-context";
 
 type CompareCategory = "rides" | "food" | "streaming" | "bnpl";
 
 export default function CompareHubPage() {
+  const { t, lang } = useLanguage();
   const [category, setCategory] = useState<CompareCategory>("rides");
 
   return (
-    <div className="space-y-6">
-      {/* Hero */}
-      <div className="rounded-3xl bg-gradient-to-l from-brand-600 to-purple-700 p-8 text-white">
-        <p className="mb-2 text-sm text-white/80">🔍 مركز المقارنات</p>
-        <h1 className="text-3xl font-extrabold">
-          قارن أي حاجة في مكان واحد
-        </h1>
-        <p className="mt-3 text-white/90">
-          من المشاوير لتوصيل الأكل والاشتراكات — كل المقارنات هنا
-        </p>
-      </div>
-
-      {/* اختيار الفئة */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-bold">اختار نوع المقارنة:</h2>
-        <div className="grid gap-3 md:grid-cols-4">
-          <CategoryButton
-            active={category === "rides"}
-            icon="🚗"
-            title="المشاوير"
-            description="Uber, Careem, InDrive"
-            onClick={() => setCategory("rides")}
-          />
-          <CategoryButton
-            active={category === "food"}
-            icon="🍔"
-            title="توصيل الأكل"
-            description="طلبات, إلمنيوز, كريم"
-            onClick={() => setCategory("food")}
-          />
-          <CategoryButton
-            active={category === "streaming"}
-            icon="🎬"
-            title="الستريمنج"
-            description="Netflix, Shahid, OSN+"
-            onClick={() => setCategory("streaming")}
-          />
-          <CategoryButton
-            active={category === "bnpl"}
-            icon="💳"
-            title="التقسيط"
-            description="فاليو, تمارا, تابي"
-            onClick={() => setCategory("bnpl")}
-          />
+    <div className="bg-cream-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 py-12 space-y-8">
+        {/* Hero */}
+        <div className="text-center mb-12">
+          <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
+            {lang === "ar" ? "قارن بذكاء" : "Smart Compare"}
+          </p>
+          <h1 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
+            {lang === "ar" ? "المقارنات" : "Comparisons"}
+          </h1>
+          <div className="divider-gold"></div>
+          <p className="text-charcoal-500 max-w-xl mx-auto">
+            {lang === "ar"
+              ? "قارن أسعار وخدمات أفضل التطبيقات في مكان واحد"
+              : "Compare prices and services of the best apps in one place"}
+          </p>
         </div>
-      </div>
 
-      {/* عرض المقارنة المناسبة */}
-      {category === "rides" && <RidesCompare />}
-      {category === "food" && <FoodCompare />}
-      {category === "streaming" && <StreamingCompare />}
-      {category === "bnpl" && <BNPLCompare />}
+        {/* اختيار الفئة */}
+        <div className="card-elegant p-6">
+          <h2 className="heading-elegant text-xl text-brand-900 mb-4">
+            {lang === "ar" ? "اختار نوع المقارنة:" : "Choose comparison type:"}
+          </h2>
+          <div className="grid gap-3 md:grid-cols-4">
+            <CategoryButton
+              active={category === "rides"}
+              icon="🚗"
+              title={lang === "ar" ? "المشاوير" : "Rides"}
+              description="Uber, Careem, InDrive"
+              onClick={() => setCategory("rides")}
+            />
+            <CategoryButton
+              active={category === "food"}
+              icon="🍔"
+              title={lang === "ar" ? "توصيل الأكل" : "Food Delivery"}
+              description={lang === "ar" ? "طلبات, إلمنيوز, كريم" : "Talabat, Elmenus, Careem"}
+              onClick={() => setCategory("food")}
+            />
+            <CategoryButton
+              active={category === "streaming"}
+              icon="🎬"
+              title={lang === "ar" ? "الستريمنج" : "Streaming"}
+              description="Netflix, Shahid, OSN+"
+              onClick={() => setCategory("streaming")}
+            />
+            <CategoryButton
+              active={category === "bnpl"}
+              icon="💳"
+              title={lang === "ar" ? "التقسيط" : "BNPL"}
+              description={lang === "ar" ? "فاليو, تمارا, تابي" : "Valu, Tamara, Tabby"}
+              onClick={() => setCategory("bnpl")}
+            />
+          </div>
+        </div>
+
+        {/* عرض المقارنة المناسبة */}
+        {category === "rides" && <RidesCompare />}
+        {category === "food" && <FoodCompare />}
+        {category === "streaming" && <StreamingCompare />}
+        {category === "bnpl" && <BNPLCompare />}
+      </div>
     </div>
   );
 }
@@ -84,13 +95,13 @@ function CategoryButton({
       onClick={onClick}
       className={`rounded-2xl border-2 p-4 text-right transition ${
         active
-          ? "border-brand-600 bg-brand-50"
-          : "border-slate-200 bg-white hover:border-brand-300"
+          ? "border-accent-400 bg-accent-50"
+          : "border-cream-200 bg-white hover:border-accent-300"
       }`}
     >
       <div className="text-3xl">{icon}</div>
-      <h3 className="mt-2 font-bold">{title}</h3>
-      <p className="text-xs text-slate-500">{description}</p>
+      <h3 className="mt-2 font-bold text-brand-900">{title}</h3>
+      <p className="text-xs text-charcoal-500">{description}</p>
     </button>
   );
 }
@@ -120,7 +131,7 @@ function RidesCompare() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="card-elegant p-6">
         <div className="grid gap-4 md:grid-cols-2">
           <LocationSearch
             label="من"
@@ -144,7 +155,7 @@ function RidesCompare() {
             onChange={(e) => setIsPeakHour(e.target.checked)}
             className="h-5 w-5"
           />
-          <span className="text-sm">🔥 وقت الذروة (+40%)</span>
+          <span className="text-sm text-charcoal-800">🔥 وقت الذروة (+40%)</span>
         </label>
       </div>
 
@@ -164,16 +175,16 @@ function RidesCompare() {
             {sorted.map((est) => (
               <div
                 key={est.app.id}
-                className={`rounded-2xl border-2 bg-white p-5 shadow-sm ${
-                  est.isCheapest ? "border-emerald-500" :
-                  est.isFastest ? "border-blue-500" : "border-slate-200"
+                className={`card-elegant p-5 ${
+                  est.isCheapest ? "border-2 border-sage-400" :
+                  est.isFastest ? "border-2 border-accent-400" : ""
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="text-3xl">{est.app.icon}</div>
                     <div>
-                      <h3 className="font-bold">{est.app.name}</h3>
+                      <h3 className="font-bold text-brand-900">{est.app.name}</h3>
                       <div className="mt-1 flex gap-2">
                         {est.isCheapest && <Badge type="success">🏆 الأرخص</Badge>}
                         {est.isFastest && <Badge type="info">⚡ الأسرع</Badge>}
@@ -181,10 +192,10 @@ function RidesCompare() {
                     </div>
                   </div>
                   <div className="text-left">
-                    <p className="text-2xl font-extrabold text-brand-600">
+                    <p className="text-2xl font-extrabold text-brand-900">
                       {est.estimatedPrice} ج
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-charcoal-500">
                       {est.priceRange.min}-{est.priceRange.max} ج
                     </p>
                   </div>
@@ -218,9 +229,9 @@ function FoodCompare() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <div className="card-elegant p-6 space-y-4">
         <div>
-          <label className="mb-2 block text-sm font-bold">💵 قيمة الطلب</label>
+          <label className="mb-2 block text-sm font-bold text-brand-900">💵 قيمة الطلب</label>
           <div className="flex items-center gap-3">
             <input
               type="range"
@@ -235,9 +246,9 @@ function FoodCompare() {
               type="number"
               value={orderValue}
               onChange={(e) => setOrderValue(Number(e.target.value))}
-              className="w-24 rounded-2xl border px-3 py-2 text-center font-bold"
+              className="w-24 rounded-2xl border border-cream-200 px-3 py-2 text-center font-bold"
             />
-            <span>ج</span>
+            <span className="text-charcoal-500">ج</span>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {[50, 100, 150, 200, 300, 500].map((val) => (
@@ -245,7 +256,7 @@ function FoodCompare() {
                 key={val}
                 onClick={() => setOrderValue(val)}
                 className={`rounded-full px-3 py-1 text-sm ${
-                  orderValue === val ? "bg-brand-600 text-white" : "bg-slate-100"
+                  orderValue === val ? "bg-brand-900 text-white" : "bg-cream-100 text-charcoal-800"
                 }`}
               >
                 {val} ج
@@ -254,14 +265,14 @@ function FoodCompare() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 border-t pt-4">
+        <div className="flex flex-wrap gap-4 border-t border-cream-200 pt-4">
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={useSubscription} onChange={(e) => setUseSubscription(e.target.checked)} className="h-5 w-5" />
-            <span className="text-sm">⭐ عندي اشتراك Premium</span>
+            <span className="text-sm text-charcoal-800">⭐ عندي اشتراك Premium</span>
           </label>
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={usePromoCode} onChange={(e) => setUsePromoCode(e.target.checked)} className="h-5 w-5" />
-            <span className="text-sm">🎟️ استخدم كود الخصم</span>
+            <span className="text-sm text-charcoal-800">🎟️ استخدم كود الخصم</span>
           </label>
         </div>
       </div>
@@ -278,17 +289,17 @@ function FoodCompare() {
             {sorted.map((est) => (
               <div
                 key={est.app.id}
-                className={`rounded-2xl border-2 bg-white p-5 shadow-sm ${
-                  est.isCheapest ? "border-emerald-500" :
-                  est.isFastest ? "border-blue-500" : "border-slate-200"
+                className={`card-elegant p-5 ${
+                  est.isCheapest ? "border-2 border-sage-400" :
+                  est.isFastest ? "border-2 border-accent-400" : ""
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
                     <div className="text-3xl">{est.app.icon}</div>
                     <div>
-                      <h3 className="font-bold">{est.app.name}</h3>
-                      <p className="text-xs text-slate-500">⏱️ {est.estimatedTime} دقيقة</p>
+                      <h3 className="font-bold text-brand-900">{est.app.name}</h3>
+                      <p className="text-xs text-charcoal-500">⏱️ {est.estimatedTime} دقيقة</p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {est.isCheapest && <Badge type="success">🏆 الأرخص</Badge>}
                         {est.isFastest && <Badge type="info">⚡ الأسرع</Badge>}
@@ -297,8 +308,8 @@ function FoodCompare() {
                     </div>
                   </div>
                   <div className="text-left">
-                    <p className="text-2xl font-extrabold text-orange-600">{est.totalCost} ج</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-2xl font-extrabold text-accent-600">{est.totalCost} ج</p>
+                    <p className="text-xs text-charcoal-500">
                       توصيل: {est.deliveryFee === 0 ? "مجاني" : `${est.deliveryFee} ج`}
                     </p>
                   </div>
@@ -329,19 +340,19 @@ function StreamingCompare() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl bg-blue-50 p-4 text-sm text-blue-900">
+      <div className="rounded-2xl bg-accent-50 border border-accent-200 p-4 text-sm text-brand-900">
         💡 الأسعار بالعملة المحلية لكل دولة. ممكن توفر فلوس لو اشتركت من بلد تاني.
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm overflow-x-auto">
+      <div className="card-elegant p-6 overflow-x-auto">
         <table className="w-full text-right">
           <thead>
-            <tr className="border-b">
-              <th className="p-3">المنصة</th>
-              <th className="p-3">🇪🇬 مصر</th>
-              <th className="p-3">🇸🇦 السعودية</th>
-              <th className="p-3">🇦🇪 الإمارات</th>
-              <th className="p-3">💰 الأرخص</th>
+            <tr className="border-b border-cream-200">
+              <th className="p-3 text-brand-900">المنصة</th>
+              <th className="p-3 text-brand-900">🇪🇬 مصر</th>
+              <th className="p-3 text-brand-900">🇸🇦 السعودية</th>
+              <th className="p-3 text-brand-900">🇦🇪 الإمارات</th>
+              <th className="p-3 text-brand-900">💰 الأرخص</th>
             </tr>
           </thead>
           <tbody>
@@ -355,19 +366,19 @@ function StreamingCompare() {
               const cheapest = prices.length > 0 ? prices.reduce((a, b) => a.value < b.value ? a : b) : null;
 
               return (
-                <tr key={p.id} className="border-b">
+                <tr key={p.id} className="border-b border-cream-100">
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{p.icon}</span>
-                      <span className="font-bold">{p.name}</span>
+                      <span className="font-bold text-brand-900">{p.name}</span>
                     </div>
                   </td>
-                  <td className="p-3">{p.eg > 0 ? `${p.eg} ج` : "—"}</td>
-                  <td className="p-3">{p.sa > 0 ? `${p.sa} ريال` : "—"}</td>
-                  <td className="p-3">{p.ae > 0 ? `${p.ae} درهم` : "—"}</td>
+                  <td className="p-3 text-charcoal-800">{p.eg > 0 ? `${p.eg} ج` : "—"}</td>
+                  <td className="p-3 text-charcoal-800">{p.sa > 0 ? `${p.sa} ريال` : "—"}</td>
+                  <td className="p-3 text-charcoal-800">{p.ae > 0 ? `${p.ae} درهم` : "—"}</td>
                   <td className="p-3">
                     {cheapest && (
-                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                      <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-bold text-sage-700">
                         {cheapest.country}
                       </span>
                     )}
@@ -379,9 +390,9 @@ function StreamingCompare() {
         </table>
       </div>
 
-      <div className="rounded-3xl bg-amber-50 p-6">
-        <h3 className="mb-3 font-bold text-amber-900">💡 نصايح للتوفير</h3>
-        <ul className="space-y-2 text-sm text-amber-800">
+      <div className="rounded-2xl bg-accent-50 border border-accent-200 p-6">
+        <h3 className="mb-3 font-bold text-brand-900">💡 نصايح للتوفير</h3>
+        <ul className="space-y-2 text-sm text-charcoal-800">
           <li>✅ Netflix من السعودية أرخص بـ 60% من مصر</li>
           <li>✅ شاهد من الإمارات أرخص بـ 60% من مصر</li>
           <li>✅ استخدم الباقات العائلية واقتسم الاشتراك</li>
@@ -407,8 +418,8 @@ function BNPLCompare() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <label className="mb-2 block text-sm font-bold">💰 المبلغ المراد تقسيطه</label>
+      <div className="card-elegant p-6">
+        <label className="mb-2 block text-sm font-bold text-brand-900">💰 المبلغ المراد تقسيطه</label>
         <div className="flex items-center gap-3">
           <input
             type="range"
@@ -423,9 +434,9 @@ function BNPLCompare() {
             type="number"
             value={amount}
             onChange={(e) => setAmount(Number(e.target.value))}
-            className="w-32 rounded-2xl border px-3 py-2 text-center font-bold"
+            className="w-32 rounded-2xl border border-cream-200 px-3 py-2 text-center font-bold"
           />
-          <span>ج</span>
+          <span className="text-charcoal-500">ج</span>
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           {[1000, 2500, 5000, 10000, 25000].map((val) => (
@@ -433,7 +444,7 @@ function BNPLCompare() {
               key={val}
               onClick={() => setAmount(val)}
               className={`rounded-full px-3 py-1 text-sm ${
-                amount === val ? "bg-brand-600 text-white" : "bg-slate-100"
+                amount === val ? "bg-brand-900 text-white" : "bg-cream-100 text-charcoal-800"
               }`}
             >
               {val.toLocaleString()} ج
@@ -448,40 +459,40 @@ function BNPLCompare() {
           const totalCost = amount + app.processingFee;
 
           return (
-            <div key={app.id} className="rounded-2xl border-2 border-slate-200 bg-white p-5 shadow-sm">
+            <div key={app.id} className="card-elegant p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="text-3xl">{app.icon}</div>
-                <h3 className="text-lg font-bold">{app.name}</h3>
+                <h3 className="text-lg font-bold text-brand-900">{app.name}</h3>
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-xl bg-emerald-50 p-4">
-                  <p className="text-xs text-emerald-700">القسط الشهري</p>
-                  <p className="text-2xl font-extrabold text-emerald-700">
+                <div className="rounded-xl bg-sage-50 border border-sage-200 p-4">
+                  <p className="text-xs text-sage-700">القسط الشهري</p>
+                  <p className="text-2xl font-extrabold text-sage-700">
                     {monthlyInstallment.toFixed(0)} ج
                   </p>
-                  <p className="text-xs text-emerald-600 mt-1">
+                  <p className="text-xs text-sage-600 mt-1">
                     على {app.installments} {app.installments > 4 ? "شهر" : "دفعات"}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">المبلغ الأصلي</p>
-                    <p className="font-bold">{amount.toLocaleString()} ج</p>
+                  <div className="rounded-lg bg-cream-100 p-3">
+                    <p className="text-xs text-charcoal-500">المبلغ الأصلي</p>
+                    <p className="font-bold text-brand-900">{amount.toLocaleString()} ج</p>
                   </div>
-                  <div className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">إجمالي ما هتدفعه</p>
-                    <p className="font-bold">{totalCost.toLocaleString()} ج</p>
+                  <div className="rounded-lg bg-cream-100 p-3">
+                    <p className="text-xs text-charcoal-500">إجمالي ما هتدفعه</p>
+                    <p className="font-bold text-brand-900">{totalCost.toLocaleString()} ج</p>
                   </div>
                 </div>
 
                 <div className="flex gap-2 text-xs">
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">
+                  <span className="rounded-full bg-sage-100 px-3 py-1 text-sage-700">
                     {app.interestRate === 0 ? "بدون فوائد" : `فايدة ${app.interestRate}%`}
                   </span>
                   {app.processingFee > 0 && (
-                    <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-700">
+                    <span className="rounded-full bg-accent-100 px-3 py-1 text-accent-700">
                       رسوم {app.processingFee} ج
                     </span>
                   )}
@@ -492,9 +503,9 @@ function BNPLCompare() {
         })}
       </div>
 
-      <div className="rounded-3xl bg-amber-50 p-6">
-        <h3 className="mb-3 font-bold text-amber-900">💡 نصايح للتقسيط الذكي</h3>
-        <ul className="space-y-2 text-sm text-amber-800">
+      <div className="rounded-2xl bg-accent-50 border border-accent-200 p-6">
+        <h3 className="mb-3 font-bold text-brand-900">💡 نصايح للتقسيط الذكي</h3>
+        <ul className="space-y-2 text-sm text-charcoal-800">
           <li>✅ تمارا وتابي بدون فوائد وأنسب للمبالغ المتوسطة</li>
           <li>✅ فاليو الأفضل للمبالغ الكبيرة (6 شهور بدون فوائد)</li>
           <li>✅ اتأكد من قدرتك على السداد قبل التقسيط</li>
@@ -510,13 +521,13 @@ function BNPLCompare() {
 // ════════════════════════════════════════
 function InfoCard({ label, value, variant = "default" }: { label: string; value: string; variant?: "default" | "success" | "info" | "purple" }) {
   const colors = {
-    default: "bg-white",
-    success: "bg-emerald-50 text-emerald-700",
-    info: "bg-blue-50 text-blue-700",
-    purple: "bg-purple-50 text-purple-700"
+    default: "bg-white border border-cream-200",
+    success: "bg-sage-50 border border-sage-200 text-sage-700",
+    info: "bg-accent-50 border border-accent-200 text-accent-700",
+    purple: "bg-brand-50 border border-brand-200 text-brand-700"
   };
   return (
-    <div className={`rounded-2xl p-5 shadow-sm ${colors[variant]}`}>
+    <div className={`rounded-2xl p-5 shadow-soft ${colors[variant]}`}>
       <p className="text-sm opacity-70">{label}</p>
       <p className="mt-2 text-lg font-extrabold">{value}</p>
     </div>
@@ -525,9 +536,9 @@ function InfoCard({ label, value, variant = "default" }: { label: string; value:
 
 function Badge({ type, children }: { type: "success" | "info" | "warning"; children: React.ReactNode }) {
   const colors = {
-    success: "bg-emerald-100 text-emerald-700",
-    info: "bg-blue-100 text-blue-700",
-    warning: "bg-amber-100 text-amber-700"
+    success: "bg-sage-100 text-sage-700",
+    info: "bg-accent-100 text-accent-700",
+    warning: "bg-cream-200 text-charcoal-800"
   };
   return (
     <span className={`rounded-full px-2 py-1 text-xs font-bold ${colors[type]}`}>

@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/language-context";
 
 type Props = {
-  links: { href: string; label: string; icon: string }[];
+  links: { href: string; label: string; icon?: string }[];
   user: any;
   isAdmin: boolean;
   userName: string;
 };
 
 export function MobileMenu({ links, user, isAdmin, userName }: Props) {
+  const { t, lang } = useLanguage();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -28,10 +30,10 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 transition"
+        className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 hover:bg-white/20 transition"
         aria-label="فتح القائمة"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
           <line x1="3" y1="6" x2="21" y2="6" />
           <line x1="3" y1="12" x2="21" y2="12" />
           <line x1="3" y1="18" x2="21" y2="18" />
@@ -40,7 +42,7 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
 
       {open && (
         <>
-          {/* Overlay - يغطي كل الشاشة */}
+          {/* Overlay */}
           <div
             onClick={() => setOpen(false)}
             style={{
@@ -49,15 +51,13 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
               left: 0,
               right: 0,
               bottom: 0,
-              width: "100vw",
-              height: "100vh",
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              backgroundColor: "rgba(26, 26, 26, 0.6)",
               zIndex: 999998
             }}
             className="md:hidden"
           />
 
-          {/* Sidebar - يغطي كل الشاشة من فوق لتحت */}
+          {/* Sidebar */}
           <aside
             style={{
               position: "fixed",
@@ -67,47 +67,67 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
               width: "85vw",
               maxWidth: "380px",
               height: "100vh",
-              backgroundColor: "#ffffff",
+              backgroundColor: "#faf8f5",
               zIndex: 999999,
-              boxShadow: "-10px 0 30px rgba(0, 0, 0, 0.3)",
+              boxShadow: "-10px 0 30px rgba(26, 41, 66, 0.2)",
               display: "flex",
               flexDirection: "column",
               overflow: "hidden"
             }}
             className="md:hidden"
           >
-            {/* Header - ثابت في الأعلى */}
+            {/* Header */}
             <div
               style={{
                 backgroundColor: "#ffffff",
-                borderBottom: "1px solid #e2e8f0",
-                padding: "16px",
+                borderBottom: "1px solid #e8dfd3",
+                padding: "16px 20px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 flexShrink: 0
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div
                   style={{
-                    width: "40px",
-                    height: "40px",
+                    width: "44px",
+                    height: "44px",
                     borderRadius: "12px",
-                    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    background: "linear-gradient(135deg, #1a2942 0%, #2c3e5a 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     color: "white",
-                    fontWeight: 900,
-                    fontSize: "20px"
+                    fontWeight: 700,
+                    fontSize: "22px",
+                    fontFamily: "var(--font-playfair), Georgia, serif"
                   }}
                 >
                   A
                 </div>
                 <div>
-                  <p style={{ fontWeight: 800, fontSize: "18px", margin: 0 }}>AppHub</p>
-                  <p style={{ fontSize: "10px", color: "#64748b", margin: 0 }}>دليل التطبيقات</p>
+                  <p
+                    style={{
+                      fontWeight: 700,
+                      fontSize: "20px",
+                      margin: 0,
+                      color: "#1a2942",
+                      fontFamily: "var(--font-playfair), Georgia, serif"
+                    }}
+                  >
+                    AppHub
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "10px",
+                      color: "#8b7355",
+                      margin: 0,
+                      letterSpacing: "0.05em"
+                    }}
+                  >
+                    {t("site_tagline")}
+                  </p>
                 </div>
               </div>
 
@@ -117,12 +137,13 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
                   width: "40px",
                   height: "40px",
                   borderRadius: "12px",
-                  backgroundColor: "#f1f5f9",
+                  backgroundColor: "#f5f1ea",
                   border: "none",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  color: "#1a2942"
                 }}
                 aria-label="إغلاق"
               >
@@ -133,17 +154,16 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
               </button>
             </div>
 
-            {/* Scrollable Content */}
+            {/* Content */}
             <div
               style={{
                 flex: 1,
                 overflowY: "auto",
-                overflowX: "hidden",
-                padding: "16px",
-                backgroundColor: "#ffffff",
-                WebkitOverflowScrolling: "touch"
+                padding: "20px",
+                backgroundColor: "#faf8f5"
               }}
             >
+              {/* User Card */}
               {user ? (
                 <Link
                   href="/profile"
@@ -151,9 +171,10 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
                   style={{
                     display: "block",
                     borderRadius: "16px",
-                    background: "linear-gradient(135deg, #eef2ff 0%, #fdf2f8 100%)",
+                    background: "linear-gradient(135deg, #faf8f5 0%, #f5f1ea 100%)",
+                    border: "1px solid #e8dfd3",
                     padding: "16px",
-                    marginBottom: "16px",
+                    marginBottom: "20px",
                     textDecoration: "none",
                     color: "inherit"
                   }}
@@ -164,20 +185,22 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
                         width: "48px",
                         height: "48px",
                         borderRadius: "50%",
-                        background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                        background: "linear-gradient(135deg, #c9a876 0%, #b08f5d 100%)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "white",
+                        color: "#1a2942",
                         fontWeight: 700,
-                        fontSize: "18px"
+                        fontSize: "20px"
                       }}
                     >
                       {userName[0] || "U"}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 700, margin: 0 }}>{userName}</p>
-                      <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>عرض الحساب</p>
+                      <p style={{ fontWeight: 700, margin: 0, color: "#1a2942" }}>{userName}</p>
+                      <p style={{ fontSize: "12px", color: "#8b7355", margin: 0 }}>
+                        {lang === "ar" ? "عرض الحساب" : "View Profile"}
+                      </p>
                     </div>
                   </div>
                 </Link>
@@ -189,31 +212,33 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
                     display: "block",
                     width: "100%",
                     textAlign: "center",
-                    borderRadius: "16px",
-                    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                    padding: "12px",
+                    borderRadius: "999px",
+                    background: "#1a1a1a",
+                    padding: "14px",
                     color: "white",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textDecoration: "none",
-                    marginBottom: "16px"
+                    marginBottom: "20px"
                   }}
                 >
-                  سجّل دخول
+                  {t("nav_login")}
                 </Link>
               )}
 
-              <div style={{ marginBottom: "16px" }}>
+              {/* Main Links */}
+              <div style={{ marginBottom: "20px" }}>
                 <p
                   style={{
                     fontSize: "11px",
                     fontWeight: 700,
-                    color: "#94a3b8",
+                    color: "#c9a876",
                     textTransform: "uppercase",
-                    marginBottom: "8px",
-                    padding: "0 8px"
+                    marginBottom: "12px",
+                    padding: "0 8px",
+                    letterSpacing: "0.1em"
                   }}
                 >
-                  القائمة
+                  {lang === "ar" ? "القائمة" : "Menu"}
                 </p>
                 {links.map((link) => (
                   <Link
@@ -225,32 +250,43 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
                       alignItems: "center",
                       gap: "12px",
                       borderRadius: "12px",
-                      padding: "12px 16px",
+                      padding: "14px 16px",
                       marginBottom: "4px",
                       textDecoration: "none",
-                      color: "#0f172a",
-                      fontWeight: 600
+                      color: "#1a2942",
+                      fontWeight: 600,
+                      transition: "background-color 0.2s"
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f5f1ea")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                   >
-                    <span style={{ fontSize: "20px" }}>{link.icon}</span>
+                    {link.icon && <span style={{ fontSize: "20px" }}>{link.icon}</span>}
                     <span>{link.label}</span>
                   </Link>
                 ))}
               </div>
 
+              {/* Admin Section */}
               {isAdmin && (
-                <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "16px", marginBottom: "16px" }}>
+                <div
+                  style={{
+                    borderTop: "1px solid #e8dfd3",
+                    paddingTop: "16px",
+                    marginBottom: "20px"
+                  }}
+                >
                   <p
                     style={{
                       fontSize: "11px",
                       fontWeight: 700,
-                      color: "#9333ea",
+                      color: "#c9a876",
                       textTransform: "uppercase",
-                      marginBottom: "8px",
-                      padding: "0 8px"
+                      marginBottom: "12px",
+                      padding: "0 8px",
+                      letterSpacing: "0.1em"
                     }}
                   >
-                    إدارة
+                    {lang === "ar" ? "إدارة" : "Admin"}
                   </p>
                   <Link
                     href="/admin"
@@ -260,19 +296,21 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
                       alignItems: "center",
                       gap: "12px",
                       borderRadius: "12px",
-                      backgroundColor: "#faf5ff",
-                      padding: "12px 16px",
+                      backgroundColor: "#f5f1ea",
+                      border: "1px solid #e8dfd3",
+                      padding: "14px 16px",
                       textDecoration: "none",
-                      color: "#0f172a",
+                      color: "#1a2942",
                       fontWeight: 600
                     }}
                   >
                     <span style={{ fontSize: "20px" }}>👑</span>
-                    <span>لوحة الأدمن</span>
+                    <span>{t("nav_admin")}</span>
                   </Link>
                 </div>
               )}
 
+              {/* Advertise CTA */}
               <Link
                 href="/advertise"
                 onClick={() => setOpen(false)}
@@ -280,42 +318,85 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
                   display: "block",
                   width: "100%",
                   textAlign: "center",
-                  borderRadius: "16px",
-                  background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
-                  padding: "12px",
-                  color: "white",
+                  borderRadius: "999px",
+                  background: "linear-gradient(135deg, #c9a876 0%, #b08f5d 100%)",
+                  padding: "14px",
+                  color: "#1a2942",
                   fontWeight: 700,
                   textDecoration: "none",
-                  marginBottom: "16px"
+                  marginBottom: "20px",
+                  boxShadow: "0 4px 12px rgba(201, 168, 118, 0.3)"
                 }}
               >
-                📢 اعلن معانا
+                📢 {t("nav_advertise")}
               </Link>
 
-              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "16px" }}>
+              {/* Footer Links */}
+              <div style={{ borderTop: "1px solid #e8dfd3", paddingTop: "16px" }}>
                 <p
                   style={{
                     fontSize: "11px",
                     fontWeight: 700,
-                    color: "#94a3b8",
+                    color: "#c9a876",
                     textTransform: "uppercase",
-                    marginBottom: "8px",
-                    padding: "0 8px"
+                    marginBottom: "12px",
+                    padding: "0 8px",
+                    letterSpacing: "0.1em"
                   }}
                 >
-                  روابط
+                  {lang === "ar" ? "روابط" : "Links"}
                 </p>
-                <Link href="/about" onClick={() => setOpen(false)} style={{ display: "block", padding: "8px 16px", fontSize: "14px", color: "#64748b", textDecoration: "none" }}>
-                  من نحن
+                <Link
+                  href="/about"
+                  onClick={() => setOpen(false)}
+                  style={{
+                    display: "block",
+                    padding: "10px 16px",
+                    fontSize: "14px",
+                    color: "#8b7355",
+                    textDecoration: "none"
+                  }}
+                >
+                  {t("footer_about")}
                 </Link>
-                <Link href="/contact" onClick={() => setOpen(false)} style={{ display: "block", padding: "8px 16px", fontSize: "14px", color: "#64748b", textDecoration: "none" }}>
-                  تواصل معانا
+                <Link
+                  href="/contact"
+                  onClick={() => setOpen(false)}
+                  style={{
+                    display: "block",
+                    padding: "10px 16px",
+                    fontSize: "14px",
+                    color: "#8b7355",
+                    textDecoration: "none"
+                  }}
+                >
+                  {t("footer_contact")}
                 </Link>
-                <Link href="/privacy" onClick={() => setOpen(false)} style={{ display: "block", padding: "8px 16px", fontSize: "14px", color: "#64748b", textDecoration: "none" }}>
-                  سياسة الخصوصية
+                <Link
+                  href="/privacy"
+                  onClick={() => setOpen(false)}
+                  style={{
+                    display: "block",
+                    padding: "10px 16px",
+                    fontSize: "14px",
+                    color: "#8b7355",
+                    textDecoration: "none"
+                  }}
+                >
+                  {t("footer_privacy")}
                 </Link>
-                <Link href="/terms" onClick={() => setOpen(false)} style={{ display: "block", padding: "8px 16px", fontSize: "14px", color: "#64748b", textDecoration: "none" }}>
-                  الشروط والأحكام
+                <Link
+                  href="/terms"
+                  onClick={() => setOpen(false)}
+                  style={{
+                    display: "block",
+                    padding: "10px 16px",
+                    fontSize: "14px",
+                    color: "#8b7355",
+                    textDecoration: "none"
+                  }}
+                >
+                  {t("footer_terms")}
                 </Link>
               </div>
             </div>
