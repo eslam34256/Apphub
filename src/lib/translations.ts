@@ -3,6 +3,8 @@ export const translations = {
     // Navbar
     nav_home: "الرئيسية",
     nav_apps: "التطبيقات",
+    nav_radar: "رادار الأسعار",
+    nav_calculator: "الحاسبة",
     nav_compare: "المقارنات",
     nav_deals: "العروض",
     nav_ai: "الترشيحات الذكية",
@@ -145,6 +147,8 @@ export const translations = {
     // Navbar
     nav_home: "Home",
     nav_apps: "Apps",
+    nav_radar: "Price Radar",
+    nav_calculator: "Calculator",
     nav_compare: "Compare",
     nav_deals: "Deals",
     nav_ai: "AI Recommendations",

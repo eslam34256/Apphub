@@ -208,6 +208,63 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════ */}
+      {/* NEW TOOLS: Price Radar + Calculator     */}
+      {/* ═══════════════════════════════════════ */}
+      <section className="bg-white section-padding border-y border-cream-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <p className="text-red-600 text-sm uppercase tracking-[0.3em] mb-3">
+              {lang === "ar" ? "🚨 أدوات جديدة" : "🚨 New Tools"}
+            </p>
+            <h2 className="heading-display text-4xl md:text-5xl text-brand-900 mb-4">
+              {lang === "ar" ? "وفّر في اشتراكاتك" : "Save on your subscriptions"}
+            </h2>
+            <div className="divider-gold"></div>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+            {/* رادار الأسعار */}
+            <Link
+              href="/price-radar"
+              className="card-elegant group p-8 transition hover:-translate-y-1 hover:shadow-soft border-r-4 border-r-red-400"
+            >
+              <span className="text-4xl" aria-hidden>🚨</span>
+              <h3 className="heading-elegant text-2xl text-brand-900 mt-4">
+                {lang === "ar" ? "رادار الأسعار" : "Price Radar"}
+              </h3>
+              <p className="mt-2 text-charcoal-500 leading-relaxed">
+                {lang === "ar"
+                  ? "بنرصد سعر كل اشتراك بالتاريخ. اعرف مين زوّد سعره وامتى — وخلّيك أول من يعرف أي تغيير."
+                  : "We track every subscription's price over time. Know who raised prices and when — and get alerted first."}
+              </p>
+              <span className="mt-4 inline-block font-bold text-red-600 group-hover:translate-x-1 transition">
+                {lang === "ar" ? "شوف الرصد ←" : "See the radar ←"}
+              </span>
+            </Link>
+
+            {/* الحاسبة */}
+            <Link
+              href="/calculator"
+              className="card-elegant group p-8 transition hover:-translate-y-1 hover:shadow-soft border-r-4 border-r-accent-400"
+            >
+              <span className="text-4xl" aria-hidden>🧮</span>
+              <h3 className="heading-elegant text-2xl text-brand-900 mt-4">
+                {lang === "ar" ? "حاسبة المصروف الرقمي" : "Digital Spend Calculator"}
+              </h3>
+              <p className="mt-2 text-charcoal-500 leading-relaxed">
+                {lang === "ar"
+                  ? "اشتراكاتك كلها بتكلفك كام في الشهر وفي السنة؟ اعرف الرقم المخيف 😅 واكتشف نفس الجودة بسعر أقل."
+                  : "How much do all your subscriptions cost monthly and yearly? See the scary number 😅 and find cheaper equivalents."}
+              </p>
+              <span className="mt-4 inline-block font-bold text-accent-600 group-hover:translate-x-1 transition">
+                {lang === "ar" ? "احسب دلوقتي ←" : "Calculate now ←"}
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════ */}
       {/* DEALS SECTION                           */}
       {/* ═══════════════════════════════════════ */}
       {topDeals.length > 0 && (

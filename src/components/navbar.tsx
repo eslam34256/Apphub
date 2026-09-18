@@ -48,6 +48,8 @@ export function Navbar() {
   const links = [
     { href: "/", label: t("nav_home") },
     { href: "/apps", label: t("nav_apps") },
+    { href: "/price-radar", label: t("nav_radar") },
+    { href: "/calculator", label: t("nav_calculator") },
     { href: "/compare-hub", label: t("nav_compare") },
     { href: "/deals", label: t("nav_deals") },
     { href: "/blog", label: t("nav_blog") }
