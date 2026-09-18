@@ -10,6 +10,7 @@ import {
 } from "@/lib/price-radar";
 import { PriceSparkline } from "@/components/price-radar/sparkline";
 import { PriceAlertForm } from "@/components/price-radar/alert-form";
+import { TelegramCard } from "@/components/price-radar/telegram-card";
 import { CountryCode } from "@/lib/types";
 
 /**
@@ -108,6 +109,9 @@ export default async function PriceRadarPage({
             </span>
           </div>
         </header>
+
+        {/* قناة التنبيهات الفورية */}
+        <TelegramCard />
 
         {/* فورم التنبيهات */}
         <PriceAlertForm />

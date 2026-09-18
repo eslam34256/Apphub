@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { extractPrice, isSanePrice, hasRealChange } from "@/lib/price-extract";
+import { sendTelegramMessage, formatPriceAlert } from "@/lib/telegram";
+import { apps } from "@/data/apps";
+import { subcategoryOf } from "@/data/subcategories";
+import { AppItem } from "@/lib/types";
 
 /**
  * 🚨 محرك رادار الأسعار — فحص يومي عبر Vercel Cron.
@@ -58,7 +62,10 @@ export async function GET(request: NextRequest) {
     checked: 0,
     changed: [] as string[],
     flagged: [] as string[],
-    failed: [] as string[]
+    failed: [] as string[],
+    telegramSent: 0,
+    telegramSkipped: false,
+    telegramErrors: [] as string[]
   };
 
   for (const w of (watches ?? []) as WatchRow[]) {
@@ -131,6 +138,37 @@ export async function GET(request: NextRequest) {
       });
 
       summary.changed.push(`${label}: ${w.current_price} ← ${extracted}`);
+
+      // 📡 بث تيليجرام: لو القناة مش متفعلة أو فشلت — الكرون يكمّل عادي
+      try {
+        const alt = cheaperAlternative(w.app_slug, w.country, extracted);
+        const hit = apps.find((a) => a.slug === w.app_slug);
+        const sent = await sendTelegramMessage(
+          formatPriceAlert({
+            appSlug: w.app_slug,
+            planName: w.plan_name,
+            country: w.country,
+            currency: w.currency,
+            oldPrice: w.current_price,
+            newPrice: extracted,
+            appName: hit?.name ?? null,
+            appIcon: hit?.icon ?? null,
+            alternative: alt
+              ? {
+                  name: alt.app.name,
+                  icon: alt.app.icon,
+                  monthly: alt.monthly,
+                  currency: alt.currency
+                }
+              : null
+          })
+        );
+        if (sent.ok) summary.telegramSent++;
+        else if (sent.skipped) summary.telegramSkipped = true;
+        else summary.telegramErrors.push(`${label}: ${sent.error}`);
+      } catch {
+        // ممنوع يوقف الكرون بسبب القناة
+      }
     } catch (err: any) {
       await markFailure(supabaseAdmin, w, `${label} — ${err.message}`, summary);
     }
@@ -155,4 +193,42 @@ async function markFailure(
     })
     .eq("id", w.id);
   summary.failed.push(label);
+}
+
+/**
+ * بديل أوفر «من نفس النوع» لرسالة التنبيه (القاعدة الذهبية من v5):
+ * تطبيق بنفس الفئة الفرعية ونفس الدولة وسعره الشهري أقل من الجديد،
+ * الأعلى تقييمًا أولًا — وبيرجع null لو مفيش (ممنوع اقتراح تخميني).
+ */
+function cheaperAlternative(
+  appSlug: string,
+  country: string,
+  newPrice: number
+): { app: AppItem; monthly: number; currency: string } | null {
+  const target = apps.find((a) => a.slug === appSlug);
+  if (!target) return null;
+  const targetSub = subcategoryOf(target);
+
+  const candidates = apps
+    .map((app) => {
+      const p = app.pricing.find(
+        (x) => x.country === country && x.monthly !== undefined && (x.monthly as number) > 0
+      );
+      return p && p.monthly !== undefined
+        ? { app, monthly: p.monthly, currency: p.currency }
+        : null;
+    })
+    .filter(Boolean) as { app: AppItem; monthly: number; currency: string }[];
+
+  return (
+    candidates
+      .filter(
+        (c) =>
+          c.app.slug !== appSlug &&
+          subcategoryOf(c.app) === targetSub &&
+          c.monthly < newPrice
+      )
+      .sort((x, y) => y.app.rating - x.app.rating || x.monthly - y.monthly)[0] ??
+    null
+  );
 }
