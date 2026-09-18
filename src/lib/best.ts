@@ -36,7 +36,8 @@ export const categoryEmoji: Record<string, string> = {
   tools: "🔧",
   religious: "📿",
   government: "🏛️",
-  freelance: "💼"
+  freelance: "💼",
+  topup: "🔋"
 };
 
 /** كل الفئات الموجودة فعلًا في الداتا */

@@ -15,7 +15,8 @@ export type AppCategory =
   | "tools"
   | "religious"
   | "government"
-  | "freelance";
+  | "freelance"
+  | "topup";
 
 export type PriceItem = {
   country: CountryCode;

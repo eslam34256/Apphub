@@ -15,7 +15,8 @@ export const categoryLabels: Record<AppCategory, string> = {
   tools: "أدوات وإنتاجية",
   religious: "ديني",
   government: "حكومي",
-  freelance: "فريلانس"
+  freelance: "فريلانس",
+  topup: "شحن وبطاقات"
 };
 
 export const countryLabels: Record<CountryCode, string> = {
@@ -39,5 +40,6 @@ export const categoryIcons: Record<AppCategory, string> = {
   tools: "🛠️",
   religious: "🕌",
   government: "🏛️",
-  freelance: "💼"
+  freelance: "💼",
+  topup: "🔋"
 };

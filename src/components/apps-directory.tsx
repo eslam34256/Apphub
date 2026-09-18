@@ -44,6 +44,7 @@ export function AppsDirectory({ apps }: { apps: AppItem[] }) {
     "food",
     "streaming",
     "shopping",
+    "topup",
     "transport",
     "finance",
     "health",

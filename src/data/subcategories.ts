@@ -106,11 +106,10 @@ export const SUBCATEGORIES: AppSubcategory[] = [
   { key: "freelance-micro", category: "freelance", label: "منصات أعمال حرة", icon: "🛠️" },
   { key: "freelance-jobs", category: "freelance", label: "وظائف وسير ذاتية", icon: "💼" },
   { key: "freelance-ecosystem", category: "freelance", label: "شبكات ومحتوى", icon: "🌐" },
-  { key: "gaming-topup", category: "gaming", label: "شحن ألعاب ورصيد", icon: "🔋" },
-  { key: "finance-topup", category: "finance", label: "شحن رصيد", icon: "🔋" },
-  { key: "shopping-topup", category: "shopping", label: "بطاقات وشحن رصيد", icon: "🔋" },
-  { key: "tools-vpn", category: "tools", label: "VPN وتخطي الحظر", icon: "🔓" },
-  { key: "travel-transit", category: "travel", label: "نقل ومواصلات", icon: "🚌" }
+
+  // 🔋 شحن وبطاقات
+  { key: "topup-games", category: "topup", label: "شحن ألعاب (شدات وجواهر)", icon: "🎮" },
+  { key: "topup-cards", category: "topup", label: "بطاقات هدايا واشتراكات", icon: "🎁" }
 ];
 
 /* ملحوظة: مفيش تعيين تلقائي بالكلمات المفتاحية (auto-hints) —
@@ -302,7 +301,14 @@ export const SUBCATEGORY_BY_SLUG: Record<string, string> = {
   wuzzuf: "freelance-jobs",
   tanqeeb: "freelance-jobs",
   linkedin: "freelance-jobs",
-  hsoub: "freelance-ecosystem"
+  hsoub: "freelance-ecosystem",
+
+  // 🔋 topup
+  midasbuy: "topup-games",
+  codashop: "topup-games",
+  unipin: "topup-games",
+  carry1st: "topup-games",
+  likecard: "topup-cards"
 };
 
 /**
