@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AppCard } from "@/components/app-card";
 import { apps as staticApps } from "@/data/apps";
 import { deals } from "@/data/deals";
+import { getActiveDeals } from "@/lib/deals";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { createClient } from "@/lib/supabase/client";
 import { AppItem } from "@/lib/types";
@@ -49,7 +50,10 @@ export default function HomePage() {
   const allApps = [...dbApps, ...filteredStatic];
 
   const topApps = [...allApps].sort((a, b) => b.rating - a.rating).slice(0, 6);
-  const topDeals = [...deals].sort((a, b) => b.discount - a.discount).slice(0, 4);
+  // العروض الصالحة فقط — المنتهية مش هتظهر على الرئيسية
+  const topDeals = getActiveDeals(deals)
+    .sort((a, b) => b.discount - a.discount)
+    .slice(0, 4);
 
   return (
     <div className="-mx-4 -mt-8">
@@ -110,7 +114,7 @@ export default function HomePage() {
           <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_countries")}</p>
         </div>
         <div className="text-center">
-          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">+{deals.length}</p>
+          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">+{getActiveDeals(deals).length}</p>
           <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_deals")}</p>
         </div>
       </div>
@@ -206,6 +210,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════ */}
       {/* DEALS SECTION                           */}
       {/* ═══════════════════════════════════════ */}
+      {topDeals.length > 0 && (
       <section className="bg-cream-50 section-padding">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -255,6 +260,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══════════════════════════════════════ */}
       {/* CTA SECTION                             */}

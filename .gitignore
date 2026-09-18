@@ -45,3 +45,9 @@ next-env.d.ts
 Thumbs.db
 .vercel
 .env*
+
+# Environment & secrets backups — never commit these
+*env*.txt
+*env*.backup
+*.env.*
+secrets*

@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { apps as staticApps } from "@/data/apps";
+import { comparisons } from "@/data/comparisons";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -13,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: baseUrl, lastModified: now, changeFrequency: "daily", priority: 1 },
     { url: `${baseUrl}/apps`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/compare-hub`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${baseUrl}/ai`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/business`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
@@ -53,5 +55,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6
     }));
 
-  return [...staticPages, ...appPages, ...staticAppPages];
+  const comparisonPages: MetadataRoute.Sitemap = comparisons.map((c) => ({
+    url: `${baseUrl}/compare/${c.slug}`,
+    lastModified: new Date(c.updatedAt || now),
+    changeFrequency: "weekly" as const,
+    priority: 0.8
+  }));
+
+  return [...staticPages, ...comparisonPages, ...appPages, ...staticAppPages];
 }

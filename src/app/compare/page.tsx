@@ -1,58 +1,89 @@
-"use client";
-import { useMemo, useState } from "react";
-import { apps } from "@/data/apps";
-import { countryLabels } from "@/lib/constants";
-import { formatMoney, getPriceForCountry } from "@/lib/helpers";
-import { CountryCode } from "@/lib/types";
-export default function ComparePage() {
-  const [first, setFirst] = useState(apps[0].slug);
-  const [second, setSecond] = useState(apps[1].slug);
-  const [country, setCountry] = useState<CountryCode>("EG");
-  const app1 = useMemo(() => apps.find(a => a.slug === first), [first]);
-  const app2 = useMemo(() => apps.find(a => a.slug === second), [second]);
-  if (!app1 || !app2) return null;
-  const price1 = getPriceForCountry(app1, country);
-  const price2 = getPriceForCountry(app2, country);
-  const winner = app1.rating > app2.rating ? app1.name : app2.rating > app1.rating ? app2.name : "تعادل";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { comparisons } from "@/data/comparisons";
+import { CompareTool } from "@/components/compare/compare-tool";
+
+/**
+ * /compare — مركز المقارنات:
+ * 1) المقارنات التفصيلية الجاهزة (SEO pages)
+ * 2) الأداة التفاعلية لمقارنة أي تطبيقين
+ */
+export const metadata: Metadata = {
+  title: "كل المقارنات — اختار التطبيق الأنسب ليك",
+  description:
+    "مقارنات تفصيلية بالأسعار والمميزات بين أفضل التطبيقات: ستريمنج، مشاوير، توصيل أكل، تقسيط وأكثر — أو قارن بين أي تطبيقين بنفسك.",
+  alternates: { canonical: "https://apphub-eight.vercel.app/compare" }
+};
+
+export default function CompareIndexPage() {
+  const categories = [...new Set(comparisons.map((c) => c.category))];
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="mb-4 text-2xl font-extrabold">مقارنة بين تطبيقين</h1>
-        <div className="grid gap-3 md:grid-cols-3">
-          <select className="rounded-2xl border px-4 py-3" value={first} onChange={e => setFirst(e.target.value)}>
-            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
-          </select>
-          <select className="rounded-2xl border px-4 py-3" value={second} onChange={e => setSecond(e.target.value)}>
-            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
-          </select>
-          <select className="rounded-2xl border px-4 py-3" value={country} onChange={e => setCountry(e.target.value as CountryCode)}>
-            <option value="EG">{countryLabels.EG}</option>
-            <option value="SA">{countryLabels.SA}</option>
-            <option value="AE">{countryLabels.AE}</option>
-          </select>
-        </div>
-      </div>
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="mb-4 rounded-2xl bg-amber-50 px-4 py-3 text-amber-800">🏆 الأفضل حاليًا: {winner}</p>
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-separate border-spacing-y-2 text-right">
-            <tbody>
-              {[
-                ["العنصر", app1.name, app2.name],
-                ["التقييم", `⭐ ${app1.rating}`, `⭐ ${app2.rating}`],
-                ["الوصف", app1.shortDescription, app2.shortDescription],
-                [`السعر في ${countryLabels[country]}`, formatMoney(price1?.monthly, price1?.currency ?? "EGP"), formatMoney(price2?.monthly, price2?.currency ?? "EGP")],
-                ["متاح في البلد؟", app1.countries.includes(country)?"نعم":"لا", app2.countries.includes(country)?"نعم":"لا"],
-                ["أبرز ميزة", app1.pros[0], app2.pros[0]],
-                ["أبرز عيب", app1.cons[0], app2.cons[0]]
-              ].map((row, i) => (
-                <tr key={i} className={i===0?"bg-slate-50":"bg-white"}>
-                  {row.map((cell, j) => <td key={j} className={`px-4 py-3 ${j===0?"font-bold":""} ${i>0?"border":""}`}>{cell}</td>)}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="bg-cream-50 min-h-screen">
+      <div className="max-w-5xl mx-auto px-4 py-12 space-y-14">
+        <header className="text-center">
+          <span className="rounded-full bg-accent-100 text-accent-700 px-4 py-1.5 text-sm font-bold">
+            ⚖️ قارن بذكاء
+          </span>
+          <h1 className="heading-display mt-4 text-3xl sm:text-4xl text-brand-900">
+            كل المقارنات
+          </h1>
+          <p className="mt-3 max-w-xl mx-auto text-charcoal-500 leading-relaxed">
+            مقارنات تفصيلية بالأسعار الحالية والميزات الحقيقية، بنحدّثها دوريًا —
+            أو استخدم الأداة وقارن أي تطبيقين بنفسك.
+          </p>
+        </header>
+
+        {/* المقارنات التفصيلية */}
+        <section aria-labelledby="detailed" className="space-y-10">
+          <h2 id="detailed" className="heading-elegant text-2xl text-brand-900">
+            📑 مقارناتنا التفصيلية
+          </h2>
+          {categories.map((cat) => (
+            <div key={cat}>
+              <h3 className="flex items-center gap-2 font-bold text-charcoal-800 mb-4">
+                <span className="h-2 w-2 rounded-full bg-accent-400" aria-hidden />
+                {cat}
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {comparisons
+                  .filter((c) => c.category === cat)
+                  .map((c) => (
+                    <Link
+                      key={c.slug}
+                      href={`/compare/${c.slug}`}
+                      className="card-elegant group p-5 transition hover:-translate-y-0.5 hover:shadow-soft"
+                    >
+                      <div className="flex items-center gap-1.5 text-3xl" aria-hidden>
+                        {c.apps.map((a, i) => (
+                          <span key={a.appSlug} className="flex items-center gap-1.5">
+                            {a.icon}
+                            {i === 0 && (
+                              <span className="text-xs font-black text-charcoal-300">VS</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                      <h4 className="mt-3 font-bold text-brand-900 group-hover:text-accent-600 transition">
+                        {c.h1}
+                      </h4>
+                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-charcoal-500">
+                        {c.metaDescription}
+                      </p>
+                      <span className="mt-3 inline-block text-sm font-bold text-accent-600">
+                        اقرأ المقارنة ←
+                      </span>
+                    </Link>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* الأداة التفاعلية */}
+        <section aria-label="أداة المقارنة التفاعلية" className="space-y-6">
+          <CompareTool />
+        </section>
       </div>
     </div>
   );

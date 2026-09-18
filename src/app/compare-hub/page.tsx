@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   calculateRideEstimates,
   calculateDistance,
   Location
 } from "@/lib/ride-calculator";
+import { comparisons } from "@/data/comparisons";
 import { calculateFoodOrder, getAllCuisines } from "@/lib/food-delivery-calculator";
 import { LocationSearch } from "@/components/location-search";
 import { useLanguage } from "@/contexts/language-context";
@@ -33,6 +35,41 @@ export default function CompareHubPage() {
               ? "قارن أسعار وخدمات أفضل التطبيقات في مكان واحد"
               : "Compare prices and services of the best apps in one place"}
           </p>
+        </div>
+
+        {/* مقارناتنا التفصيلية الجاهزة */}
+        <div className="card-elegant p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 className="heading-elegant text-xl text-brand-900">
+              {lang === "ar" ? "📑 مقارناتنا التفصيلية" : "📑 Our detailed comparisons"}
+            </h2>
+            <Link href="/compare" className="text-sm font-bold text-accent-600 hover:text-accent-700 transition">
+              {lang === "ar" ? "كل المقارنات ←" : "All comparisons ←"}
+            </Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {comparisons.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/compare/${c.slug}`}
+                className="group rounded-2xl border-2 border-cream-200 bg-white p-5 transition hover:border-accent-300 hover:-translate-y-0.5"
+              >
+                <div className="flex items-center gap-1.5 text-2xl" aria-hidden>
+                  {c.apps.map((a, i) => (
+                    <span key={a.appSlug} className="flex items-center gap-1.5">
+                      {a.icon}
+                      {i === 0 && <span className="text-xs font-black text-charcoal-300">VS</span>}
+                    </span>
+                  ))}
+                  <span className="mr-auto rounded-full bg-accent-100 px-2.5 py-0.5 text-[10px] font-bold text-accent-700">
+                    {c.category}
+                  </span>
+                </div>
+                <p className="mt-3 font-bold text-brand-900 group-hover:text-accent-600 transition">{c.h1}</p>
+                <p className="mt-1 line-clamp-2 text-sm leading-6 text-charcoal-500">{c.metaDescription}</p>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* اختيار الفئة */}
