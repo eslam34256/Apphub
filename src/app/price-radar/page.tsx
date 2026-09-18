@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { priceRadar } from "@/data/price-history";
+import { getRadarEntries } from "@/lib/price-radar-db";
 import {
   entryChange,
   formatPrice,
@@ -16,7 +16,13 @@ import { CountryCode } from "@/lib/types";
  * 🚨 رادار الأسعار — الميزة الأقوى تنافسيًا:
  * متتبع تاريخ أسعار الاشتراكات في المنطقة العربية.
  * بيانات تراكمية لا يمكن نسخها رجعيًا = Moat حقيقي.
+ *
+ * بتقرا من قاعدة البيانات (price_watch) اللي بيحدّثها الـ Cron يوميًا،
+ * مع رجوع تلقائي للبيانات الثابتة لو القاعدة مش متاحة.
  */
+
+// الصفحة بتتجدد كل ساعة من الكاش (البيانات بتتغير يوميًا بحد أقصى)
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "رادار الأسعار — تاريخ أسعار اشتراكاتك المفضلة",
@@ -42,7 +48,7 @@ const dirStyles: Record<string, { badge: string; label: (pct: number) => string 
   new: { badge: "bg-accent-100 text-accent-700", label: () => "تحت الرصد 🔍" }
 };
 
-export default function PriceRadarPage({
+export default async function PriceRadarPage({
   searchParams
 }: {
   searchParams: { country?: string };
@@ -53,9 +59,10 @@ export default function PriceRadarPage({
     ? (searchParams.country as CountryCode)
     : undefined;
 
-  const entries = country ? priceRadar.filter((e) => e.country === country) : priceRadar;
-  const trackedPlans = priceRadar.reduce((n, e) => n + e.plans.length, 0);
-  const changedRecently = priceRadar
+  const allEntries = await getRadarEntries();
+  const entries = country ? allEntries.filter((e) => e.country === country) : allEntries;
+  const trackedPlans = allEntries.reduce((n, e) => n + e.plans.length, 0);
+  const changedRecently = allEntries
     .flatMap((e) => e.plans.map(priceChange))
     .filter((c) => c.dir === "up" || c.dir === "down").length;
 
@@ -91,7 +98,7 @@ export default function PriceRadarPage({
 
           <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
             <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
-              🔍 {priceRadar.length} اشتراك تحت الرصد
+              🔍 {allEntries.length} اشتراك تحت الرصد
             </span>
             <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
               📊 {trackedPlans} باقة متتبعة
