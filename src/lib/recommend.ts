@@ -1,19 +1,39 @@
 import { apps } from "@/data/apps";
+import { subcategoryOf } from "@/data/subcategories";
 import { getMonthlyPrice } from "./helpers";
 import { AppItem, CountryCode } from "./types";
 type Answers = { activity: string; priority: string; country: CountryCode };
-const activityToCategories: Record<string, string[]> = {
-  food: ["food"], entertainment: ["streaming"], shopping: ["shopping"],
-  learning: ["education"], health: ["health"], mobility: ["transport"],
-  finance: ["finance"], home: ["real-estate"]
+
+/**
+ * نطاق النشاط: sub = فئات فرعية محددة (الأدق)، cats = فئات عامة.
+ * الترشيح بيفلتر من النطاق بس — «الترفيه» القديم اتقسّم لمشاهدة وموسيقى
+ * عشان السؤال «عايز تتفرج» ميرشحش أنغامي والعكس.
+ */
+type Scope = { sub?: string[]; cats?: string[] };
+const activityToScope: Record<string, Scope> = {
+  food: { cats: ["food"] },
+  watch: { sub: ["streaming-video"] },
+  music: { sub: ["streaming-music"] },
+  entertainment: { cats: ["streaming"] }, // توافقية للروابط القديمة
+  shopping: { cats: ["shopping"] },
+  learning: { cats: ["education"] },
+  health: { cats: ["health"] },
+  mobility: { cats: ["transport"] },
+  finance: { cats: ["finance"] },
+  home: { cats: ["real-estate"] }
 };
+
 export function recommendApps({ activity, priority, country }: Answers): AppItem[] {
-  const categories = activityToCategories[activity] ?? [];
-  return apps
-    .filter(app => app.countries.includes(country))
+  const scope = activityToScope[activity] ?? {};
+  const pool = apps.filter(app => {
+    if (!app.countries.includes(country)) return false;
+    if (scope.sub) return scope.sub.includes(subcategoryOf(app));
+    if (scope.cats) return scope.cats.includes(app.category);
+    return true;
+  });
+  return pool
     .map(app => {
-      let score = 0;
-      if (categories.includes(app.category)) score += 4;
+      let score = 4;
       if (priority === "price") {
         const price = getMonthlyPrice(app, country);
         if (price === 0) score += 4;

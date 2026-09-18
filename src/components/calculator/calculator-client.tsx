@@ -9,6 +9,7 @@
 
 import { useMemo, useState } from "react";
 import { apps as allApps } from "@/data/apps";
+import { subcategoryIcon, subcategoryLabel, subcategoryOf } from "@/data/subcategories";
 import { categoryLabels } from "@/lib/constants";
 import { formatMoney } from "@/lib/helpers";
 import {
@@ -217,7 +218,8 @@ export function CalculatorClient({
               <li key={`swap-${i}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-sage-50 border border-sage-200 p-4">
                 <p className="text-sm text-charcoal-800">
                   <b>{s.from.icon} {s.from.name}</b> بتكلفك {formatMoney(monthlyOf(s.from, country), currency)} —{" "}
-                  <b>{s.to.icon} {s.to.name}</b> (⭐{s.to.rating}) نفس الفئة بـ{" "}
+                  <b>{s.to.icon} {s.to.name}</b> (⭐{s.to.rating}) {subcategoryIcon(subcategoryOf(s.to))}{" "}
+                  {subcategoryLabel(subcategoryOf(s.to))} زيها بالظبط، بـ{" "}
                   {formatMoney(monthlyOf(s.to, country), currency)} بس!
                 </p>
                 <button

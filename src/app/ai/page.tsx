@@ -4,10 +4,10 @@ import { recommendApps } from "@/lib/recommend";
 import { CountryCode } from "@/lib/types";
 import { AppCard } from "@/components/app-card";
 export default function AIPage() {
-  const [activity, setActivity] = useState("entertainment");
+  const [activity, setActivity] = useState("watch");
   const [priority, setPriority] = useState("quality");
   const [country, setCountry] = useState<CountryCode>("EG");
-  const [results, setResults] = useState(recommendApps({ activity:"entertainment", priority:"quality", country:"EG" }));
+  const [results, setResults] = useState(recommendApps({ activity:"watch", priority:"quality", country:"EG" }));
   function handleRecommend() { setResults(recommendApps({ activity, priority, country })); }
   return (
     <div className="space-y-6">
@@ -17,7 +17,8 @@ export default function AIPage() {
         <div className="grid gap-3 md:grid-cols-3">
           <select className="rounded-2xl border px-4 py-3" value={activity} onChange={e => setActivity(e.target.value)}>
             <option value="food">الأكل والتوصيل</option>
-            <option value="entertainment">الترفيه</option>
+            <option value="watch">🎬 أفلام ومسلسلات</option>
+            <option value="music">🎵 موسيقى وبودكاست</option>
             <option value="shopping">التسوق</option>
             <option value="learning">التعلم</option>
             <option value="health">الصحة</option>

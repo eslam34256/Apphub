@@ -31,6 +31,8 @@ export type AppItem = {
   name: string;
   icon: string;
   category: AppCategory;
+  /** فئة فرعية اختيارية (مثلاً من عمود الداتابيز) — الأولوية عن مابنج data/subcategories */
+  subcategory?: string;
   shortDescription: string;
   description: string;
   rating: number;

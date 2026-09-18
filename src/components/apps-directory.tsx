@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AppCard } from "./app-card";
+import { groupAppsBySubcategory, subcategoryOf } from "@/data/subcategories";
 import { AppItem, CountryCode, AppCategory } from "@/lib/types";
 import { categoryLabels, countryLabels, categoryIcons } from "@/lib/constants";
 
@@ -150,15 +151,8 @@ export function AppsDirectory({ apps }: { apps: AppItem[] }) {
                   </a>
                 </div>
 
-                {/* التطبيقات في الفئة */}
-                <div
-                  id={cat}
-                  className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-                >
-                  {categoryApps.map((app) => (
-                    <AppCard key={app.id} app={app} />
-                  ))}
-                </div>
+                {/* التطبيقات في الفئة + فلاتر فرعية */}
+                <CategoryAppsGrid cat={cat} apps={categoryApps} />
               </section>
             );
           })}
@@ -178,6 +172,55 @@ export function AppsDirectory({ apps }: { apps: AppItem[] }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * شبكة قسم واحد + فلاتر فرعية (شحن/فيديو/موسيقى...) —
+ * بتظهر بس لما الفئة فيها أكتر من نوع، فالمستخدم يرشّح بدقة
+ * (مثلاً: ستريمنج ← أفلام ومسلسلات / موسيقى وبودكاست).
+ */
+function CategoryAppsGrid({ cat, apps }: { cat: AppCategory; apps: AppItem[] }) {
+  const [sub, setSub] = useState<string>("all");
+  const groups = useMemo(() => groupAppsBySubcategory(apps), [apps]);
+  const shown =
+    sub === "all" ? apps : apps.filter((a) => subcategoryOf(a) === sub);
+
+  return (
+    <div id={cat} className="space-y-4">
+      {groups.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSub("all")}
+            className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
+              sub === "all"
+                ? "bg-brand-600 text-white shadow"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            الكل ({apps.length})
+          </button>
+          {groups.map((g) => (
+            <button
+              key={g.key}
+              onClick={() => setSub(g.key)}
+              className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
+                sub === g.key
+                  ? "bg-brand-600 text-white shadow"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {g.icon} {g.label} ({g.apps.length})
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {shown.map((app) => (
+          <AppCard key={app.id} app={app} />
+        ))}
+      </div>
     </div>
   );
 }

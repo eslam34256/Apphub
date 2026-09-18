@@ -11,9 +11,11 @@ import {
   bestVerdicts,
   categoryEmoji,
   categoryName,
-  BEST_COUNTRIES
+  BEST_COUNTRIES,
+  type CountryInfo
 } from "@/lib/best";
 import { comparisons } from "@/data/comparisons";
+import { groupAppsBySubcategory } from "@/data/subcategories";
 
 /**
  * 🏆 صفحات «الأفضل في البلد» البرمجية — آلة الترافيك:
@@ -90,6 +92,8 @@ export default async function BestCategoryPage({ params }: PageProps) {
   if (!list.length) notFound();
 
   const verdicts = bestVerdicts(list, country);
+  /** تقسيم بالفئات الفرعية: «ستريمنج» بتتفصل لأفلام/موسيقى بدل ترتيب مُخلط */
+  const groups = groupAppsBySubcategory(list);
   const faqItems = faq(cat, country.name, list, verdicts.cheapest?.name, verdicts.freeCount);
   const relatedComparisons = comparisons.filter((c) => c.category === cat);
   const otherCountries = BEST_COUNTRIES.filter((c) => c.code !== country.code);
@@ -128,12 +132,6 @@ export default async function BestCategoryPage({ params }: PageProps) {
       ]
     }
   ];
-
-  const rankStyle = (i: number) =>
-    i === 0 ? "border-accent-400 ring-1 ring-accent-300" : "border-cream-200";
-
-  const rankBadge = (i: number) =>
-    ["🥇", "🥈", "🥉"][i] ?? `#${i + 1}`;
 
   return (
     <div className="bg-cream-50 min-h-screen">
@@ -187,50 +185,32 @@ export default async function BestCategoryPage({ params }: PageProps) {
           </div>
         </header>
 
-        {/* القائمة المرتبة */}
-        <ol className="space-y-4">
-          {list.map((app, i) => (
-            <li key={app.slug}>
-              <div className={`card-elegant flex flex-col sm:flex-row sm:items-center gap-4 p-5 border-r-4 ${rankStyle(i)}`}>
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <span className="w-12 shrink-0 text-center font-black text-lg text-charcoal-500">
-                    {rankBadge(i)}
-                  </span>
-                  <span className="w-14 h-14 rounded-2xl bg-cream-100 flex items-center justify-center text-4xl shadow-soft shrink-0">
-                    {app.icon}
-                  </span>
-                  <div className="min-w-0">
-                    <h2 className="font-bold text-lg text-brand-900 truncate">
-                      <Link href={`/apps/${app.slug}`} className="hover:text-accent-600 transition">
-                        {app.name}
-                      </Link>
-                    </h2>
-                    <p className="text-sm text-charcoal-500 truncate">{app.shortDescription}</p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-bold">
-                      <span className="text-amber-600">⭐ {app.rating}</span>
-                      <span className="rounded-full bg-sage-50 border border-sage-200 text-sage-700 px-2 py-0.5">
-                        {localPriceLabel(app, country)}
-                      </span>
-                      {app.pricing.find((p) => p.country === country.code)?.note && (
-                        <span className="text-charcoal-500 font-normal">
-                          💡 {app.pricing.find((p) => p.country === country.code)?.note}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex sm:flex-col gap-2 shrink-0">
-                  <Link
-                    href={`/apps/${app.slug}`}
-                    className="btn-primary text-center text-sm whitespace-nowrap"
-                  >
-                    التفاصيل ←
-                  </Link>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ol>
+        {/* القائمة المرتبة — مقسّمة بالفئات الفرعية لو الفئة فيها أكتر من نوع */}
+        {groups.length > 1 ? (
+          <div className="space-y-10">
+            {groups.map((g) => (
+              <section key={g.key} aria-label={g.label}>
+                <h2 className="heading-elegant mb-1 text-2xl text-brand-900">
+                  {g.icon} أفضل {g.label}
+                </h2>
+                <p className="mb-4 text-sm text-charcoal-500">
+                  {g.apps.length} {g.apps.length > 2 ? "تطبيقات" : "تطبيق"} — مرتبة بالتقييم والسعر المحلي
+                </p>
+                <ol className="space-y-4">
+                  {g.apps.map((app, i) => (
+                    <RankedItem key={app.slug} app={app} rank={i} country={country} />
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <ol className="space-y-4">
+            {list.map((app, i) => (
+              <RankedItem key={app.slug} app={app} rank={i} country={country} />
+            ))}
+          </ol>
+        )}
 
         {/* مقارنات متصلة */}
         {relatedComparisons.length > 0 && (
@@ -295,3 +275,61 @@ export default async function BestCategoryPage({ params }: PageProps) {
     </div>
   );
 }
+
+const rankStyle = (i: number) =>
+  i === 0 ? "border-accent-400 ring-1 ring-accent-300" : "border-cream-200";
+
+const rankBadge = (i: number) => ["🥇", "🥈", "🥉"][i] ?? `#${i + 1}`;
+
+/** صف تطبيق في القائمة المرتبة — بيستخدمه المقطع الموحد وسكاشن الفئات الفرعية */
+function RankedItem({
+  app,
+  rank,
+  country
+}: {
+  app: ReturnType<typeof filterBest>[number];
+  rank: number;
+  country: CountryInfo;
+}) {
+  const localNote = app.pricing.find((p) => p.country === country.code)?.note;
+  return (
+    <li>
+      <div className={`card-elegant flex flex-col sm:flex-row sm:items-center gap-4 p-5 border-r-4 ${rankStyle(rank)}`}>
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <span className="w-12 shrink-0 text-center font-black text-lg text-charcoal-500">
+            {rankBadge(rank)}
+          </span>
+          <span className="w-14 h-14 rounded-2xl bg-cream-100 flex items-center justify-center text-4xl shadow-soft shrink-0">
+            {app.icon}
+          </span>
+          <div className="min-w-0">
+            <h3 className="font-bold text-lg text-brand-900 truncate">
+              <Link href={`/apps/${app.slug}`} className="hover:text-accent-600 transition">
+                {app.name}
+              </Link>
+            </h3>
+            <p className="text-sm text-charcoal-500 truncate">{app.shortDescription}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-bold">
+              <span className="text-amber-600">⭐ {app.rating}</span>
+              <span className="rounded-full bg-sage-50 border border-sage-200 text-sage-700 px-2 py-0.5">
+                {localPriceLabel(app, country)}
+              </span>
+              {localNote && (
+                <span className="text-charcoal-500 font-normal">💡 {localNote}</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex sm:flex-col gap-2 shrink-0">
+          <Link
+            href={`/apps/${app.slug}`}
+            className="btn-primary text-center text-sm whitespace-nowrap"
+          >
+            التفاصيل ←
+          </Link>
+        </div>
+      </div>
+    </li>
+  );
+}
+

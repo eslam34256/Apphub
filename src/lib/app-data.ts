@@ -74,6 +74,7 @@ function mapDbApp(dbApp: any): AppItem {
     name: dbApp.name,
     icon: dbApp.icon,
     category: dbApp.category,
+    subcategory: dbApp.subcategory || undefined,
     shortDescription: dbApp.short_description || "",
     description: dbApp.description || "",
     rating: parseFloat(dbApp.rating) || 0,

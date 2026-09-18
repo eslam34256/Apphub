@@ -1,4 +1,5 @@
 import { apps as allApps } from "@/data/apps";
+import { subcategoryOf } from "@/data/subcategories";
 import { AppItem, CountryCode } from "./types";
 import { getPriceForCountry } from "./helpers";
 
@@ -56,7 +57,8 @@ export function yearlyTips(selected: AppItem[], country: CountryCode) {
 }
 
 /**
- * بدائل أوفر بنفس الفئة: ريتنج مشابه وسعر أقل.
+ * بدائل أوفر من نفس «النوع»: فئة فرعية واحدة على الأقل —
+ * العلاج لخلط زباين ترشيح سبوتيفاي (موسيقى) مكان شاهد (فيديو).
  * بندير مقترح واحد لكل تطبيق مختار.
  */
 export function swapSuggestions(
@@ -71,7 +73,7 @@ export function swapSuggestions(
       if (myPrice <= 0) return null;
       const cheaper = allApps
         .filter((c) => {
-          if (selectedIds.has(c.id) || c.category !== a.category) return false;
+          if (selectedIds.has(c.id) || subcategoryOf(c) !== subcategoryOf(a)) return false;
           const p = monthlyOf(c, country);
           return p > 0 && p < myPrice && c.rating >= a.rating - maxRatingDrop;
         })

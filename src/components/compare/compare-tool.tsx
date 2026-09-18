@@ -7,16 +7,20 @@
 
 import { useMemo, useState } from "react";
 import { apps } from "@/data/apps";
+import { groupAppsBySubcategory, sameSubcategory, subcategoryIcon, subcategoryLabel, subcategoryOf } from "@/data/subcategories";
 import { countryLabels } from "@/lib/constants";
 import { formatMoney, getPriceForCountry } from "@/lib/helpers";
 import { CountryCode } from "@/lib/types";
 
 export function CompareTool() {
-  const [first, setFirst] = useState(apps[0].slug);
-  const [second, setSecond] = useState(apps[1].slug);
+  // افتراضي ملفت ومنافسة حقيقية (نفس الفئة الفرعية) — مش مجرد أول عنصرين في الملف
+  const [first, setFirst] = useState("uber");
+  const [second, setSecond] = useState("careem");
   const [country, setCountry] = useState<CountryCode>("EG");
   const app1 = useMemo(() => apps.find(a => a.slug === first), [first]);
   const app2 = useMemo(() => apps.find(a => a.slug === second), [second]);
+  /** قوائم الاختيار مجمعة بالفئات الفرعية: المنافس الحقيقي جنب بعضه */
+  const groups = useMemo(() => groupAppsBySubcategory(apps), []);
   if (!app1 || !app2) return null;
   const price1 = getPriceForCountry(app1, country);
   const price2 = getPriceForCountry(app2, country);
@@ -28,10 +32,18 @@ export function CompareTool() {
         <h2 className="heading-elegant mb-4 text-xl text-brand-900">قارن بين أي تطبيقين بنفسك</h2>
         <div className="grid gap-3 md:grid-cols-3">
           <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={first} onChange={e => setFirst(e.target.value)}>
-            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
+            {groups.map(g => (
+              <optgroup key={g.key} label={`${g.icon} ${g.label}`}>
+                {g.apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
+              </optgroup>
+            ))}
           </select>
           <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={second} onChange={e => setSecond(e.target.value)}>
-            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
+            {groups.map(g => (
+              <optgroup key={g.key} label={`${g.icon} ${g.label}`}>
+                {g.apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
+              </optgroup>
+            ))}
           </select>
           <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={country} onChange={e => setCountry(e.target.value as CountryCode)}>
             <option value="EG">{countryLabels.EG}</option>
@@ -45,6 +57,17 @@ export function CompareTool() {
         <p className="mb-4 rounded-2xl bg-accent-50 border border-accent-200 px-4 py-3 text-accent-800 font-bold">
           🏆 الأفضل حاليًا: {winner}
         </p>
+        {app1.slug === app2.slug ? (
+          <p className="mb-4 rounded-2xl bg-cream-100 border border-cream-200 px-4 py-3 text-sm text-charcoal-500">
+            اخترت نفس التطبيق مرتين 😅 — جرّب تطبيقًا منافسًا من نفس المجموعة في القائمة.
+          </p>
+        ) : !sameSubcategory(app1, app2) && (
+          <p className="mb-4 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+            ⚠️ ملحوظة دقة: {app1.name} ({subcategoryIcon(subcategoryOf(app1))} {subcategoryLabel(subcategoryOf(app1))})
+            و{app2.name} ({subcategoryIcon(subcategoryOf(app2))} {subcategoryLabel(subcategoryOf(app2))})
+            مش منافسين مباشرين — المقارنة هنا معلوماتية، مش ترشيح إن واحد ياخد مكان التاني.
+          </p>
+        )}
         <div className="overflow-x-auto">
           <table className="min-w-full border-separate border-spacing-y-2 text-right">
             <tbody>
