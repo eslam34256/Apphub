@@ -65,3 +65,49 @@ export async function getAllAppSlugs(): Promise<string[]> {
   } catch {}
   return [...slugs];
 }
+
+/** تحويل صف managed_apps من القاعدة لشكل AppItem */
+function mapDbApp(dbApp: any): AppItem {
+  return {
+    id: `db-${dbApp.id}`,
+    slug: dbApp.slug,
+    name: dbApp.name,
+    icon: dbApp.icon,
+    category: dbApp.category,
+    shortDescription: dbApp.short_description || "",
+    description: dbApp.description || "",
+    rating: parseFloat(dbApp.rating) || 0,
+    pros: Array.isArray(dbApp.pros) ? dbApp.pros : [],
+    cons: Array.isArray(dbApp.cons) ? dbApp.cons : [],
+    countries: Array.isArray(dbApp.countries) ? dbApp.countries : [],
+    pricing: Array.isArray(dbApp.pricing) ? dbApp.pricing : [],
+    tags: Array.isArray(dbApp.tags) ? dbApp.tags : [],
+    businessUse: Array.isArray(dbApp.business_use) ? dbApp.business_use : [],
+    googlePlay: dbApp.google_play || undefined,
+    appStore: dbApp.app_store || undefined,
+    website: dbApp.website || undefined
+  };
+}
+
+/**
+ * كل التطبيقات مدمجة (قاعدة + ثابتة بدون تكرار بالـ slug).
+ * بتستخدمها صفحات التجميع: /best/[category]/[country] والـ sitemap.
+ * محمية الرجوع: لو القاعدة وقعت ترجّع الثابتة كاملة والموقع لا يتعطل.
+ */
+export const getAllAppsMerged = cache(async (): Promise<AppItem[]> => {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("managed_apps")
+      .select("*")
+      .eq("is_active", true);
+    if (!data?.length) return staticApps;
+    const dbSlugs = new Set(data.map((a: any) => a.slug as string));
+    return [
+      ...data.map(mapDbApp),
+      ...staticApps.filter((a) => !dbSlugs.has(a.slug))
+    ];
+  } catch {
+    return staticApps;
+  }
+});

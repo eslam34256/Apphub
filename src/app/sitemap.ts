@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { apps as staticApps } from "@/data/apps";
 import { comparisons } from "@/data/comparisons";
+import { bestCombos } from "@/lib/best";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -17,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/price-radar`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/calculator`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${baseUrl}/best`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${baseUrl}/ai`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/business`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
@@ -64,5 +66,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8
   }));
 
-  return [...staticPages, ...comparisonPages, ...appPages, ...staticAppPages];
+  // صفحات «الأفضل في البلد» — 45 صفحة SEO برمجية
+  const bestPages: MetadataRoute.Sitemap = bestCombos().map((combo) => ({
+    url: `${baseUrl}/best/${combo.category}/${combo.country}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.8
+  }));
+
+  return [...staticPages, ...comparisonPages, ...bestPages, ...appPages, ...staticAppPages];
 }
