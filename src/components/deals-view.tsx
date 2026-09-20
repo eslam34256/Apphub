@@ -8,6 +8,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { deals as initialDeals } from "@/data/deals";
 import { ReportDealButton } from "@/components/report-deal-button";
+import { TrackedAffiliateLink } from "@/components/tracked-affiliate-link";
 import { DealItem } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveDeals, getExpiredDeals, getExpiryLabel } from "@/lib/deals";
@@ -107,6 +108,9 @@ export function DealsView() {
                 </p>
               )}
               <ReportDealButton dealId={deal.id} />
+              {deal.affiliateUrl && (
+                <TrackedAffiliateLink target={`deal:${deal.id}`} url={deal.affiliateUrl} label="اشتري العرض" />
+              )}
             </div>
           );
         })}

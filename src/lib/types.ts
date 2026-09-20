@@ -59,6 +59,8 @@ export type DealItem = {
   code?: string;
   createdAt?: string;
   userId?: string;
+  /** رابط عمولة حقيقي من الشبكة (اختياري) — الشارة والتتبع بيظهروا لوحدهم */
+  affiliateUrl?: string;
 };
 
 export type BusinessStack = {

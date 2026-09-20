@@ -13,3 +13,5 @@ export const deals: DealItem[] = [
   { id:"d5", title:"خصم 40% على الأزياء المختارة", brand:"Noon", category:"fashion", discount:40, views:2110, expiresAt:"2026-09-22" },
   { id:"d6", title:"خصم 10% على الإلكترونيات", brand:"جرير", category:"tech", discount:10, views:640, expiresAt:"2026-08-30" }
 ];
+// ملحوظة أفيليات: لما شبكة العمولة approve تحط الـ affiliateUrl في أي deal —
+// الشارة والتتبع بيظهروا لوحدهم. ممنوع روابط مختلقة.

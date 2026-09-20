@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SponsoredSlot } from "@/components/sponsored-slot";
 import { notFound } from "next/navigation";
 
 import { getAllAppsMerged } from "@/lib/app-data";
@@ -184,6 +185,9 @@ export default async function BestCategoryPage({ params }: PageProps) {
             )}
           </div>
         </header>
+
+        {/* خانة إعلان برعاية — بشارة «إعلان» صريحة، والترتيب مش قابل للشراء */}
+        <SponsoredSlot placement={`best:${params.category}`} />
 
         {/* القائمة المرتبة — مقسّمة بالفئات الفرعية لو الفئة فيها أكتر من نوع */}
         {groups.length > 1 ? (

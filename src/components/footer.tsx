@@ -115,6 +115,16 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/shop" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_shop")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/data" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_data")}
+                </Link>
+              </li>
+              <li>
                 <Link href="/blog" className="text-charcoal-500 hover:text-accent-600 transition">
                   {t("nav_blog")}
                 </Link>
@@ -180,6 +190,11 @@ export function Footer() {
               <li>
                 <Link href="/cookies" className="text-charcoal-500 hover:text-accent-600 transition">
                   {t("footer_cookies")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/disclosure" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_disclosure")}
                 </Link>
               </li>
               <li>
