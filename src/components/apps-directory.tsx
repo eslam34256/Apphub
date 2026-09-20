@@ -6,8 +6,8 @@ import { groupAppsBySubcategory, subcategoryOf } from "@/data/subcategories";
 import { AppItem, CountryCode, AppCategory } from "@/lib/types";
 import { categoryLabels, countryLabels, categoryIcons } from "@/lib/constants";
 
-export function AppsDirectory({ apps }: { apps: AppItem[] }) {
-  const [query, setQuery] = useState("");
+export function AppsDirectory({ apps, initialQuery = "" }: { apps: AppItem[]; initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery);
   const [country, setCountry] = useState<CountryCode | "all">("all");
   const [viewMode, setViewMode] = useState<"categories" | "all">("categories");
 

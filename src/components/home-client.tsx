@@ -6,6 +6,7 @@ import { apps as staticApps } from "@/data/apps";
 import { deals } from "@/data/deals";
 import { getActiveDeals } from "@/lib/deals";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { HeroSearch } from "@/components/hero-search";
 import { AppItem } from "@/lib/types";
 import { useLanguage } from "@/contexts/language-context";
 
@@ -45,12 +46,17 @@ export function HomeClient({ initialDbApps }: { initialDbApps: AppItem[] }) {
       <span className="text-accent-400 italic block">{t("hero_title_2")}</span>
     </h1>
 
-    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-12 leading-relaxed text-shadow-soft animate-slide-up px-4">
+    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 leading-relaxed text-shadow-soft animate-slide-up px-4">
       {t("hero_description")}
     </p>
 
+    {/* بحث الـ Hero التفاعلي */}
+    <div className="animate-slide-up px-4 mb-8 w-full">
+      <HeroSearch apps={allApps} />
+    </div>
+
     {/* Buttons */}
-    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up px-4 mb-16">
+    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up px-4 mb-12">
       <Link 
         href="/apps" 
         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent-400 text-brand-900 px-8 py-4 rounded-full font-bold hover:bg-accent-500 transition shadow-xl"

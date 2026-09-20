@@ -5,7 +5,7 @@ import { AppItem } from "@/lib/types";
 
 export const revalidate = 0;
 
-export default async function AppsPage() {
+export default async function AppsPage({ searchParams }: { searchParams: { q?: string } }) {
   const supabase = createClient();
 
   const { data: dbApps } = await supabase
@@ -52,8 +52,8 @@ export default async function AppsPage() {
           </p>
         </div>
 
-        {/* Apps Directory */}
-        <AppsDirectory apps={allApps} />
+        {/* Apps Directory — ?q= بيجهز البحث من الـ Hero */}
+        <AppsDirectory apps={allApps} initialQuery={typeof searchParams.q === "string" ? searchParams.q : ""} />
       </div>
     </div>
   );
