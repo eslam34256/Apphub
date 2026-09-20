@@ -1,8 +1,7 @@
 import { ImageResponse } from "next/og";
-import { promises as fs } from "fs";
-import path from "path";
 import { getAppBySlug } from "@/lib/app-data";
 import { ArabicShaper } from "arabic-persian-reshaper";
+import { ALMARAI_B64 } from "@/lib/og-font";
 
 export const runtime = "nodejs";
 export const alt = "AppHub — تقييم وأسعار";
@@ -26,9 +25,8 @@ const RATING_LABEL_AR = "التقييم العام";
 const GENERIC_TITLE_AR = "كل اشتراكاتك بسعرها الحقيقي";
 
 export default async function AppOgImage({ params }: { params: { slug: string } }) {
-  const font = await fs.readFile(
-    path.join(process.cwd(), "src/assets/fonts/Almarai-ExtraBold.ttf")
-  );
+  // الخط من موديول base64 — مش fs — علشان Vercel serverless مبتتتبعش ملفات المشروع
+  const font = Buffer.from(ALMARAI_B64, "base64");
 
   const app = await getAppBySlug(params.slug);
   const isArabicName = app ? /[؀-ۿ]/.test(app.name) : true;
