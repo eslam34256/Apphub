@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <div className="rounded-3xl gradient-brand p-10 text-white text-center">
         <div className="text-6xl mb-3">🔒</div>
         <h1 className="text-4xl font-extrabold mb-2">سياسة الخصوصية</h1>
-        <p className="text-white/90">آخر تحديث: يناير 2025</p>
+        <p className="text-white/90">آخر مراجعة: سبتمبر 2026</p>
       </div>
 
       <div className="rounded-3xl bg-white p-8 md:p-12 shadow-soft space-y-6">

@@ -178,6 +178,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/methodology" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("footer_methodology")}
+                </Link>
+              </li>
+              <li>
                 <Link href="/disclaimer" className="text-charcoal-500 hover:text-accent-600 transition">
                   {t("footer_disclaimer")}
                 </Link>

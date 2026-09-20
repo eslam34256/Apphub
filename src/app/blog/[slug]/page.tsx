@@ -19,7 +19,10 @@ export default function BlogPostPage({ params }: Props) {
       <div className="rounded-3xl bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap gap-2">{post.tags.map(tag => <span key={tag} className="rounded-full bg-brand-50 px-3 py-1 text-sm text-brand-600">{tag}</span>)}</div>
         <h1 className="mb-2 text-3xl font-extrabold">{post.title}</h1>
-        <p className="mb-4 text-slate-500">{post.author} — {new Date(post.createdAt).toLocaleDateString("ar-EG")}</p>
+        <p className="mb-4 text-slate-500">
+          {post.author} — نشر: {new Date(post.createdAt).toLocaleDateString("ar-EG")}
+          {post.updatedAt && <span className="mr-2 text-brand-600"> • آخر تنشيف: {new Date(post.updatedAt).toLocaleDateString("ar-EG")}</span>}
+        </p>
         <p className="mb-6 text-lg text-slate-600">{post.excerpt}</p>
       </div>
       <div className="rounded-3xl bg-white p-6 shadow-sm">
