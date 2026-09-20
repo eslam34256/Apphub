@@ -7,10 +7,12 @@ import { deals } from "@/data/deals";
 import { getActiveDeals } from "@/lib/deals";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { HeroSearch } from "@/components/hero-search";
-import { AppItem } from "@/lib/types";
+import { AppItem, AppCategory } from "@/lib/types";
+import { categoryEmoji } from "@/lib/best";
+import { categoryLabels } from "@/lib/constants";
 import { useLanguage } from "@/contexts/language-context";
 
-export function HomeClient({ initialDbApps }: { initialDbApps: AppItem[] }) {
+export function HomeClient({ initialDbApps, radarCount = null }: { initialDbApps: AppItem[]; radarCount?: number | null }) {
   const { t, lang } = useLanguage();
   // التطبيقات المُدارة بتيجي جاهزة من السيرفر (SSR) — مفيش fetch من المتصفح
   const dbApps = initialDbApps;
@@ -20,6 +22,16 @@ export function HomeClient({ initialDbApps }: { initialDbApps: AppItem[] }) {
   const allApps = [...dbApps, ...filteredStatic];
   // أرقام الحقيقة دايمًا متحسوبة من الداتا — ممنوع أرقام ثابتة بتبقى قديمة
   const categoryCount = new Set(allApps.map((a) => a.category)).size;
+  // كروت الفئات → /best — الفئات المعروفة بس (اللي ليها صفحة فعلًا)
+  const homeCategories = Object.entries(
+    allApps.reduce<Record<string, number>>((acc, a) => {
+      acc[a.category] = (acc[a.category] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .filter(([cat]) => cat in categoryEmoji)
+    .map(([cat, count]) => ({ cat, count }))
+    .sort((a, b) => b.count - a.count);
 
   const topApps = [...allApps].sort((a, b) => b.rating - a.rating).slice(0, 6);
   // العروض الصالحة فقط — المنتهية مش هتظهر على الرئيسية
@@ -50,9 +62,19 @@ export function HomeClient({ initialDbApps }: { initialDbApps: AppItem[] }) {
       {t("hero_description")}
     </p>
 
-    {/* بحث الـ Hero التفاعلي */}
+    {/* بحث الـ Hero التفاعلي + نبض الرادار الحي */}
     <div className="animate-slide-up px-4 mb-8 w-full">
       <HeroSearch apps={allApps} />
+      {radarCount && radarCount > 0 && (
+        <div className="mt-5 flex justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 px-5 py-1.5 text-sm text-white/90">
+            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+            {lang === "ar"
+              ? `${radarCount} سعر اشتراك مرصود لحظة بلحظة — بيتجدد يوميًا`
+              : `${radarCount} subscription prices tracked now — updated daily`}
+          </span>
+        </div>
+      )}
     </div>
 
     {/* Buttons */}
@@ -130,6 +152,51 @@ export function HomeClient({ initialDbApps }: { initialDbApps: AppItem[] }) {
               <span>{t("view_all")}</span>
               <span>{lang === "ar" ? "←" : "→"}</span>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════ */}
+      {/* CATEGORIES → /best                      */}
+      {/* ═══════════════════════════════════════ */}
+      <section className="bg-white section-padding border-y border-cream-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
+              {lang === "ar" ? "التصنيفات" : "Categories"}
+            </p>
+            <h2 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
+              {lang === "ar" ? "تصفّح حسب الفئة" : "Browse by Category"}
+            </h2>
+            <div className="divider-gold"></div>
+            <p className="text-charcoal-500 max-w-xl mx-auto">
+              {lang === "ar"
+                ? "لكل فئة قائمة «الأفضل في بلدك» — مختارة ومدروسة"
+                : "Each category has a curated 'best in your country' list"}
+            </p>
+          </div>
+
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            {homeCategories.map(({ cat, count }) => (
+              <Link
+                key={cat}
+                href={`/best/${cat}/eg`}
+                className="card-elegant p-5 flex items-center gap-4 transition hover:-translate-y-1 hover:shadow-soft"
+              >
+                <span className="text-3xl" aria-hidden>{categoryEmoji[cat] ?? "📱"}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-bold text-brand-900 truncate">
+                    {categoryLabels[cat as AppCategory] ?? cat}
+                  </span>
+                  <span className="block text-xs text-charcoal-500">
+                    {count} {lang === "ar" ? "تطبيق" : "apps"}
+                  </span>
+                </span>
+                <span className="text-accent-600 font-bold shrink-0">
+                  {lang === "ar" ? "←" : "→"}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

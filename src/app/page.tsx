@@ -37,6 +37,7 @@ function mapManagedApp(app: any): AppItem {
 
 export default async function HomePage() {
   let dbApps: AppItem[] = [];
+  let radarCount: number | null = null;
   try {
     const supabase = createClient();
     const { data } = await supabase
@@ -49,5 +50,16 @@ export default async function HomePage() {
     console.error("Home SSR managed_apps error:", err);
   }
 
-  return <HomeClient initialDbApps={dbApps} />;
+  try {
+    const supabase = createClient();
+    const { count } = await supabase
+      .from("price_watch")
+      .select("*", { count: "exact", head: true });
+    radarCount = count;
+  } catch {
+    // جدول الرصد لسه مش موجود → العدّاد بيختفي بهدوء (ممنوع أرقام مختلقة)
+    radarCount = null;
+  }
+
+  return <HomeClient initialDbApps={dbApps} radarCount={radarCount} />;
 }
