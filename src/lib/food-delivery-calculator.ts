@@ -14,6 +14,7 @@ export type FoodApp = {
   subscriptionPrice?: number;
   subscriptionBenefits?: string[];
   restaurantCount: string;
+  verifiedAt: string; // تاريخ آخر مراجعة — الرقم له تاريخ (قاعدة المشروع)
   features: string[];
   paymentMethods: string[];
   promoCode?: { code: string; discount: number; description: string };
@@ -35,6 +36,7 @@ export const foodApps: FoodApp[] = [
     subscriptionPrice: 99,      // كان 49
     subscriptionBenefits: ["توصيل مجاني", "خصومات حصرية"],
     restaurantCount: "5,000+",
+    verifiedAt: "سبتمبر 2026",
     features: ["أكتر مطاعم", "توصيل سريع", "عروض يومية"],
     paymentMethods: ["كاش", "كارت", "محفظة"],
     promoCode: { code: "WELCOME50", discount: 50, description: "خصم 50 ج على أول طلب" },
@@ -51,6 +53,7 @@ export const foodApps: FoodApp[] = [
     averageDeliveryTime: 50,
     hasSubscription: false,
     restaurantCount: "3,500+",
+    verifiedAt: "سبتمبر 2026",
     features: ["دليل المطاعم", "مراجعات حقيقية", "صور للأكل"],
     paymentMethods: ["كاش", "كارت"],
     promoCode: { code: "ELMENUS20", discount: 20, description: "خصم 20% على أول طلب" },
@@ -70,6 +73,7 @@ export const foodApps: FoodApp[] = [
     subscriptionPrice: 79,
     subscriptionBenefits: ["توصيل مجاني", "خصومات على المشاوير"],
     restaurantCount: "2,500+",
+    verifiedAt: "سبتمبر 2026",
     features: ["مدمج مع كريم", "نقاط على كل طلب", "كريم باي"],
     paymentMethods: ["كاش", "كارت", "كريم باي"],
     promoCode: { code: "CAREEM30", discount: 30, description: "خصم 30 ج على أول طلب" },
@@ -89,6 +93,7 @@ export const foodApps: FoodApp[] = [
     subscriptionPrice: 149,
     subscriptionBenefits: ["توصيل مجاني للإفطار", "بقالة مجانية"],
     restaurantCount: "البقالة والإفطار",
+    verifiedAt: "سبتمبر 2026",
     features: ["إفطار طازج", "بقالة يومية", "أسعار ممتازة"],
     paymentMethods: ["كاش", "كارت", "محفظة"],
     cuisines: ["إفطار", "بقالة", "مخبوزات", "ألبان", "خضار وفاكهة"]
@@ -104,6 +109,7 @@ export const foodApps: FoodApp[] = [
     averageDeliveryTime: 20,
     hasSubscription: false,
     restaurantCount: "البقالة الفورية",
+    verifiedAt: "سبتمبر 2026",
     features: ["توصيل في 20 دقيقة", "بقالة فورية", "سريع جدًا"],
     paymentMethods: ["كاش", "كارت"],
     promoCode: { code: "RABBIT15", discount: 15, description: "خصم 15% على أول 3 طلبات" },
@@ -120,6 +126,7 @@ export const foodApps: FoodApp[] = [
     averageDeliveryTime: 50,
     hasSubscription: false,
     restaurantCount: "2,000+",
+    verifiedAt: "سبتمبر 2026",
     features: ["تاريخ طويل", "موثوق", "عروض موسمية"],
     paymentMethods: ["كاش", "كارت"],
     cuisines: ["مصري", "شرقي", "إيطالي", "صيني"]

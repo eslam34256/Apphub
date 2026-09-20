@@ -8,8 +8,11 @@ import {
   Location
 } from "@/lib/ride-calculator";
 import { comparisons } from "@/data/comparisons";
-import { calculateFoodOrder, getAllCuisines } from "@/lib/food-delivery-calculator";
+import { calculateFoodOrder, getAllCuisines, foodApps } from "@/lib/food-delivery-calculator";
 import { LocationSearch } from "@/components/location-search";
+import { CommunityMedian } from "@/components/community-median";
+import { CommunityReportForm } from "@/components/community-report-form";
+import { FxTicker } from "@/components/fx-ticker";
 import { useLanguage } from "@/contexts/language-context";
 
 type CompareCategory = "rides" | "food" | "streaming" | "bnpl";
@@ -349,6 +352,10 @@ function FoodCompare() {
                     <p className="text-xs text-charcoal-500">
                       توصيل: {est.deliveryFee === 0 ? "مجاني" : `${est.deliveryFee} ج`}
                     </p>
+                    <p className="mt-0.5 text-[11px] text-charcoal-400">
+                      🗓️ آخر مراجعة: {est.app.verifiedAt}
+                    </p>
+                    <CommunityMedian appId={est.app.id} metric="delivery_fee" unit="ج" />
                   </div>
                 </div>
               </div>
@@ -356,6 +363,15 @@ function FoodCompare() {
           </div>
         </>
       )}
+
+      {/* بلاغات المجتمع — الداتا بتيجي من الكاستومر للمجتمع */}
+      <CommunityReportForm
+        domain="food"
+        apps={foodApps.map((a) => ({ id: a.id, name: a.name }))}
+        metric="delivery_fee"
+        metricLabel="رسوم التوصيل"
+        unit="ج"
+      />
     </div>
   );
 }
@@ -377,8 +393,9 @@ function StreamingCompare() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-accent-50 border border-accent-200 p-4 text-sm text-brand-900">
-        💡 الأسعار بالعملة المحلية لكل دولة. ممكن توفر فلوس لو اشتركت من بلد تاني.
+      <div className="rounded-2xl bg-accent-50 border border-accent-200 p-4 text-sm text-brand-900 space-y-1">
+        💡 الأسعار بالعملة المحلية لكل دولة — آخر مراجعة: سبتمبر 2026. ممكن توفر فلوس لو اشتركت من بلد تاني.
+        <FxTicker />
       </div>
 
       <div className="card-elegant p-6 overflow-x-auto">
