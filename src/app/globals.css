@@ -50,37 +50,39 @@ button, a {
 }
 
 .heading-display {
-  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  /* سلسلة خطوط على مستوى الحرف: اللاتيني ← Playfair، العربي ← Almarai (الاحتياطي Cairo) */
+  font-family: var(--font-playfair), var(--font-almarai), var(--font-cairo), Georgia, serif;
   font-weight: 900;
   letter-spacing: -0.03em;
   line-height: 0.95;
 }
 
 .heading-elegant {
-  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  font-family: var(--font-playfair), var(--font-almarai), var(--font-cairo), Georgia, serif;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
 
+/* خلفية هيرو من صنعنا: تدرج كحلي + لمعان ذهبي + شبكة نقاط —
+   بدون صور خارجية، أسرع، وأثبت تحت أي اتصال */
 .hero-bg {
   background:
-    linear-gradient(135deg, rgba(26, 41, 66, 0.88) 0%, rgba(26, 26, 26, 0.7) 100%),
-    url('https://images.unsplash.com/photo-1551650975-87deedd944c3?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+    radial-gradient(1200px 520px at 85% -12%, rgba(201, 168, 118, 0.28), transparent 62%),
+    radial-gradient(900px 420px at 8% 112%, rgba(133, 150, 190, 0.18), transparent 60%),
+    linear-gradient(135deg, #1a2942 0%, #162138 52%, #0f1830 100%);
   min-height: 700px;
   position: relative;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .hero-bg {
-    min-height: 600px;
-  }
-}
-
-@media (max-width: 768px) {
-  .hero-bg {
-    min-height: 600px;
-  }
+.hero-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1.6px);
+  background-size: 28px 28px;
+  pointer-events: none;
 }
 
 @media (max-width: 768px) {

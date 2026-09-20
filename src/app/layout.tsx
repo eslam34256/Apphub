@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cairo, Playfair_Display } from "next/font/google";
+import { Cairo, Playfair_Display, Almarai } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
@@ -19,6 +19,15 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
   variable: "--font-playfair"
+});
+
+/* خط عرض عربي حقيقي — Playfair مفيهوش أحرف عربية فاللقمة العربية
+   كانت بتنزل بخط النظام (تصميم مش مقصود). Almarai أنيق وجاد، ببيِّن بالوزن */
+const almarai = Almarai({
+  subsets: ["arabic"],
+  weight: ["300", "400", "700", "800"],
+  display: "swap",
+  variable: "--font-almarai"
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -53,7 +62,7 @@ export default function RootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable}`}>
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable} ${almarai.variable}`}>
       <body className={`${cairo.className} min-h-screen flex flex-col bg-cream-50`}>
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>

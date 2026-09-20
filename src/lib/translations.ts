@@ -19,11 +19,11 @@ export const translations = {
     search_placeholder: "ابحث في AppHub...",
 
     // Hero Section
-    hero_badge: "منصة عربية رائدة",
-    hero_title_1: "اكتشف",
-    hero_title_2: "أفضل التطبيقات",
+    hero_badge: "المرجع العربي لأسعار الاشتراكات",
+    hero_title_1: "كل اشتراكاتك",
+    hero_title_2: "بسعرها الحقيقي",
     hero_title_3: "بكل سهولة",
-    hero_description: "منصة عربية أنيقة تساعدك تختار التطبيق المناسب حسب بلدك وميزانيتك واحتياجك.",
+    hero_description: "بنرصد سعر كل اشتراك بالتاريخ، ونقارن البدائل من نفس النوع، ونحسبلك مصروفك الرقمي الشهري — عشان تدفع أقل مقابل نفس الجودة.",
     apps_waiting: "تطبيق في انتظارك",
     btn_browse_apps: "تصفح التطبيقات",
     btn_smart_compare: "المقارنات الذكية",
@@ -163,11 +163,11 @@ export const translations = {
     search_placeholder: "Search in AppHub...",
 
     // Hero Section
-    hero_badge: "Leading Arabic Platform",
-    hero_title_1: "Discover",
-    hero_title_2: "The Best Apps",
+    hero_badge: "The Arabic subscription-price reference",
+    hero_title_1: "Every subscription you have",
+    hero_title_2: "at its true price",
     hero_title_3: "With Ease",
-    hero_description: "An elegant Arabic platform to help you choose the right app based on your country, budget, and needs.",
+    hero_description: "We track every subscription's price over time, compare alternatives of the same kind, and calculate your monthly digital spend — so you pay less for the same quality.",
     apps_waiting: "apps waiting for you",
     btn_browse_apps: "Browse Apps",
     btn_smart_compare: "Smart Comparisons",

@@ -48,6 +48,8 @@ export default function HomePage() {
   const dbSlugs = new Set(dbApps.map((a) => a.slug));
   const filteredStatic = staticApps.filter((a) => !dbSlugs.has(a.slug));
   const allApps = [...dbApps, ...filteredStatic];
+  // أرقام الحقيقة دايمًا متحسوبة من الداتا — ممنوع أرقام ثابتة بتبقى قديمة
+  const categoryCount = new Set(allApps.map((a) => a.category)).size;
 
   const topApps = [...allApps].sort((a, b) => b.rating - a.rating).slice(0, 6);
   // العروض الصالحة فقط — المنتهية مش هتظهر على الرئيسية
@@ -106,7 +108,7 @@ export default function HomePage() {
           <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_apps")}</p>
         </div>
         <div className="text-center">
-          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">15</p>
+          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">{categoryCount}</p>
           <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_categories")}</p>
         </div>
         <div className="text-center">
@@ -171,10 +173,10 @@ export default function HomePage() {
                 </div>
                 <div className="absolute bottom-6 right-6 left-6 glass-light rounded-2xl p-6">
                   <p className="heading-elegant text-2xl text-brand-900 mb-2">
-                    {lang === "ar" ? "163+ تطبيق" : "163+ Apps"}
+                    {lang === "ar" ? `${allApps.length}+ تطبيق` : `${allApps.length}+ Apps`}
                   </p>
                   <p className="text-sm text-charcoal-500">
-                    {lang === "ar" ? "في 15 فئة مختلفة" : "Across 15 categories"}
+                    {lang === "ar" ? `في ${categoryCount} فئة مختلفة` : `Across ${categoryCount} categories`}
                   </p>
                 </div>
               </div>
