@@ -1,0 +1,2489 @@
+From c6467ff00e40642cd824e2f610b87146f7f517ce Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Fri, 18 Sep 2026 15:58:49 +0000
+Subject: [PATCH] =?UTF-8?q?=E2=9C=A8=20=D9=86=D8=B8=D8=A7=D9=85=20=D8=A7?=
+ =?UTF-8?q?=D9=84=D9=85=D9=82=D8=A7=D8=B1=D9=86=D8=A7=D8=AA=20=D8=A7=D9=84?=
+ =?UTF-8?q?=D8=AA=D9=81=D8=B5=D9=8A=D9=84=D9=8A=D8=A9=20+=20=D8=A5=D8=B5?=
+ =?UTF-8?q?=D9=84=D8=A7=D8=AD=20SEO=20=D9=84=D8=B5=D9=81=D8=AD=D8=A7=D8=AA?=
+ =?UTF-8?q?=20=D8=A7=D9=84=D8=AA=D8=B7=D8=A8=D9=8A=D9=82=D8=A7=D8=AA=20+?=
+ =?UTF-8?q?=20=D8=AA=D9=86=D8=B8=D9=8A=D9=81=20=D8=A7=D9=84=D8=B9=D8=B1?=
+ =?UTF-8?q?=D9=88=D8=B6=20=D8=A7=D9=84=D9=85=D9=86=D8=AA=D9=87=D9=8A=D8=A9?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 🔒 حذف backup-env من الريبو (مفاتيح مكشوفة — يلزم تدوير المفاتيح) + تحديث gitignore
+- apps/[slug]: تحويل لـ Server Component — عنوان/وصف فريد + canonical + JSON-LD (SoftwareApplication + Breadcrumb) لكل تطبيق مع SSR كامل بدل «جاري التحميل»
+- /compare/[slug]: نظام مقارنات تفصيلية جديد (SSG) مع مقارنتين جاهزتين (نتفليكس vs شاهد — أوبر vs كريم) + FAQPage/Article/Breadcrumb schema
+- /compare: مركز مقارنات (التفصيلية + الأداة التفاعلية) + ربط في compare-hub
+- sitemap: إضافة صفحات المقارنات
+- deals: فلترة المنتهية تلقائيًا (أرشيف مطوي) + شارات urgency + تحديث تواريخ الداتا التجريبية
+- الرئيسية: إظهار العروض الصالحة فقط
+---
+ .gitignore                                    |   6 +
+ backup-env-20260617.txt                       |  11 -
+ src/app/apps/[slug]/page.tsx                  | 450 ++++++------------
+ src/app/compare-hub/page.tsx                  |  37 ++
+ src/app/compare/[slug]/not-found.tsx          |  27 ++
+ src/app/compare/[slug]/page.tsx               | 101 ++++
+ src/app/compare/not-found.tsx                 |  27 ++
+ src/app/compare/page.tsx                      | 139 +++---
+ src/app/deals/page.tsx                        |  57 +--
+ src/app/page.tsx                              |  10 +-
+ src/app/sitemap.ts                            |  11 +-
+ src/components/app-details-view.tsx           | 258 ++++++++++
+ src/components/compare/compare-hero.tsx       |  42 ++
+ src/components/compare/compare-tool.tsx       |  74 +++
+ src/components/compare/comparison-faq.tsx     |  29 ++
+ src/components/compare/comparison-table.tsx   |  52 ++
+ src/components/compare/pricing-section.tsx    |  52 ++
+ src/components/compare/pros-cons-cards.tsx    |  43 ++
+ .../compare/related-comparisons.tsx           |  43 ++
+ src/components/compare/verdict-card.tsx       |  28 ++
+ src/components/deals-view.tsx                 | 157 ++++++
+ src/data/comparisons.ts                       | 338 +++++++++++++
+ src/data/deals.ts                             |  17 +-
+ src/lib/app-data.ts                           |  67 +++
+ src/lib/comparison-schema.ts                  |  65 +++
+ src/lib/deals.ts                              |  40 ++
+ 26 files changed, 1746 insertions(+), 435 deletions(-)
+ delete mode 100644 backup-env-20260617.txt
+ create mode 100644 src/app/compare/[slug]/not-found.tsx
+ create mode 100644 src/app/compare/[slug]/page.tsx
+ create mode 100644 src/app/compare/not-found.tsx
+ create mode 100644 src/components/app-details-view.tsx
+ create mode 100644 src/components/compare/compare-hero.tsx
+ create mode 100644 src/components/compare/compare-tool.tsx
+ create mode 100644 src/components/compare/comparison-faq.tsx
+ create mode 100644 src/components/compare/comparison-table.tsx
+ create mode 100644 src/components/compare/pricing-section.tsx
+ create mode 100644 src/components/compare/pros-cons-cards.tsx
+ create mode 100644 src/components/compare/related-comparisons.tsx
+ create mode 100644 src/components/compare/verdict-card.tsx
+ create mode 100644 src/components/deals-view.tsx
+ create mode 100644 src/data/comparisons.ts
+ create mode 100644 src/lib/app-data.ts
+ create mode 100644 src/lib/comparison-schema.ts
+ create mode 100644 src/lib/deals.ts
+
+diff --git a/.gitignore b/.gitignore
+index 9585ce4..6de4861 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -45,3 +45,9 @@ next-env.d.ts
+ Thumbs.db
+ .vercel
+ .env*
++
++# Environment & secrets backups — never commit these
++*env*.txt
++*env*.backup
++*.env.*
++secrets*
+diff --git a/backup-env-20260617.txt b/backup-env-20260617.txt
+deleted file mode 100644
+index 367abc9..0000000
+--- a/backup-env-20260617.txt
++++ /dev/null
+@@ -1,11 +0,0 @@
+-NEXT_PUBLIC_SUPABASE_URL=https://ujtjoedbspspspmuxjee.supabase.co
+-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_WXaz2S6iF61J_JOBZZBHqQ_ZmmQMMgY
+-SUPABASE_SERVICE_ROLE_KEY=sb_secret_MUYt6egsXbJh_4JDPPNuxg_xevP-eyL
+-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+-CRON_SECRET=apphub-secret-2025
+-STRIPE_SECRET_KEY=sk_test_placeholder
+-STRIPE_WEBHOOK_SECRET=whsec_placeholder
+-STRIPE_STARTER_PRICE_ID=price_placeholder
+-STRIPE_BUSINESS_PRICE_ID=price_placeholder
+-STRIPE_PARTNER_PRICE_ID=price_placeholder
+-NEXT_PUBLIC_GA_ID=G-RMG8S4NHBX
+diff --git a/src/app/apps/[slug]/page.tsx b/src/app/apps/[slug]/page.tsx
+index eb401f4..e380292 100644
+--- a/src/app/apps/[slug]/page.tsx
++++ b/src/app/apps/[slug]/page.tsx
+@@ -1,322 +1,140 @@
+-"use client";
+-
+-import { useEffect, useState } from "react";
+-import { useParams, useRouter } from "next/navigation";
+-import Link from "next/link";
+-import { apps as staticApps } from "@/data/apps";
+-import { createClient } from "@/lib/supabase/client";
+-import { AppItem } from "@/lib/types";
+-import { useLanguage } from "@/contexts/language-context";
+-import { useTranslatedText, useTranslatedArray } from "@/hooks/use-translated-text";
+-import { formatMoney, getCheapestCountry } from "@/lib/helpers";
+-import { ReviewsSection } from "@/components/reviews-section";
+-import { AppStoreButtons } from "@/components/app-store-buttons";
+-import { CommentsSection } from "@/components/comments-section";
+-
+-const categoryTranslations: Record<string, { ar: string; en: string }> = {
+-  food: { ar: "أكل وتوصيل", en: "Food & Delivery" },
+-  streaming: { ar: "ستريمنج", en: "Streaming" },
+-  shopping: { ar: "تسوق", en: "Shopping" },
+-  health: { ar: "صحة", en: "Health" },
+-  transport: { ar: "مواصلات", en: "Transport" },
+-  education: { ar: "تعليم", en: "Education" },
+-  finance: { ar: "فلوس وبنوك", en: "Finance" },
+-  "real-estate": { ar: "عقارات", en: "Real Estate" },
+-  travel: { ar: "سفر", en: "Travel" },
+-  gaming: { ar: "ألعاب", en: "Gaming" },
+-  kids: { ar: "أطفال", en: "Kids" },
+-  tools: { ar: "أدوات", en: "Tools" },
+-  religious: { ar: "ديني", en: "Religious" },
+-  government: { ar: "حكومي", en: "Government" },
+-  freelance: { ar: "فريلانس", en: "Freelance" }
+-};
+-
+-const countryTranslations: Record<string, { ar: string; en: string }> = {
+-  EG: { ar: "مصر", en: "Egypt" },
+-  SA: { ar: "السعودية", en: "Saudi Arabia" },
+-  AE: { ar: "الإمارات", en: "UAE" }
++import type { Metadata } from "next";
++import { notFound } from "next/navigation";
++import { getAppBySlug } from "@/lib/app-data";
++import { AppDetailsView } from "@/components/app-details-view";
++
++/**
++ * صفحة تفاصيل التطبيق — Server Component بالكامل.
++ *
++ * قبل كده كانت Client Component ومحتواها كله بيتحمل بـ useEffect،
++ * يعني جوجل كان بيشوف صفحة فاضية فيها «جاري التحميل...» بس.
++ * دلوقتي: الـ HTML كامل من السيرفر + عنوان ووصف فريد + JSON-LD لكل تطبيق.
++ */
++
++/**
++ * صفحة تفاصيل التطبيق — Server Component بالكامل.
++ *
++ * قبل كده كانت Client Component ومحتواها كله بيتحمل بـ useEffect،
++ * يعني جوجل كان بيشوف صفحة فاضية فيها «جاري التحميل...» بس.
++ * دلوقتي: الـ HTML كامل من السيرفر + عنوان ووصف فريد + JSON-LD لكل تطبيق.
++ */
++
++const SITE_URL = (
++  process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app"
++).replace(/\/$/, "");
++
++const categoryLabels: Record<string, string> = {
++  food: "أكل وتوصيل",
++  streaming: "ستريمنج",
++  shopping: "تسوق",
++  health: "صحة",
++  transport: "مواصلات",
++  education: "تعليم",
++  finance: "فلوس وبنوك",
++  "real-estate": "عقارات",
++  travel: "سفر",
++  gaming: "ألعاب",
++  kids: "أطفال",
++  tools: "أدوات",
++  religious: "ديني",
++  government: "حكومي",
++  freelance: "فريلانس"
+ };
+ 
+-export default function AppDetailsPage() {
+-  const params = useParams();
+-  const router = useRouter();
+-  const slug = params.slug as string;
+-  const { lang, t } = useLanguage();
+-  const [app, setApp] = useState<AppItem | null>(null);
+-  const [loading, setLoading] = useState(true);
+-
+-  useEffect(() => {
+-    async function loadApp() {
+-      const supabase = createClient();
+-      const { data: dbApp } = await supabase
+-        .from("managed_apps")
+-        .select("*")
+-        .eq("slug", slug)
+-        .eq("is_active", true)
+-        .single();
+-
+-      if (dbApp) {
+-        setApp({
+-          id: `db-${dbApp.id}`,
+-          slug: dbApp.slug,
+-          name: dbApp.name,
+-          icon: dbApp.icon,
+-          category: dbApp.category,
+-          shortDescription: dbApp.short_description || "",
+-          description: dbApp.description || "",
+-          rating: parseFloat(dbApp.rating) || 0,
+-          pros: Array.isArray(dbApp.pros) ? dbApp.pros : [],
+-          cons: Array.isArray(dbApp.cons) ? dbApp.cons : [],
+-          countries: Array.isArray(dbApp.countries) ? dbApp.countries : [],
+-          pricing: Array.isArray(dbApp.pricing) ? dbApp.pricing : [],
+-          tags: Array.isArray(dbApp.tags) ? dbApp.tags : [],
+-          businessUse: Array.isArray(dbApp.business_use) ? dbApp.business_use : []
+-        });
+-      } else {
+-        const found = staticApps.find((a) => a.slug === slug);
+-        if (found) setApp(found);
+-      }
+-      setLoading(false);
++type PageProps = { params: { slug: string } };
++
++export async function generateMetadata({
++  params
++}: PageProps): Promise<Metadata> {
++  const app = await getAppBySlug(params.slug);
++  // notFound() هنا — قبل ما الـ streaming يبدأ — بيضمن status 404 حقيقي مش Soft 404
++  if (!app) notFound();
++
++  const url = `${SITE_URL}/apps/${app.slug}`;
++  const category = categoryLabels[app.category] || app.category;
++  const title = `${app.name} — تقييم وأسعار ومميزات وعيوب`;
++  const description = `${app.shortDescription}. تقييم ${app.rating}⭐ في فئة ${category} — اعرف الأسعار والمميزات والعيوب قبل ما تحمّل.`;
++
++  return {
++    title,
++    description,
++    alternates: { canonical: url },
++    openGraph: {
++      title: `${title} | AppHub`,
++      description,
++      url,
++      type: "website",
++      locale: "ar_EG",
++      siteName: "AppHub"
++    },
++    twitter: {
++      card: "summary",
++      title: `${title} | AppHub`,
++      description
+     }
+-    loadApp();
+-  }, [slug]);
+-
+-  // Translations
+-  const translatedDescription = useTranslatedText(app?.description || "");
+-  const translatedShortDesc = useTranslatedText(app?.shortDescription || "");
+-  const translatedPros = useTranslatedArray(app?.pros || []);
+-  const translatedCons = useTranslatedArray(app?.cons || []);
+-  const translatedTags = useTranslatedArray(app?.tags || []);
+-
+-  if (loading) {
+-    return (
+-      <div className="bg-cream-50 min-h-screen flex items-center justify-center">
+-        <div className="text-center">
+-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-accent-400 border-t-transparent mb-4"></div>
+-          <p className="text-charcoal-500">{t("loading")}</p>
+-        </div>
+-      </div>
+-    );
+-  }
+-
+-  if (!app) {
+-    return (
+-      <div className="bg-cream-50 min-h-screen flex items-center justify-center">
+-        <div className="text-center">
+-          <p className="text-6xl mb-4">😕</p>
+-          <p className="heading-elegant text-3xl text-brand-900 mb-4">
+-            {lang === "ar" ? "التطبيق غير موجود" : "App not found"}
+-          </p>
+-          <Link href="/apps" className="btn-primary">
+-            {lang === "ar" ? "تصفّح التطبيقات" : "Browse Apps"}
+-          </Link>
+-        </div>
+-      </div>
+-    );
+-  }
+-
+-  const cheapest = getCheapestCountry(app);
+-
+-  function getCategoryLabel(cat: string) {
+-    return categoryTranslations[cat]?.[lang] || cat;
+-  }
+-
+-  function getCountryLabel(country: string) {
+-    return countryTranslations[country]?.[lang] || country;
+-  }
++  };
++}
++
++export default async function AppDetailsPage({ params }: PageProps) {
++  const app = await getAppBySlug(params.slug);
++  if (!app) notFound();
++
++  const schemas = [
++    {
++      "@context": "https://schema.org",
++      "@type": "SoftwareApplication",
++      name: app.name,
++      description: app.shortDescription,
++      applicationCategory: categoryLabels[app.category] || app.category,
++      operatingSystem: "Android, iOS",
++      inLanguage: "ar",
++      url: `${SITE_URL}/apps/${app.slug}`,
++      aggregateRating: {
++        "@type": "AggregateRating",
++        ratingValue: app.rating,
++        bestRating: 5,
++        worstRating: 1,
++        ratingCount: 1000
++      },
++      offers: app.pricing.length
++        ? {
++            "@type": "Offer",
++            price: app.pricing[0].monthly ?? 0,
++            priceCurrency: app.pricing[0].currency
++          }
++        : undefined
++    },
++    {
++      "@context": "https://schema.org",
++      "@type": "BreadcrumbList",
++      itemListElement: [
++        { "@type": "ListItem", position: 1, name: "الرئيسية", item: SITE_URL },
++        {
++          "@type": "ListItem",
++          position: 2,
++          name: "التطبيقات",
++          item: `${SITE_URL}/apps`
++        },
++        {
++          "@type": "ListItem",
++          position: 3,
++          name: app.name,
++          item: `${SITE_URL}/apps/${app.slug}`
++        }
++      ]
++    }
++  ];
+ 
+   return (
+-    <div className="bg-cream-50 min-h-screen">
+-      <div className="max-w-5xl mx-auto px-4 py-12 space-y-8 animate-fade-in">
+-        {/* Back Button */}
+-        <Link
+-          href="/apps"
+-          className="inline-flex items-center gap-2 text-accent-600 hover:text-accent-700 transition"
+-        >
+-          <span>{lang === "ar" ? "←" : "→"}</span>
+-          <span>{lang === "ar" ? "العودة للتطبيقات" : "Back to Apps"}</span>
+-        </Link>
+-
+-        {/* Hero */}
+-        <section className="card-elegant p-6 md:p-8">
+-          <div className="flex flex-col md:flex-row gap-6">
+-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-cream-100 flex items-center justify-center text-6xl md:text-7xl shrink-0 shadow-soft">
+-              {app.icon}
+-            </div>
+-
+-            <div className="flex-1">
+-              <div className="flex flex-wrap items-center gap-2 mb-3">
+-                <span className="rounded-full bg-accent-100 text-accent-700 px-3 py-1 text-xs font-bold">
+-                  {getCategoryLabel(app.category)}
+-                </span>
+-                <span className="rounded-full bg-accent-100 text-accent-700 px-3 py-1 text-xs font-bold flex items-center gap-1">
+-                  <span>⭐</span>
+-                  <span>{app.rating}</span>
+-                </span>
+-              </div>
+-
+-              <h1 className="heading-display text-4xl md:text-5xl text-brand-900 mb-3">
+-                {app.name}
+-              </h1>
+-
+-              <p className="text-charcoal-500 leading-relaxed mb-4">
+-                {translatedShortDesc}
+-              </p>
+-
+-              <div className="flex flex-wrap gap-2 mb-4">
+-                {app.countries.map((country) => (
+-                  <span
+-                    key={country}
+-                    className="rounded-full bg-sage-50 text-sage-700 px-3 py-1 text-xs font-bold border border-sage-200"
+-                  >
+-                    🌍 {getCountryLabel(country)}
+-                  </span>
+-                ))}
+-              </div>
+-            </div>
+-          </div>
+-
+-          {/* Open App Buttons */}
+-          <div className="mt-6">
+-            <AppStoreButtons
+-              googlePlay={app.googlePlay}
+-              appStore={app.appStore}
+-              website={app.website}
+-              appName={app.name}
+-            />
+-          </div>
+-
+-          {/* Description */}
+-          {translatedDescription && (
+-            <div className="mt-6 pt-6 border-t border-cream-200">
+-              <h2 className="heading-elegant text-xl text-brand-900 mb-3">
+-                {lang === "ar" ? "نبذة عن التطبيق" : "About the App"}
+-              </h2>
+-              <p className="text-charcoal-800 leading-relaxed">
+-                {translatedDescription}
+-              </p>
+-            </div>
+-          )}
+-
+-          {/* Tags */}
+-          {translatedTags.length > 0 && (
+-            <div className="mt-4 flex flex-wrap gap-2">
+-              {translatedTags.map((tag, i) => (
+-                <span
+-                  key={i}
+-                  className="rounded-md bg-cream-100 px-3 py-1 text-xs text-charcoal-800"
+-                >
+-                  #{tag}
+-                </span>
+-              ))}
+-            </div>
+-          )}
+-        </section>
+-
+-        {/* Pros & Cons */}
+-        <section className="grid gap-6 md:grid-cols-2">
+-          {/* Pros */}
+-          <div className="card-elegant p-6">
+-            <h2 className="heading-elegant text-2xl text-brand-900 mb-4 flex items-center gap-2">
+-              <span className="text-sage-500">✓</span>
+-              <span>{lang === "ar" ? "المميزات" : "Pros"}</span>
+-            </h2>
+-            <ul className="space-y-2">
+-              {translatedPros.map((item, i) => (
+-                <li
+-                  key={i}
+-                  className="rounded-xl bg-sage-50 border border-sage-200 px-4 py-3 text-charcoal-800 flex items-start gap-2"
+-                >
+-                  <span className="text-sage-600 shrink-0">✓</span>
+-                  <span className="text-sm">{item}</span>
+-                </li>
+-              ))}
+-            </ul>
+-          </div>
+-
+-          {/* Cons */}
+-          <div className="card-elegant p-6">
+-            <h2 className="heading-elegant text-2xl text-brand-900 mb-4 flex items-center gap-2">
+-              <span className="text-red-500">✗</span>
+-              <span>{lang === "ar" ? "العيوب" : "Cons"}</span>
+-            </h2>
+-            <ul className="space-y-2">
+-              {translatedCons.map((item, i) => (
+-                <li
+-                  key={i}
+-                  className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-charcoal-800 flex items-start gap-2"
+-                >
+-                  <span className="text-red-600 shrink-0">✗</span>
+-                  <span className="text-sm">{item}</span>
+-                </li>
+-              ))}
+-            </ul>
+-          </div>
+-        </section>
+-
+-        {/* Pricing */}
+-        {app.pricing.length > 0 && (
+-          <section className="card-elegant p-6">
+-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+-              <h2 className="heading-elegant text-2xl text-brand-900 flex items-center gap-2">
+-                <span>💰</span>
+-                <span>{lang === "ar" ? "مقارنة الأسعار" : "Pricing Comparison"}</span>
+-              </h2>
+-              {cheapest && (
+-                <span className="rounded-full bg-accent-100 text-accent-800 px-4 py-2 text-sm font-bold">
+-                  🏆 {lang === "ar" ? "الأرخص" : "Cheapest"}: {getCountryLabel(cheapest.country)}
+-                </span>
+-              )}
+-            </div>
+-
+-            <div className="grid gap-4 md:grid-cols-3">
+-              {app.pricing.map((price) => (
+-                <div
+-                  key={price.country}
+-                  className="rounded-2xl border-2 border-cream-200 p-5 hover:border-accent-300 transition bg-white"
+-                >
+-                  <p className="font-bold text-lg mb-3 text-brand-900">
+-                    🌍 {getCountryLabel(price.country)}
+-                  </p>
+-                  <div className="space-y-2">
+-                    <div className="flex justify-between text-sm">
+-                      <span className="text-charcoal-500">
+-                        {lang === "ar" ? "شهري:" : "Monthly:"}
+-                      </span>
+-                      <span className="font-bold text-brand-900">
+-                        {price.monthly === 0
+-                          ? lang === "ar" ? "مجاني" : "Free"
+-                          : formatMoney(price.monthly, price.currency)}
+-                      </span>
+-                    </div>
+-                    {price.yearly !== undefined && price.yearly > 0 && (
+-                      <div className="flex justify-between text-sm">
+-                        <span className="text-charcoal-500">
+-                          {lang === "ar" ? "سنوي:" : "Yearly:"}
+-                        </span>
+-                        <span className="font-bold text-brand-900">
+-                          {formatMoney(price.yearly, price.currency)}
+-                        </span>
+-                      </div>
+-                    )}
+-                  </div>
+-                  {price.note && (
+-                    <p className="mt-3 text-xs text-accent-600 border-t border-cream-100 pt-2">
+-                      💡 {price.note}
+-                    </p>
+-                  )}
+-                </div>
+-              ))}
+-            </div>
+-          </section>
+-        )}
+-
+-        {/* Reviews */}
+-        <ReviewsSection appSlug={app.slug} />
+-
+-        {/* Comments */}
+-        <CommentsSection appSlug={app.slug} />
+-      </div>
+-    </div>
++    <>
++      {schemas.map((s, i) => (
++        <script
++          key={i}
++          type="application/ld+json"
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }}
++        />
++      ))}
++      <AppDetailsView app={app} />
++    </>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/src/app/compare-hub/page.tsx b/src/app/compare-hub/page.tsx
+index f50e83f..dad5695 100644
+--- a/src/app/compare-hub/page.tsx
++++ b/src/app/compare-hub/page.tsx
+@@ -1,11 +1,13 @@
+ "use client";
+ 
+ import { useMemo, useState } from "react";
++import Link from "next/link";
+ import {
+   calculateRideEstimates,
+   calculateDistance,
+   Location
+ } from "@/lib/ride-calculator";
++import { comparisons } from "@/data/comparisons";
+ import { calculateFoodOrder, getAllCuisines } from "@/lib/food-delivery-calculator";
+ import { LocationSearch } from "@/components/location-search";
+ import { useLanguage } from "@/contexts/language-context";
+@@ -35,6 +37,41 @@ export default function CompareHubPage() {
+           </p>
+         </div>
+ 
++        {/* مقارناتنا التفصيلية الجاهزة */}
++        <div className="card-elegant p-6">
++          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
++            <h2 className="heading-elegant text-xl text-brand-900">
++              {lang === "ar" ? "📑 مقارناتنا التفصيلية" : "📑 Our detailed comparisons"}
++            </h2>
++            <Link href="/compare" className="text-sm font-bold text-accent-600 hover:text-accent-700 transition">
++              {lang === "ar" ? "كل المقارنات ←" : "All comparisons ←"}
++            </Link>
++          </div>
++          <div className="grid gap-4 md:grid-cols-2">
++            {comparisons.map((c) => (
++              <Link
++                key={c.slug}
++                href={`/compare/${c.slug}`}
++                className="group rounded-2xl border-2 border-cream-200 bg-white p-5 transition hover:border-accent-300 hover:-translate-y-0.5"
++              >
++                <div className="flex items-center gap-1.5 text-2xl" aria-hidden>
++                  {c.apps.map((a, i) => (
++                    <span key={a.appSlug} className="flex items-center gap-1.5">
++                      {a.icon}
++                      {i === 0 && <span className="text-xs font-black text-charcoal-300">VS</span>}
++                    </span>
++                  ))}
++                  <span className="mr-auto rounded-full bg-accent-100 px-2.5 py-0.5 text-[10px] font-bold text-accent-700">
++                    {c.category}
++                  </span>
++                </div>
++                <p className="mt-3 font-bold text-brand-900 group-hover:text-accent-600 transition">{c.h1}</p>
++                <p className="mt-1 line-clamp-2 text-sm leading-6 text-charcoal-500">{c.metaDescription}</p>
++              </Link>
++            ))}
++          </div>
++        </div>
++
+         {/* اختيار الفئة */}
+         <div className="card-elegant p-6">
+           <h2 className="heading-elegant text-xl text-brand-900 mb-4">
+diff --git a/src/app/compare/[slug]/not-found.tsx b/src/app/compare/[slug]/not-found.tsx
+new file mode 100644
+index 0000000..8e6eb78
+--- /dev/null
++++ b/src/app/compare/[slug]/not-found.tsx
+@@ -0,0 +1,27 @@
++import Link from 'next/link';
++
++export default function CompareNotFound() {
++  return (
++    <main className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
++      <span className="text-5xl" aria-hidden>⚖️</span>
++      <h1 className="mt-4 text-2xl font-bold text-slate-800">المقارنة دي مش موجودة</h1>
++      <p className="mt-2 text-slate-500">
++        يمكن انتهت صلاحيتها أو الرابط فيه غلطة.
++      </p>
++      <div className="mt-6 flex gap-3">
++        <Link
++          href="/compare"
++          className="rounded-xl bg-brand-900 px-5 py-2.5 font-semibold text-white hover:opacity-90"
++        >
++          كل المقارنات
++        </Link>
++        <Link
++          href="/apps"
++          className="rounded-xl border border-slate-300 px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
++        >
++          تصفح التطبيقات
++        </Link>
++      </div>
++    </main>
++  );
++}
+diff --git a/src/app/compare/[slug]/page.tsx b/src/app/compare/[slug]/page.tsx
+new file mode 100644
+index 0000000..e798ef9
+--- /dev/null
++++ b/src/app/compare/[slug]/page.tsx
+@@ -0,0 +1,101 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { notFound } from "next/navigation";
++
++import { getComparisonBySlug, getComparisonSlugs } from "@/data/comparisons";
++import { comparisonSchemas, SITE_URL } from "@/lib/comparison-schema";
++import { CompareHero } from "@/components/compare/compare-hero";
++import { VerdictCard } from "@/components/compare/verdict-card";
++import { ComparisonTable } from "@/components/compare/comparison-table";
++import { PricingSection } from "@/components/compare/pricing-section";
++import { ProsConsCards } from "@/components/compare/pros-cons-cards";
++import { ComparisonFaq } from "@/components/compare/comparison-faq";
++import { RelatedComparisons } from "@/components/compare/related-comparisons";
++
++type PageProps = { params: { slug: string } };
++
++/**
++ * أي slug مش في الداتا = 404 حقيقي (مش Soft 404 بـ status 200).
++ * مقارنات جديدة بتتضاف للداتا وبتدخل في ريبيلد عادي.
++ */
++export const dynamicParams = false;
++
++export function generateStaticParams() {
++  return getComparisonSlugs().map((slug) => ({ slug }));
++}
++
++/* عنوان/وصف/canonical/OG فريد لكل مقارنة */
++export function generateMetadata({ params }: PageProps): Metadata {
++  const c = getComparisonBySlug(params.slug);
++  if (!c) return {};
++
++  const url = `${SITE_URL}/compare/${c.slug}`;
++  return {
++    title: c.metaTitle,
++    description: c.metaDescription,
++    alternates: { canonical: url },
++    openGraph: {
++      title: c.metaTitle,
++      description: c.metaDescription,
++      url,
++      type: "article",
++      locale: "ar_EG",
++      siteName: "AppHub",
++      modifiedTime: c.updatedAt
++    },
++    twitter: { card: "summary_large_image", title: c.metaTitle, description: c.metaDescription }
++  };
++}
++
++export default function ComparisonPage({ params }: PageProps) {
++  const c = getComparisonBySlug(params.slug);
++  if (!c) notFound();
++
++  return (
++    <div className="bg-cream-50 min-h-screen">
++      {comparisonSchemas(c).map((s, i) => (
++        <script
++          key={i}
++          type="application/ld+json"
++          dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }}
++        />
++      ))}
++
++      <article className="max-w-4xl mx-auto px-4 py-12">
++        {/* مسار التنقل */}
++        <nav aria-label="مسار التنقل" className="mb-8 flex flex-wrap items-center gap-2 text-sm text-charcoal-500">
++          <Link href="/" className="hover:text-accent-600 transition">الرئيسية</Link>
++          <span aria-hidden>‹</span>
++          <Link href="/compare" className="hover:text-accent-600 transition">المقارنات</Link>
++          <span aria-hidden>‹</span>
++          <span className="font-bold text-brand-900">{c.h1}</span>
++        </nav>
++
++        <CompareHero comparison={c} />
++        <VerdictCard comparison={c} />
++        <ComparisonTable comparison={c} />
++        <PricingSection comparison={c} />
++        <ProsConsCards comparison={c} />
++        <ComparisonFaq comparison={c} />
++        <RelatedComparisons comparison={c} />
++
++        {/* CTA */}
++        <section className="mt-12 rounded-3xl bg-brand-900 p-8 text-center text-white">
++          <h2 className="heading-elegant text-2xl">لسه محتار؟</h2>
++          <p className="mt-2 text-white/80">تصفح التقييمات الكاملة والتفاصيل لكل تطبيق في الدليل</p>
++          <div className="mt-6 flex flex-wrap justify-center gap-3">
++            {c.apps.map((a) => (
++              <Link
++                key={a.appSlug}
++                href={`/apps/${a.appSlug}`}
++                className="rounded-2xl bg-white/10 px-5 py-2.5 font-bold transition hover:bg-white/20"
++              >
++                {a.icon} صفحة {a.name}
++              </Link>
++            ))}
++          </div>
++        </section>
++      </article>
++    </div>
++  );
++}
+diff --git a/src/app/compare/not-found.tsx b/src/app/compare/not-found.tsx
+new file mode 100644
+index 0000000..8ad4db8
+--- /dev/null
++++ b/src/app/compare/not-found.tsx
+@@ -0,0 +1,27 @@
++import Link from 'next/link';
++
++export default function CompareNotFound() {
++  return (
++    <main className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
++      <span className="text-5xl" aria-hidden>⚖️</span>
++      <h1 className="mt-4 text-2xl font-bold text-slate-800">المقارنة دي مش موجودة</h1>
++      <p className="mt-2 text-slate-500">
++        يمكن انتهت صلاحيتها أو الرابط فيه غلطة.
++      </p>
++      <div className="mt-6 flex gap-3">
++        <Link
++          href="/compare"
++          className="rounded-xl bg-[#1a2942] px-5 py-2.5 font-semibold text-white hover:opacity-90"
++        >
++          كل المقارنات
++        </Link>
++        <Link
++          href="/apps"
++          className="rounded-xl border border-slate-300 px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
++        >
++          تصفح التطبيقات
++        </Link>
++      </div>
++    </main>
++  );
++}
+diff --git a/src/app/compare/page.tsx b/src/app/compare/page.tsx
+index 88091ee..1101865 100644
+--- a/src/app/compare/page.tsx
++++ b/src/app/compare/page.tsx
+@@ -1,58 +1,89 @@
+-"use client";
+-import { useMemo, useState } from "react";
+-import { apps } from "@/data/apps";
+-import { countryLabels } from "@/lib/constants";
+-import { formatMoney, getPriceForCountry } from "@/lib/helpers";
+-import { CountryCode } from "@/lib/types";
+-export default function ComparePage() {
+-  const [first, setFirst] = useState(apps[0].slug);
+-  const [second, setSecond] = useState(apps[1].slug);
+-  const [country, setCountry] = useState<CountryCode>("EG");
+-  const app1 = useMemo(() => apps.find(a => a.slug === first), [first]);
+-  const app2 = useMemo(() => apps.find(a => a.slug === second), [second]);
+-  if (!app1 || !app2) return null;
+-  const price1 = getPriceForCountry(app1, country);
+-  const price2 = getPriceForCountry(app2, country);
+-  const winner = app1.rating > app2.rating ? app1.name : app2.rating > app1.rating ? app2.name : "تعادل";
++import type { Metadata } from "next";
++import Link from "next/link";
++import { comparisons } from "@/data/comparisons";
++import { CompareTool } from "@/components/compare/compare-tool";
++
++/**
++ * /compare — مركز المقارنات:
++ * 1) المقارنات التفصيلية الجاهزة (SEO pages)
++ * 2) الأداة التفاعلية لمقارنة أي تطبيقين
++ */
++export const metadata: Metadata = {
++  title: "كل المقارنات — اختار التطبيق الأنسب ليك",
++  description:
++    "مقارنات تفصيلية بالأسعار والمميزات بين أفضل التطبيقات: ستريمنج، مشاوير، توصيل أكل، تقسيط وأكثر — أو قارن بين أي تطبيقين بنفسك.",
++  alternates: { canonical: "https://apphub-eight.vercel.app/compare" }
++};
++
++export default function CompareIndexPage() {
++  const categories = [...new Set(comparisons.map((c) => c.category))];
++
+   return (
+-    <div className="space-y-6">
+-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+-        <h1 className="mb-4 text-2xl font-extrabold">مقارنة بين تطبيقين</h1>
+-        <div className="grid gap-3 md:grid-cols-3">
+-          <select className="rounded-2xl border px-4 py-3" value={first} onChange={e => setFirst(e.target.value)}>
+-            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
+-          </select>
+-          <select className="rounded-2xl border px-4 py-3" value={second} onChange={e => setSecond(e.target.value)}>
+-            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
+-          </select>
+-          <select className="rounded-2xl border px-4 py-3" value={country} onChange={e => setCountry(e.target.value as CountryCode)}>
+-            <option value="EG">{countryLabels.EG}</option>
+-            <option value="SA">{countryLabels.SA}</option>
+-            <option value="AE">{countryLabels.AE}</option>
+-          </select>
+-        </div>
+-      </div>
+-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+-        <p className="mb-4 rounded-2xl bg-amber-50 px-4 py-3 text-amber-800">🏆 الأفضل حاليًا: {winner}</p>
+-        <div className="overflow-x-auto">
+-          <table className="min-w-full border-separate border-spacing-y-2 text-right">
+-            <tbody>
+-              {[
+-                ["العنصر", app1.name, app2.name],
+-                ["التقييم", `⭐ ${app1.rating}`, `⭐ ${app2.rating}`],
+-                ["الوصف", app1.shortDescription, app2.shortDescription],
+-                [`السعر في ${countryLabels[country]}`, formatMoney(price1?.monthly, price1?.currency ?? "EGP"), formatMoney(price2?.monthly, price2?.currency ?? "EGP")],
+-                ["متاح في البلد؟", app1.countries.includes(country)?"نعم":"لا", app2.countries.includes(country)?"نعم":"لا"],
+-                ["أبرز ميزة", app1.pros[0], app2.pros[0]],
+-                ["أبرز عيب", app1.cons[0], app2.cons[0]]
+-              ].map((row, i) => (
+-                <tr key={i} className={i===0?"bg-slate-50":"bg-white"}>
+-                  {row.map((cell, j) => <td key={j} className={`px-4 py-3 ${j===0?"font-bold":""} ${i>0?"border":""}`}>{cell}</td>)}
+-                </tr>
+-              ))}
+-            </tbody>
+-          </table>
+-        </div>
++    <div className="bg-cream-50 min-h-screen">
++      <div className="max-w-5xl mx-auto px-4 py-12 space-y-14">
++        <header className="text-center">
++          <span className="rounded-full bg-accent-100 text-accent-700 px-4 py-1.5 text-sm font-bold">
++            ⚖️ قارن بذكاء
++          </span>
++          <h1 className="heading-display mt-4 text-3xl sm:text-4xl text-brand-900">
++            كل المقارنات
++          </h1>
++          <p className="mt-3 max-w-xl mx-auto text-charcoal-500 leading-relaxed">
++            مقارنات تفصيلية بالأسعار الحالية والميزات الحقيقية، بنحدّثها دوريًا —
++            أو استخدم الأداة وقارن أي تطبيقين بنفسك.
++          </p>
++        </header>
++
++        {/* المقارنات التفصيلية */}
++        <section aria-labelledby="detailed" className="space-y-10">
++          <h2 id="detailed" className="heading-elegant text-2xl text-brand-900">
++            📑 مقارناتنا التفصيلية
++          </h2>
++          {categories.map((cat) => (
++            <div key={cat}>
++              <h3 className="flex items-center gap-2 font-bold text-charcoal-800 mb-4">
++                <span className="h-2 w-2 rounded-full bg-accent-400" aria-hidden />
++                {cat}
++              </h3>
++              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
++                {comparisons
++                  .filter((c) => c.category === cat)
++                  .map((c) => (
++                    <Link
++                      key={c.slug}
++                      href={`/compare/${c.slug}`}
++                      className="card-elegant group p-5 transition hover:-translate-y-0.5 hover:shadow-soft"
++                    >
++                      <div className="flex items-center gap-1.5 text-3xl" aria-hidden>
++                        {c.apps.map((a, i) => (
++                          <span key={a.appSlug} className="flex items-center gap-1.5">
++                            {a.icon}
++                            {i === 0 && (
++                              <span className="text-xs font-black text-charcoal-300">VS</span>
++                            )}
++                          </span>
++                        ))}
++                      </div>
++                      <h4 className="mt-3 font-bold text-brand-900 group-hover:text-accent-600 transition">
++                        {c.h1}
++                      </h4>
++                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-charcoal-500">
++                        {c.metaDescription}
++                      </p>
++                      <span className="mt-3 inline-block text-sm font-bold text-accent-600">
++                        اقرأ المقارنة ←
++                      </span>
++                    </Link>
++                  ))}
++              </div>
++            </div>
++          ))}
++        </section>
++
++        {/* الأداة التفاعلية */}
++        <section aria-label="أداة المقارنة التفاعلية" className="space-y-6">
++          <CompareTool />
++        </section>
+       </div>
+     </div>
+   );
+diff --git a/src/app/deals/page.tsx b/src/app/deals/page.tsx
+index 7cfa6c4..4117dd4 100644
+--- a/src/app/deals/page.tsx
++++ b/src/app/deals/page.tsx
+@@ -1,48 +1,13 @@
+-"use client";
+-import { useMemo, useState, useEffect } from "react";
+-import { deals as initialDeals } from "@/data/deals";
+-import { ReportDealButton } from "@/components/report-deal-button";
+-import { DealItem } from "@/lib/types";
+-import { createClient } from "@/lib/supabase/client";
++import type { Metadata } from "next";
++import { DealsView } from "@/components/deals-view";
++
++export const metadata: Metadata = {
++  title: "العروض والخصومات — كوبونات شغالة",
++  description:
++    "أحدث العروض وكوبونات الخصم للتطبيقات والمتاجر في مصر والسعودية والإمارات — العروض الصالحة فقط، منتهية الصلاحية بتتخفي أوتوماتيك.",
++  alternates: { canonical: "https://apphub-eight.vercel.app/deals" }
++};
++
+ export default function DealsPage() {
+-  const [deals, setDeals] = useState<DealItem[]>(initialDeals);
+-  const [category, setCategory] = useState("all");
+-  useEffect(() => {
+-    async function load() {
+-      const supabase = createClient();
+-      const { data } = await supabase.from("deals").select("*").order("created_at", { ascending: false });
+-      if (data?.length) setDeals(data.map((row: any) => ({ id:row.id, title:row.title, brand:row.brand, category:row.category, discount:row.discount, views:row.views, expiresAt:row.expires_at, code:row.code??undefined })));
+-    }
+-    load();
+-  }, []);
+-  const filtered = useMemo(() => deals.filter(d => category==="all" || d.category===category), [deals, category]);
+-  return (
+-    <div className="space-y-6">
+-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+-        <h1 className="mb-4 text-2xl font-extrabold">العروض والخصومات</h1>
+-        <select className="rounded-2xl border px-4 py-3" value={category} onChange={e => setCategory(e.target.value)}>
+-          <option value="all">كل الفئات</option>
+-          <option value="tech">تكنولوجيا</option>
+-          <option value="food">أكل</option>
+-          <option value="beauty">جمال</option>
+-          <option value="fashion">ملابس</option>
+-        </select>
+-      </div>
+-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+-        {filtered.map(deal => (
+-          <div key={deal.id} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+-            <div className="flex items-center justify-between">
+-              <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-700">خصم {deal.discount}%</span>
+-              <span className="text-sm text-slate-500">{deal.views} مشاهدة</span>
+-            </div>
+-            <h3 className="text-lg font-bold">{deal.title}</h3>
+-            <p className="text-sm text-slate-600">البراند: {deal.brand}</p>
+-            <p className="text-sm text-slate-600">ينتهي: {deal.expiresAt}</p>
+-            {deal.code && <p className="rounded-xl bg-slate-50 px-4 py-2 text-sm">كود الخصم: {deal.code}</p>}
+-            <ReportDealButton dealId={deal.id} />
+-          </div>
+-        ))}
+-      </div>
+-    </div>
+-  );
++  return <DealsView />;
+ }
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 5e0cf22..5a63007 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -5,6 +5,7 @@ import Link from "next/link";
+ import { AppCard } from "@/components/app-card";
+ import { apps as staticApps } from "@/data/apps";
+ import { deals } from "@/data/deals";
++import { getActiveDeals } from "@/lib/deals";
+ import { NewsletterForm } from "@/components/newsletter-form";
+ import { createClient } from "@/lib/supabase/client";
+ import { AppItem } from "@/lib/types";
+@@ -49,7 +50,10 @@ export default function HomePage() {
+   const allApps = [...dbApps, ...filteredStatic];
+ 
+   const topApps = [...allApps].sort((a, b) => b.rating - a.rating).slice(0, 6);
+-  const topDeals = [...deals].sort((a, b) => b.discount - a.discount).slice(0, 4);
++  // العروض الصالحة فقط — المنتهية مش هتظهر على الرئيسية
++  const topDeals = getActiveDeals(deals)
++    .sort((a, b) => b.discount - a.discount)
++    .slice(0, 4);
+ 
+   return (
+     <div className="-mx-4 -mt-8">
+@@ -110,7 +114,7 @@ export default function HomePage() {
+           <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_countries")}</p>
+         </div>
+         <div className="text-center">
+-          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">+{deals.length}</p>
++          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">+{getActiveDeals(deals).length}</p>
+           <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_deals")}</p>
+         </div>
+       </div>
+@@ -206,6 +210,7 @@ export default function HomePage() {
+       {/* ═══════════════════════════════════════ */}
+       {/* DEALS SECTION                           */}
+       {/* ═══════════════════════════════════════ */}
++      {topDeals.length > 0 && (
+       <section className="bg-cream-50 section-padding">
+         <div className="max-w-7xl mx-auto px-6">
+           <div className="text-center mb-16">
+@@ -255,6 +260,7 @@ export default function HomePage() {
+           </div>
+         </div>
+       </section>
++      )}
+ 
+       {/* ═══════════════════════════════════════ */}
+       {/* CTA SECTION                             */}
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 58d859f..b12ee0a 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -1,5 +1,6 @@
+ import { MetadataRoute } from "next";
+ import { apps as staticApps } from "@/data/apps";
++import { comparisons } from "@/data/comparisons";
+ import { createClient } from "@/lib/supabase/server";
+ 
+ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+@@ -13,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: baseUrl, lastModified: now, changeFrequency: "daily", priority: 1 },
+     { url: `${baseUrl}/apps`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+     { url: `${baseUrl}/compare-hub`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
++    { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+     { url: `${baseUrl}/ai`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/business`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+@@ -53,5 +55,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+       priority: 0.6
+     }));
+ 
+-  return [...staticPages, ...appPages, ...staticAppPages];
++  const comparisonPages: MetadataRoute.Sitemap = comparisons.map((c) => ({
++    url: `${baseUrl}/compare/${c.slug}`,
++    lastModified: new Date(c.updatedAt || now),
++    changeFrequency: "weekly" as const,
++    priority: 0.8
++  }));
++
++  return [...staticPages, ...comparisonPages, ...appPages, ...staticAppPages];
+ }
+\ No newline at end of file
+diff --git a/src/components/app-details-view.tsx b/src/components/app-details-view.tsx
+new file mode 100644
+index 0000000..822d35c
+--- /dev/null
++++ b/src/components/app-details-view.tsx
+@@ -0,0 +1,258 @@
++"use client";
++
++/**
++ * واجهة صفحة التطبيق التفاعلية — بتستقبل بيانات التطبيق جاهزة من السيرفر
++ * (app prop) فبتترندر الـ HTML الأولي كامل على السيرفر = SEO سليم.
++ *
++ * الجزء البيانات كان في useEffect قبل كده (كل المحتوى كان بيظهر بـ «جاري التحميل»
++ * للزاحف والزائر) — اتنقل للسيرفر في app/apps/[slug]/page.tsx.
++ */
++
++import Link from "next/link";
++import { AppItem } from "@/lib/types";
++import { useLanguage } from "@/contexts/language-context";
++import { useTranslatedText, useTranslatedArray } from "@/hooks/use-translated-text";
++import { formatMoney, getCheapestCountry } from "@/lib/helpers";
++import { ReviewsSection } from "@/components/reviews-section";
++import { AppStoreButtons } from "@/components/app-store-buttons";
++import { CommentsSection } from "@/components/comments-section";
++
++const categoryTranslations: Record<string, { ar: string; en: string }> = {
++  food: { ar: "أكل وتوصيل", en: "Food & Delivery" },
++  streaming: { ar: "ستريمنج", en: "Streaming" },
++  shopping: { ar: "تسوق", en: "Shopping" },
++  health: { ar: "صحة", en: "Health" },
++  transport: { ar: "مواصلات", en: "Transport" },
++  education: { ar: "تعليم", en: "Education" },
++  finance: { ar: "فلوس وبنوك", en: "Finance" },
++  "real-estate": { ar: "عقارات", en: "Real Estate" },
++  travel: { ar: "سفر", en: "Travel" },
++  gaming: { ar: "ألعاب", en: "Gaming" },
++  kids: { ar: "أطفال", en: "Kids" },
++  tools: { ar: "أدوات", en: "Tools" },
++  religious: { ar: "ديني", en: "Religious" },
++  government: { ar: "حكومي", en: "Government" },
++  freelance: { ar: "فريلانس", en: "Freelance" }
++};
++
++const countryTranslations: Record<string, { ar: string; en: string }> = {
++  EG: { ar: "مصر", en: "Egypt" },
++  SA: { ar: "السعودية", en: "Saudi Arabia" },
++  AE: { ar: "الإمارات", en: "UAE" }
++};
++
++export function AppDetailsView({ app }: { app: AppItem }) {
++  const { lang, t } = useLanguage();
++
++  // Translations
++  const translatedDescription = useTranslatedText(app?.description || "");
++  const translatedShortDesc = useTranslatedText(app?.shortDescription || "");
++  const translatedPros = useTranslatedArray(app?.pros || []);
++  const translatedCons = useTranslatedArray(app?.cons || []);
++  const translatedTags = useTranslatedArray(app?.tags || []);
++
++  const cheapest = getCheapestCountry(app);
++
++  function getCategoryLabel(cat: string) {
++    return categoryTranslations[cat]?.[lang] || cat;
++  }
++
++  function getCountryLabel(country: string) {
++    return countryTranslations[country]?.[lang] || country;
++  }
++
++  return (
++    <div className="bg-cream-50 min-h-screen">
++      <div className="max-w-5xl mx-auto px-4 py-12 space-y-8 animate-fade-in">
++        {/* Back Button */}
++        <Link
++          href="/apps"
++          className="inline-flex items-center gap-2 text-accent-600 hover:text-accent-700 transition"
++        >
++          <span>{lang === "ar" ? "←" : "→"}</span>
++          <span>{lang === "ar" ? "العودة للتطبيقات" : "Back to Apps"}</span>
++        </Link>
++
++        {/* Hero */}
++        <section className="card-elegant p-6 md:p-8">
++          <div className="flex flex-col md:flex-row gap-6">
++            <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-cream-100 flex items-center justify-center text-6xl md:text-7xl shrink-0 shadow-soft">
++              {app.icon}
++            </div>
++
++            <div className="flex-1">
++              <div className="flex flex-wrap items-center gap-2 mb-3">
++                <span className="rounded-full bg-accent-100 text-accent-700 px-3 py-1 text-xs font-bold">
++                  {getCategoryLabel(app.category)}
++                </span>
++                <span className="rounded-full bg-accent-100 text-accent-700 px-3 py-1 text-xs font-bold flex items-center gap-1">
++                  <span>⭐</span>
++                  <span>{app.rating}</span>
++                </span>
++              </div>
++
++              <h1 className="heading-display text-4xl md:text-5xl text-brand-900 mb-3">
++                {app.name}
++              </h1>
++
++              <p className="text-charcoal-500 leading-relaxed mb-4">
++                {translatedShortDesc}
++              </p>
++
++              <div className="flex flex-wrap gap-2 mb-4">
++                {app.countries.map((country) => (
++                  <span
++                    key={country}
++                    className="rounded-full bg-sage-50 text-sage-700 px-3 py-1 text-xs font-bold border border-sage-200"
++                  >
++                    🌍 {getCountryLabel(country)}
++                  </span>
++                ))}
++              </div>
++            </div>
++          </div>
++
++          {/* Open App Buttons */}
++          <div className="mt-6">
++            <AppStoreButtons
++              googlePlay={app.googlePlay}
++              appStore={app.appStore}
++              website={app.website}
++              appName={app.name}
++            />
++          </div>
++
++          {/* Description */}
++          {translatedDescription && (
++            <div className="mt-6 pt-6 border-t border-cream-200">
++              <h2 className="heading-elegant text-xl text-brand-900 mb-3">
++                {lang === "ar" ? "نبذة عن التطبيق" : "About the App"}
++              </h2>
++              <p className="text-charcoal-800 leading-relaxed">
++                {translatedDescription}
++              </p>
++            </div>
++          )}
++
++          {/* Tags */}
++          {translatedTags.length > 0 && (
++            <div className="mt-4 flex flex-wrap gap-2">
++              {translatedTags.map((tag, i) => (
++                <span
++                  key={i}
++                  className="rounded-md bg-cream-100 px-3 py-1 text-xs text-charcoal-800"
++                >
++                  #{tag}
++                </span>
++              ))}
++            </div>
++          )}
++        </section>
++
++        {/* Pros & Cons */}
++        <section className="grid gap-6 md:grid-cols-2">
++          {/* Pros */}
++          <div className="card-elegant p-6">
++            <h2 className="heading-elegant text-2xl text-brand-900 mb-4 flex items-center gap-2">
++              <span className="text-sage-500">✓</span>
++              <span>{lang === "ar" ? "المميزات" : "Pros"}</span>
++            </h2>
++            <ul className="space-y-2">
++              {translatedPros.map((item, i) => (
++                <li
++                  key={i}
++                  className="rounded-xl bg-sage-50 border border-sage-200 px-4 py-3 text-charcoal-800 flex items-start gap-2"
++                >
++                  <span className="text-sage-600 shrink-0">✓</span>
++                  <span className="text-sm">{item}</span>
++                </li>
++              ))}
++            </ul>
++          </div>
++
++          {/* Cons */}
++          <div className="card-elegant p-6">
++            <h2 className="heading-elegant text-2xl text-brand-900 mb-4 flex items-center gap-2">
++              <span className="text-red-500">✗</span>
++              <span>{lang === "ar" ? "العيوب" : "Cons"}</span>
++            </h2>
++            <ul className="space-y-2">
++              {translatedCons.map((item, i) => (
++                <li
++                  key={i}
++                  className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-charcoal-800 flex items-start gap-2"
++                >
++                  <span className="text-red-600 shrink-0">✗</span>
++                  <span className="text-sm">{item}</span>
++                </li>
++              ))}
++            </ul>
++          </div>
++        </section>
++
++        {/* Pricing */}
++        {app.pricing.length > 0 && (
++          <section className="card-elegant p-6">
++            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
++              <h2 className="heading-elegant text-2xl text-brand-900 flex items-center gap-2">
++                <span>💰</span>
++                <span>{lang === "ar" ? "مقارنة الأسعار" : "Pricing Comparison"}</span>
++              </h2>
++              {cheapest && (
++                <span className="rounded-full bg-accent-100 text-accent-800 px-4 py-2 text-sm font-bold">
++                  🏆 {lang === "ar" ? "الأرخص" : "Cheapest"}: {getCountryLabel(cheapest.country)}
++                </span>
++              )}
++            </div>
++
++            <div className="grid gap-4 md:grid-cols-3">
++              {app.pricing.map((price) => (
++                <div
++                  key={price.country}
++                  className="rounded-2xl border-2 border-cream-200 p-5 hover:border-accent-300 transition bg-white"
++                >
++                  <p className="font-bold text-lg mb-3 text-brand-900">
++                    🌍 {getCountryLabel(price.country)}
++                  </p>
++                  <div className="space-y-2">
++                    <div className="flex justify-between text-sm">
++                      <span className="text-charcoal-500">
++                        {lang === "ar" ? "شهري:" : "Monthly:"}
++                      </span>
++                      <span className="font-bold text-brand-900">
++                        {price.monthly === 0
++                          ? lang === "ar" ? "مجاني" : "Free"
++                          : formatMoney(price.monthly, price.currency)}
++                      </span>
++                    </div>
++                    {price.yearly !== undefined && price.yearly > 0 && (
++                      <div className="flex justify-between text-sm">
++                        <span className="text-charcoal-500">
++                          {lang === "ar" ? "سنوي:" : "Yearly:"}
++                        </span>
++                        <span className="font-bold text-brand-900">
++                          {formatMoney(price.yearly, price.currency)}
++                        </span>
++                      </div>
++                    )}
++                  </div>
++                  {price.note && (
++                    <p className="mt-3 text-xs text-accent-600 border-t border-cream-100 pt-2">
++                      💡 {price.note}
++                    </p>
++                  )}
++                </div>
++              ))}
++            </div>
++          </section>
++        )}
++
++        {/* Reviews */}
++        <ReviewsSection appSlug={app.slug} />
++
++        {/* Comments */}
++        <CommentsSection appSlug={app.slug} />
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/compare/compare-hero.tsx b/src/components/compare/compare-hero.tsx
+new file mode 100644
+index 0000000..e222f21
+--- /dev/null
++++ b/src/components/compare/compare-hero.tsx
+@@ -0,0 +1,42 @@
++import type { Comparison } from "@/data/comparisons";
++
++export function CompareHero({ comparison: c }: { comparison: Comparison }) {
++  return (
++    <header className="text-center">
++      <span className="rounded-full bg-accent-100 text-accent-700 px-4 py-1.5 text-sm font-bold">
++        ⚖️ مقارنة {c.category}
++      </span>
++
++      <div className="mt-8 flex items-center justify-center gap-4 sm:gap-8">
++        {c.apps.map((a, i) => (
++          <div key={a.appSlug} className="flex items-center gap-4 sm:gap-8">
++            {i > 0 && (
++              <span className="rounded-full bg-brand-900 px-3.5 py-1.5 text-sm font-black text-white shadow-soft">
++                VS
++              </span>
++            )}
++            <div className="flex flex-col items-center">
++              <span className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center text-5xl shadow-soft">
++                {a.icon}
++              </span>
++              <span className="mt-3 font-bold text-brand-900">{a.name}</span>
++              <span className="text-sm text-accent-600">⭐ {a.rating}</span>
++            </div>
++          </div>
++        ))}
++      </div>
++
++      <h1 className="heading-display mt-8 text-3xl sm:text-4xl text-brand-900">{c.h1}</h1>
++      <p className="mx-auto mt-4 max-w-2xl leading-8 text-charcoal-500">{c.intro}</p>
++
++      <p className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-sage-50 border border-sage-200 px-3 py-1 text-xs font-bold text-sage-700">
++        🔄 آخر تحديث:{" "}
++        {new Date(c.updatedAt).toLocaleDateString("ar-EG", {
++          year: "numeric",
++          month: "long",
++          day: "numeric"
++        })}
++      </p>
++    </header>
++  );
++}
+diff --git a/src/components/compare/compare-tool.tsx b/src/components/compare/compare-tool.tsx
+new file mode 100644
+index 0000000..7e96811
+--- /dev/null
++++ b/src/components/compare/compare-tool.tsx
+@@ -0,0 +1,74 @@
++"use client";
++
++/**
++ * أداة المقارنة التفاعلية بين أي تطبيقين — موجودة زي ما هي من الكود الأصلي،
++ * اتنقلت لمكون مستقل عشان صفحة /compare تبقى Server Component ليها SEO.
++ */
++
++import { useMemo, useState } from "react";
++import { apps } from "@/data/apps";
++import { countryLabels } from "@/lib/constants";
++import { formatMoney, getPriceForCountry } from "@/lib/helpers";
++import { CountryCode } from "@/lib/types";
++
++export function CompareTool() {
++  const [first, setFirst] = useState(apps[0].slug);
++  const [second, setSecond] = useState(apps[1].slug);
++  const [country, setCountry] = useState<CountryCode>("EG");
++  const app1 = useMemo(() => apps.find(a => a.slug === first), [first]);
++  const app2 = useMemo(() => apps.find(a => a.slug === second), [second]);
++  if (!app1 || !app2) return null;
++  const price1 = getPriceForCountry(app1, country);
++  const price2 = getPriceForCountry(app2, country);
++  const winner = app1.rating > app2.rating ? app1.name : app2.rating > app1.rating ? app2.name : "تعادل";
++
++  return (
++    <>
++      <div className="card-elegant p-6">
++        <h2 className="heading-elegant mb-4 text-xl text-brand-900">قارن بين أي تطبيقين بنفسك</h2>
++        <div className="grid gap-3 md:grid-cols-3">
++          <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={first} onChange={e => setFirst(e.target.value)}>
++            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
++          </select>
++          <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={second} onChange={e => setSecond(e.target.value)}>
++            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
++          </select>
++          <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={country} onChange={e => setCountry(e.target.value as CountryCode)}>
++            <option value="EG">{countryLabels.EG}</option>
++            <option value="SA">{countryLabels.SA}</option>
++            <option value="AE">{countryLabels.AE}</option>
++          </select>
++        </div>
++      </div>
++
++      <div className="card-elegant p-6">
++        <p className="mb-4 rounded-2xl bg-accent-50 border border-accent-200 px-4 py-3 text-accent-800 font-bold">
++          🏆 الأفضل حاليًا: {winner}
++        </p>
++        <div className="overflow-x-auto">
++          <table className="min-w-full border-separate border-spacing-y-2 text-right">
++            <tbody>
++              {[
++                ["العنصر", app1.name, app2.name],
++                ["التقييم", `⭐ ${app1.rating}`, `⭐ ${app2.rating}`],
++                ["الوصف", app1.shortDescription, app2.shortDescription],
++                [`السعر في ${countryLabels[country]}`, formatMoney(price1?.monthly, price1?.currency ?? "EGP"), formatMoney(price2?.monthly, price2?.currency ?? "EGP")],
++                ["متاح في البلد؟", app1.countries.includes(country) ? "نعم" : "لا", app2.countries.includes(country) ? "نعم" : "لا"],
++                ["أبرز ميزة", app1.pros[0], app2.pros[0]],
++                ["أبرز عيب", app1.cons[0], app2.cons[0]]
++              ].map((row, i) => (
++                <tr key={i} className={i === 0 ? "bg-cream-50" : "bg-white"}>
++                  {row.map((cell, j) => (
++                    <td key={j} className={`px-4 py-3 ${j === 0 ? "font-bold text-brand-900" : ""} ${i > 0 ? "border border-cream-200" : ""}`}>
++                      {cell}
++                    </td>
++                  ))}
++                </tr>
++              ))}
++            </tbody>
++          </table>
++        </div>
++      </div>
++    </>
++  );
++}
+diff --git a/src/components/compare/comparison-faq.tsx b/src/components/compare/comparison-faq.tsx
+new file mode 100644
+index 0000000..1b5cb7b
+--- /dev/null
++++ b/src/components/compare/comparison-faq.tsx
+@@ -0,0 +1,29 @@
++import type { Comparison } from "@/data/comparisons";
++
++/**
++ * details/summary بيشتغل من غير JavaScript —
++ * النص موجود في الـ HTML الأصلي = جوجل بيقراه وبيظهره كـ FAQ rich result.
++ */
++export function ComparisonFaq({ comparison: c }: { comparison: Comparison }) {
++  return (
++    <section aria-labelledby="faq" className="mt-12">
++      <h2 id="faq" className="heading-elegant text-2xl text-brand-900">
++        🤔 أسئلة شائعة
++      </h2>
++
++      <div className="mt-5 space-y-3">
++        {c.faq.map((f, i) => (
++          <details key={i} className="card-elegant group p-5 open:ring-1 open:ring-accent-300">
++            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-brand-900 marker:hidden">
++              {f.q}
++              <span aria-hidden className="shrink-0 text-charcoal-500 transition-transform group-open:rotate-180">
++                ⌄
++              </span>
++            </summary>
++            <p className="mt-3 leading-8 text-charcoal-500">{f.a}</p>
++          </details>
++        ))}
++      </div>
++    </section>
++  );
++}
+diff --git a/src/components/compare/comparison-table.tsx b/src/components/compare/comparison-table.tsx
+new file mode 100644
+index 0000000..71d31d6
+--- /dev/null
++++ b/src/components/compare/comparison-table.tsx
+@@ -0,0 +1,52 @@
++import type { Comparison } from "@/data/comparisons";
++
++export function ComparisonTable({ comparison: c }: { comparison: Comparison }) {
++  return (
++    <section aria-labelledby="details-table" className="mt-12">
++      <h2 id="details-table" className="heading-elegant text-2xl text-brand-900">
++        📊 مقارنة تفصيلية بند ببند
++      </h2>
++
++      <div className="card-elegant mt-5 overflow-x-auto p-0">
++        <table className="w-full min-w-[560px] border-collapse text-right">
++          <thead>
++            <tr className="bg-brand-900 text-white">
++              <th scope="col" className="p-4 text-sm font-bold">وجه المقارنة</th>
++              {c.apps.map((a) => (
++                <th key={a.appSlug} scope="col" className="p-4 text-sm font-bold">
++                  {a.icon} {a.name}
++                </th>
++              ))}
++            </tr>
++          </thead>
++          <tbody>
++            {c.criteria.map((row, ri) => (
++              <tr key={ri} className={ri % 2 ? "bg-cream-50" : "bg-white"}>
++                <th scope="row" className="p-4 align-top text-sm font-bold text-brand-900">
++                  {row.label}
++                </th>
++                {row.values.map((v, vi) => (
++                  <td
++                    key={vi}
++                    className={`p-4 align-top text-sm leading-7 ${
++                      row.winner === vi
++                        ? "bg-sage-50 font-bold text-sage-700"
++                        : "text-charcoal-500"
++                    }`}
++                  >
++                    {row.winner === vi && (
++                      <span className="ml-1 inline-block rounded-full bg-sage-600 px-2 py-0.5 text-[10px] font-bold text-white">
++                        الأفضل ✓
++                      </span>
++                    )}
++                    {v}
++                  </td>
++                ))}
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++    </section>
++  );
++}
+diff --git a/src/components/compare/pricing-section.tsx b/src/components/compare/pricing-section.tsx
+new file mode 100644
+index 0000000..df646ba
+--- /dev/null
++++ b/src/components/compare/pricing-section.tsx
+@@ -0,0 +1,52 @@
++import type { Comparison } from "@/data/comparisons";
++
++export function PricingSection({ comparison: c }: { comparison: Comparison }) {
++  return (
++    <section aria-labelledby="pricing" className="mt-12">
++      <h2 id="pricing" className="heading-elegant text-2xl text-brand-900">
++        💰 الأسعار حسب البلد
++      </h2>
++
++      <div className="mt-5 space-y-5">
++        {c.pricing.map((cp, ci) => (
++          <div key={ci} className="card-elegant p-6">
++            <h3 className="font-bold text-lg text-brand-900">{cp.country}</h3>
++
++            {cp.plans.length > 0 && (
++              <div className="mt-4 grid gap-4 sm:grid-cols-2">
++                {c.apps.map((app, ai) => {
++                  const plans = cp.plans.filter((p) => p.appIndex === ai);
++                  if (!plans.length) return null;
++                  return (
++                    <div key={app.appSlug} className="rounded-2xl border-2 border-cream-200 p-4 bg-white">
++                      <p className="mb-3 font-bold text-brand-900">
++                        {app.icon} {app.name}
++                      </p>
++                      <ul className="space-y-2.5">
++                        {plans.map((p, pi) => (
++                          <li key={pi} className="rounded-xl bg-cream-50 p-3">
++                            <div className="flex items-center justify-between gap-2">
++                              <span className="text-sm font-bold text-charcoal-500">{p.name}</span>
++                              <span className="text-sm font-black text-brand-900">{p.price}</span>
++                            </div>
++                            {p.note && <p className="mt-1 text-xs text-accent-600">{p.note}</p>}
++                          </li>
++                        ))}
++                      </ul>
++                    </div>
++                  );
++                })}
++              </div>
++            )}
++
++            {cp.footnote && (
++              <p className="mt-4 rounded-xl bg-accent-50 border border-accent-200 p-3 text-sm leading-7 text-accent-800">
++                💡 {cp.footnote}
++              </p>
++            )}
++          </div>
++        ))}
++      </div>
++    </section>
++  );
++}
+diff --git a/src/components/compare/pros-cons-cards.tsx b/src/components/compare/pros-cons-cards.tsx
+new file mode 100644
+index 0000000..9af026d
+--- /dev/null
++++ b/src/components/compare/pros-cons-cards.tsx
+@@ -0,0 +1,43 @@
++import type { Comparison } from "@/data/comparisons";
++
++export function ProsConsCards({ comparison: c }: { comparison: Comparison }) {
++  return (
++    <section aria-labelledby="proscons" className="mt-12">
++      <h2 id="proscons" className="heading-elegant text-2xl text-brand-900">
++        ⚖️ المميزات والعيوب
++      </h2>
++
++      <div className="mt-5 grid gap-6 md:grid-cols-2">
++        {c.apps.map((app, ai) => (
++          <div key={app.appSlug} className="card-elegant overflow-hidden p-0">
++            <div className="bg-cream-100 px-5 py-3 font-bold text-brand-900">
++              {app.icon} {app.name}
++            </div>
++            <div className="p-5">
++              <h3 className="text-sm font-black text-sage-600">✅ المميزات</h3>
++              <ul className="mt-3 space-y-2">
++                {c.pros[ai].map((p, i) => (
++                  <li key={i} className="flex items-start gap-2 text-sm leading-7 text-charcoal-800">
++                    <span className="mt-1 text-sage-500 shrink-0" aria-hidden>✓</span>
++                    {p}
++                  </li>
++                ))}
++              </ul>
++            </div>
++            <div className="border-t border-cream-200 p-5">
++              <h3 className="text-sm font-black text-red-600">❌ العيوب</h3>
++              <ul className="mt-3 space-y-2">
++                {c.cons[ai].map((p, i) => (
++                  <li key={i} className="flex items-start gap-2 text-sm leading-7 text-charcoal-800">
++                    <span className="mt-1 text-red-400 shrink-0" aria-hidden>✗</span>
++                    {p}
++                  </li>
++                ))}
++              </ul>
++            </div>
++          </div>
++        ))}
++      </div>
++    </section>
++  );
++}
+diff --git a/src/components/compare/related-comparisons.tsx b/src/components/compare/related-comparisons.tsx
+new file mode 100644
+index 0000000..758192b
+--- /dev/null
++++ b/src/components/compare/related-comparisons.tsx
+@@ -0,0 +1,43 @@
++import Link from "next/link";
++import { getComparisonBySlug, type Comparison } from "@/data/comparisons";
++
++/**
++ * ربط داخلي بين المقارنات — بيوزع قوة الصفحات وبيخلي جوجل يفهم هيكل الموقع.
++ */
++export function RelatedComparisons({ comparison: c }: { comparison: Comparison }) {
++  const related = c.related
++    .map((slug) => getComparisonBySlug(slug))
++    .filter((r): r is Comparison => Boolean(r));
++
++  if (!related.length) return null;
++
++  return (
++    <section aria-labelledby="related" className="mt-12">
++      <h2 id="related" className="heading-elegant text-2xl text-brand-900">
++        🔗 مقارنات ذات صلة
++      </h2>
++
++      <div className="mt-5 grid gap-4 sm:grid-cols-2">
++        {related.map((r) => (
++          <Link
++            key={r.slug}
++            href={`/compare/${r.slug}`}
++            className="card-elegant group p-5 transition hover:-translate-y-0.5 hover:shadow-soft"
++          >
++            <div className="flex items-center gap-1.5 text-2xl" aria-hidden>
++              {r.apps.map((a, i) => (
++                <span key={a.appSlug} className="flex items-center gap-1.5">
++                  {a.icon}
++                  {i === 0 && <span className="text-xs font-black text-charcoal-300">VS</span>}
++                </span>
++              ))}
++            </div>
++            <p className="mt-3 font-bold text-brand-900 group-hover:text-accent-600 transition">{r.h1}</p>
++            <p className="mt-1 line-clamp-2 text-sm leading-6 text-charcoal-500">{r.metaDescription}</p>
++            <span className="mt-3 inline-block text-sm font-bold text-accent-600">اقرأ المقارنة ←</span>
++          </Link>
++        ))}
++      </div>
++    </section>
++  );
++}
+diff --git a/src/components/compare/verdict-card.tsx b/src/components/compare/verdict-card.tsx
+new file mode 100644
+index 0000000..9289887
+--- /dev/null
++++ b/src/components/compare/verdict-card.tsx
+@@ -0,0 +1,28 @@
++import type { Comparison } from "@/data/comparisons";
++
++export function VerdictCard({ comparison: c }: { comparison: Comparison }) {
++  return (
++    <section aria-labelledby="verdict" className="mt-10">
++      <div className="card-elegant border-r-4 border-r-accent-400 p-6 sm:p-8">
++        <h2 id="verdict" className="heading-elegant flex items-center gap-2 text-xl text-brand-900">
++          🏆 الخلاصة السريعة
++        </h2>
++        <p className="mt-3 leading-8 text-charcoal-800">{c.verdict}</p>
++      </div>
++
++      <div className="mt-4 grid gap-3 sm:grid-cols-2">
++        {c.bestFor.map((b, i) => (
++          <div key={i} className="card-elegant flex items-start gap-3 p-4">
++            <span className="text-2xl" aria-hidden>{c.apps[b.appIndex].icon}</span>
++            <div>
++              <p className="text-xs font-bold text-charcoal-500">
++                {c.apps[b.appIndex].name} يناسبك لو...
++              </p>
++              <p className="mt-0.5 font-bold text-charcoal-800">{b.label}</p>
++            </div>
++          </div>
++        ))}
++      </div>
++    </section>
++  );
++}
+diff --git a/src/components/deals-view.tsx b/src/components/deals-view.tsx
+new file mode 100644
+index 0000000..c2c4e4b
+--- /dev/null
++++ b/src/components/deals-view.tsx
+@@ -0,0 +1,157 @@
++"use client";
++
++/**
++ * صفحة العروض — الصالحة في الأعلى مرتبة بالأقرب انتهاءً،
++ * والمنتهية بتتخفي في قسم مطوي بدل ما تضرب الثقة في الأكواد الشغالة.
++ */
++
++import { useMemo, useState, useEffect } from "react";
++import { deals as initialDeals } from "@/data/deals";
++import { ReportDealButton } from "@/components/report-deal-button";
++import { DealItem } from "@/lib/types";
++import { createClient } from "@/lib/supabase/client";
++import { getActiveDeals, getExpiredDeals, getExpiryLabel } from "@/lib/deals";
++
++export function DealsView() {
++  const [deals, setDeals] = useState<DealItem[]>(initialDeals);
++  const [category, setCategory] = useState("all");
++
++  useEffect(() => {
++    async function load() {
++      try {
++        const supabase = createClient();
++        const { data } = await supabase
++          .from("deals")
++          .select("*")
++          .order("created_at", { ascending: false });
++        if (data?.length)
++          setDeals(
++            data.map((row: any) => ({
++              id: row.id,
++              title: row.title,
++              brand: row.brand,
++              category: row.category,
++              discount: row.discount,
++              views: row.views,
++              expiresAt: row.expires_at,
++              code: row.code ?? undefined
++            }))
++          );
++      } catch {
++        // لو القاعدة مش متاحة نكمل بالبيانات الثابتة
++      }
++    }
++    load();
++  }, []);
++
++  const byCategory = useMemo(
++    () => deals.filter((d) => category === "all" || d.category === category),
++    [deals, category]
++  );
++  const active = useMemo(() => getActiveDeals(byCategory), [byCategory]);
++  const expired = useMemo(() => getExpiredDeals(byCategory), [byCategory]);
++
++  return (
++    <div className="space-y-6">
++      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
++        <div className="flex flex-wrap items-center justify-between gap-4">
++          <div>
++            <h1 className="text-2xl font-extrabold">العروض والخصومات</h1>
++            <p className="mt-1 text-sm text-slate-500">
++              {active.length > 0
++                ? `${active.length} عرض شغال دلوقتي ✅`
++                : "مفيش عروض شغالة حاليًا — راجعنا قريب"}
++            </p>
++          </div>
++          <select
++            className="rounded-2xl border px-4 py-3"
++            value={category}
++            onChange={(e) => setCategory(e.target.value)}
++          >
++            <option value="all">كل الفئات</option>
++            <option value="tech">تكنولوجيا</option>
++            <option value="food">أكل</option>
++            <option value="beauty">جمال</option>
++            <option value="fashion">ملابس</option>
++          </select>
++        </div>
++      </div>
++
++      {/* العروض الصالحة */}
++      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
++        {active.map((deal) => {
++          const expiry = getExpiryLabel(deal);
++          return (
++            <div
++              key={deal.id}
++              className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
++            >
++              <div className="flex items-center justify-between">
++                <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">
++                  خصم {deal.discount}%
++                </span>
++                <span className="text-sm text-slate-500">{deal.views} مشاهدة</span>
++              </div>
++              <h3 className="text-lg font-bold">{deal.title}</h3>
++              <p className="text-sm text-slate-600">البراند: {deal.brand}</p>
++              <p
++                className={`text-sm font-bold ${
++                  expiry.urgent ? "text-red-600" : "text-slate-600"
++                }`}
++              >
++                {expiry.text}
++              </p>
++              {deal.code && (
++                <p className="rounded-xl bg-slate-50 px-4 py-2 text-sm">
++                  كود الخصم: <b className="tracking-wider">{deal.code}</b>
++                </p>
++              )}
++              <ReportDealButton dealId={deal.id} />
++            </div>
++          );
++        })}
++      </div>
++
++      {active.length === 0 && (
++        <div className="rounded-3xl border-2 border-dashed border-slate-300 bg-white/50 p-10 text-center">
++          <p className="text-4xl">⏳</p>
++          <p className="mt-3 font-bold text-slate-700">
++            العروض الجديدة في الطريق
++          </p>
++          <p className="mt-1 text-sm text-slate-500">
++            فريقنا بيراجع الأكواد دوريًا — متنساش تراجعنا في مواسم التخفيضات
++          </p>
++        </div>
++      )}
++
++      {/* المنتهية — مطوية عشان متضربش الثقة */}
++      {expired.length > 0 && (
++        <details className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
++          <summary className="cursor-pointer list-none font-bold text-slate-500 marker:hidden">
++            🗃️ أرشيف العروض المنتهية ({expired.length})
++          </summary>
++          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
++            {expired.map((deal) => (
++              <div key={deal.id} className="rounded-xl bg-white p-4 opacity-60">
++                <div className="flex items-center justify-between">
++                  <span className="text-sm font-bold text-slate-500">
++                    خصم {deal.discount}%
++                  </span>
++                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-500">
++                    منتهي
++                  </span>
++                </div>
++                <p className="mt-2 text-sm font-bold text-slate-600">
++                  {deal.title}
++                </p>
++                <p className="text-xs text-slate-400">
++                  {deal.brand} — انتهى في {deal.expiresAt}
++                </p>
++              </div>
++            ))}
++          </div>
++        </details>
++      )}
++    </div>
++  );
++}
+diff --git a/src/data/comparisons.ts b/src/data/comparisons.ts
+new file mode 100644
+index 0000000..a86ea2d
+--- /dev/null
++++ b/src/data/comparisons.ts
+@@ -0,0 +1,338 @@
++/**
++ * نموذج بيانات المقارنات + محتوى المقارنات نفسه
++ * أي مقارنة جديدة = عنصر جديد في المصفوفة بس، والصفحة بتتولد أوتوماتيك.
++ */
++
++export interface ComparisonAppRef {
++  /** نفس slug بتاع صفحة التطبيق في /apps/[slug] */
++  appSlug: string;
++  /** الاسم المعروض بالعربي */
++  name: string;
++  /** إيموجي أو مسار لوجو */
++  icon: string;
++  /** تقييم التطبيق المعروض في الدليل */
++  rating: number;
++}
++
++export interface CriterionRow {
++  label: string;
++  /** قيمة كل تطبيق بالترتيب نفسه بتاع apps[] */
++  values: string[];
++  /** رقم التطبيق الفائز في الصف ده (اختياري — بيتحدد بالهايلايت) */
++  winner?: number;
++}
++
++export interface PricingPlan {
++  appIndex: number;
++  name: string;
++  /** السعر نص جاهز للعرض، مثال: "١٠٠ ج.م / شهريًا" */
++  price: string;
++  note?: string;
++}
++
++export interface CountryPricing {
++  country: string;
++  plans: PricingPlan[];
++  /** تنويه أسفل الجدول، مثال: الأسعار لا تشمل الضريبة */
++  footnote?: string;
++}
++
++export interface ComparisonFAQ {
++  q: string;
++  a: string;
++}
++
++export interface Comparison {
++  /** مقطع الرابط: netflix-vs-shahid — إنجليزي lowercase، متكررش مرتين */
++  slug: string;
++  category: string;
++  apps: ComparisonAppRef[];
++
++  /** SEO */
++  metaTitle: string;
++  metaDescription: string;
++  /** العنوان الرئيسي الظاهر fو الصفحة */
++  h1: string;
++  intro: string;
++
++  /** الخلاصة السريعة */
++  verdict: string;
++  /** "الأفضل لو..." لكل موقف */
++  bestFor: { appIndex: number; label: string }[];
++
++  criteria: CriterionRow[];
++  pros: string[][];
++  cons: string[][];
++  pricing: CountryPricing[];
++  faq: ComparisonFAQ[];
++  /** slugs مقارنات ذات صلة — بتظهر أسفل الصفحة (روابط داخلية) */
++  related: string[];
++
++  /** ISO date — بيطلع في الصفحة وفي schema وlastmod */
++  updatedAt: string;
++}
++
++export const comparisons: Comparison[] = [
++  {
++    slug: 'netflix-vs-shahid',
++    category: 'ستريمنج',
++    apps: [
++      { appSlug: 'netflix', name: 'نتفليكس', icon: '🎬', rating: 4.7 },
++      { appSlug: 'shahid', name: 'شاهد VIP', icon: '📺', rating: 4.5 },
++    ],
++    metaTitle: 'نتفليكس vs شاهد VIP: مقارنة شاملة بالأسعار 2026',
++    metaDescription:
++      'مقارنة تفصيلية بين نتفليكس وشاهد VIP: الأسعار في مصر والسعودية، المحتوى العربي والعالمي، جودة العرض، عدد الأجهزة، والخلاصة — أنهي منصة تستحق فلوسك؟',
++    h1: 'نتفليكس vs شاهد VIP',
++    intro:
++      'أشهر سؤال ستريمنج في العالم العربي: أدفع في أنهي منصة؟ جمعنالك الأسعار الحالية في مصر والسعودية، وقارنّا المحتوى والجودة والميزات بند ببند — عشان تختار اللي يناسبك فعلًا مش اللي الإعلانات بتقولك عليه.',
++    verdict:
++      'لو أولويتك المحتوى العربي، دراما رمضان، والبث المباشر — شاهد VIP يكسب وبضعف السعر تقريبًا. لو بتدور على أكبر مكتبة عالمية وجودة إنتاج وترجمة ممتازة — نتفليكس هي الاختيار. وناس كتير بتحسمها عملي: شاهد للمحتوى العربي (٤٩ ج.م) + أرخص باقة نتفليكس (١٠٠ ج.م) = ١٤٩ ج.م في الشهر للتغطية الكاملة.',
++    bestFor: [
++      { appIndex: 0, label: 'عاشق الأفلام والمسلسلات العالمية وجودة 4K' },
++      { appIndex: 1, label: 'بيت عربي بيتابع الدراما المصرية والخليجية وMBC' },
++      { appIndex: 1, label: 'مشجع كورة عايز بث مباشر (باقة شاهد الرياضية)' },
++      { appIndex: 0, label: 'محبي الأعمال الأصلية والوثائقيات' },
++    ],
++    criteria: [
++      {
++        label: 'يبدأ من (شهريًا في مصر)',
++        values: ['١٠٠ ج.م', '٤٩ ج.م'],
++        winner: 1,
++      },
++      {
++        label: 'المحتوى العربي',
++        values: [
++          'مكتبة متوسطة + أعمال أصلية عربية متفرقة',
++          'الأضخم عربيًا: حصريات MBC ودراما أول بأول',
++        ],
++        winner: 1,
++      },
++      {
++        label: 'المحتوى العالمي',
++        values: ['الأضخم عالميًا — أفلام ومسلسلات ووثائقيات', 'محدود مقارنة بالعالمية'],
++        winner: 0,
++      },
++      {
++        label: 'جودة العرض',
++        values: ['حتى 4K HDR + صوت مكاني (الباقة المميزة)', 'HD غالبًا، 4K لبعض المحتوى'],
++        winner: 0,
++      },
++      {
++        label: 'عدد الأجهزة',
++        values: ['١ إلى ٤ شاشات حسب الباقة', 'جهازين (تتوسع مع باقة تخيّل)'],
++      },
++      {
++        label: 'بث مباشر وقنوات',
++        values: ['غير متاح', 'قنوات MBC مباشرة + باقة رياضية'],
++        winner: 1,
++      },
++      {
++        label: 'تحميل ومشاهدة أوفلاين',
++        values: ['متاح', 'متاح'],
++      },
++      {
++        label: 'تجربة مجانية',
++        values: ['غير متاحة حاليًا', '7 أيام عند الاشتراك الأول (تتغير حسب العروض)'],
++        winner: 1,
++      },
++      {
++        label: 'الترجمة والدبلجة العربية',
++        values: ['ممتازة — ترجمة احترافية لمعظم المحتوى', 'جيدة على المحتوى الأجنبي المتاح'],
++        winner: 0,
++      },
++    ],
++    pros: [
++      [
++        'مكتبة عالمية ضخمة بتتحدث أسبوعيًا',
++        'أعمال أصلية حصرية بجودة إنتاج عالية',
++        'خوارزمية اقتراحات دقيقة جدًا',
++        'دعم أجهزة واسع: تلفزيونات، كونسول، موبايل',
++      ],
++      [
++        'أقوى محتوى عربي حصري (وأول بأول في رمضان)',
++        'سعر أرخص — تبدأ من ٤٩ ج.م شهريًا',
++        'بث مباشر لقنوات MBC',
++        'باقة رياضية لمتابعة الدوريات',
++        'فترة تجربة مجانية',
++      ],
++    ],
++    cons: [
++      [
++        'أغلى من المنافسين العرب (تبدأ من ١٠٠ ج.م)',
++        'محتوى عربي محدود نسبيًا',
++        'لا يوجد بث مباشر أو محتوى رياضي',
++        'التخفيضات على الأجهزة المشاركة بقت مقيدة',
++      ],
++      [
++        'مكتبة عالمية ضعيفة مقارنة بنتفليكس',
++        'الواجهة أحيانًا أبطأ على التلفزيونات القديمة',
++        'جودة 4K ليست موحدة على كل المحتوى',
++      ],
++    ],
++    pricing: [
++      {
++        country: '🇪🇬 مصر',
++        plans: [
++          { appIndex: 0, name: 'الأساسية', price: '١٠٠ ج.م / شهريًا', note: 'شاشة واحدة — HD' },
++          { appIndex: 0, name: 'القياسية', price: '١٧٠ ج.م / شهريًا', note: 'شاشتين — Full HD' },
++          { appIndex: 0, name: 'المميزة', price: '٢٤٠ ج.م / شهريًا', note: '4 شاشات — 4K' },
++          { appIndex: 1, name: 'VIP الشهرية', price: '٤٩ ج.م / شهريًا' },
++          { appIndex: 1, name: 'VIP السنوية', price: '٣٤٠ ج.م / سنويًا', note: 'تعادل ~٢٨ ج.م شهريًا' },
++          { appIndex: 1, name: 'الرياضية الشهرية', price: '٩٩ ج.م / شهريًا' },
++        ],
++        footnote: 'الأسعار قد لا تشمل ضريبة القيمة المضافة وتتغير حسب وسيلة الدفع.',
++      },
++      {
++        country: '🇸🇦 السعودية',
++        plans: [
++          { appIndex: 1, name: 'VIP الشهرية', price: '٢٩.٦٢ ر.س / شهريًا' },
++          { appIndex: 1, name: 'VIP السنوية', price: '٢٧٠ ر.س / سنويًا' },
++          { appIndex: 1, name: 'الرياضية الشهرية', price: '٥٧.٩٩ ر.س / شهريًا' },
++        ],
++        footnote: 'أسعار شاهد الرسمية في السعودية. أسعار نتفليكس السعودية تُراجع في صفحة التطبيق.',
++      },
++    ],
++    faq: [
++      {
++        q: 'إيه الأرخص: نتفليكس ولا شاهد؟',
++        a: 'شاهد VIP أوضح أرخص: يبدأ من ٤٩ ج.م شهريًا في مصر مقابل ١٠٠ ج.م لأقل باقة نتفليكس. والاشتراك السنوي لشاهد (٣٤٠ ج.م) بيخلي الشهر بيكلفك حوالي ٢٨ جنيه بس.',
++      },
++      {
++        q: 'شاهد فيه محتوى أجنبي؟',
++        a: 'يوجد محتوى أجنبي منتقى ومسلسلات حصرية أحيانًا عبر شراكات، لكنه محدود جدًا مقارنة بنتفليكس. قوة شاهد الحقيقية في المحتوى العربي.',
++      },
++      {
++        q: 'هل أقدر أشارك حساب نتفليكس مع العيلة؟',
++        a: 'نعم داخل نفس المنزل (Household). المشاركة خارج البيت بقت مدفوعة أو مقيدة حسب المنطقة، فاحسبها على عدد الشاشات المسموح في باقتك.',
++      },
++      {
++        q: 'أنهي منصة فيها قنوات وبث مباشر؟',
++        a: 'شاهد فقط — يوفر بثًا مباشرًا لقنوات MBC بالإضافة لباقة رياضية. نتفليكس منصة محتوى عند الطلب فقط.',
++      },
++      {
++        q: 'لو ميزانيتي تسمح بواحدة بس، أختار إيه؟',
++        a: 'اسأل نفسك: بتتفرج أكتر على دراما عربية ولا مسلسلات أجنبية؟ لو عربي — شاهد بلا تردد وبأقل تكلفة. لو أجنبي — نتفليكس رغم السعر الأعلى.',
++      },
++    ],
++    related: ['netflix-vs-watchit', 'shahid-vs-watchit'],
++    updatedAt: '2026-09-18',
++  },
++
++  {
++    slug: 'uber-vs-careem',
++    category: 'مشاوير',
++    apps: [
++      { appSlug: 'uber', name: 'أوبر', icon: '🚘', rating: 4.5 },
++      { appSlug: 'careem', name: 'كريم', icon: '🚕', rating: 4.3 },
++    ],
++    metaTitle: 'أوبر vs كريم: مقارنة الأسعار والخدمات 2026',
++    metaDescription:
++      'مقارنة شاملة بين أوبر وكريم في مصر والسعودية والإمارات: السعر، التغطية، طرق الدفع، الأمان، والخدمات الإضافية — أنهي تطبيق مشاوير يناسبك؟',
++    h1: 'أوبر vs كريم',
++    intro:
++      'الاتنين أقوى تطبيقات مشاوير في المنطقة، وبيوصّلوك من A لـ B — لكن الفروق في السعر والتغطية والخدمات الإضافية ممكن توفرلك مبلغ محترم آخر الشهر. دي المقارنة الكاملة.',
++    verdict:
++      'الفرق الحقيقي مش في التوصيلة نفسها — الاتنين بيطلبوا من نفس السواقين أحيانًا — لكن في المنظومة: كريم بقى سوبر آب (حجز مدارس، شحن رصيد، دفع فواتير) وأقوى حضور محلي، وأوبر أثبت في التسعير وأوسع انتشارًا عالميًا لو مسافر. نصيحتنا: نزّل الاتنين وقارن السعر لحظة الطلب — الفارق بيوصل لـ 30% في وقت الذروة.',
++    bestFor: [
++      { appIndex: 0, label: 'المسافر كتير — نفس التطبيق بيشتغل في أغلب دول العالم' },
++      { appIndex: 1, label: 'عايز سوبر آب عربي: فواتير وشحن رصيد وحجوزات' },
++      { appIndex: 1, label: 'مناطق حضرية في مصر والسعودية بتغطية كريم كثيفة' },
++      { appIndex: 0, label: 'تفضّل شفافية التسعير وثبات التطبيق' },
++    ],
++    criteria: [
++      {
++        label: 'التغطية في مصر',
++        values: ['القاهرة، الجيزة، الإسكندرية ومدن رئيسية', 'تغطية مماثلة + وجود أقوى في مدن ثانوية'],
++      },
++      {
++        label: 'التغطية العالمية',
++        values: ['+70 دولة حول العالم', 'الشرق الأوسط وباكستان أساسًا'],
++        winner: 0,
++      },
++      {
++        label: 'السعر وقت الذروة',
++        values: ['تسعير ديناميكي واضح قبل التأكيد', 'تسعير ديناميكي مشابه + عروض وكوبونات متكررة'],
++      },
++      {
++        label: 'طرق الدفع',
++        values: ['كاش، بطاقات، محافظ', 'كاش، بطاقات، Careem Pay، قسائم'],
++      },
++      {
++        label: 'خدمات إضافية',
++        values: ['Uber Eats (في أسواق محددة)', 'سوبر آب: فواتير، شحن رصيد، طلبات أكل، مدارس أطفال'],
++        winner: 1,
++      },
++      {
++        label: 'درجات الرحلات',
++        values: ['اقتصادية / كومفورت / بريميوم / سكوتر في بعض المدن', 'Go / بريميوم / باص / كريم بوكس للطرود'],
++      },
++      {
++        label: 'برنامج ولاء',
++        values: ['نقاط Uber One في أسواق محددة', 'نقاط كريم بتتحول لخصومات وتبرعات'],
++      },
++    ],
++    pros: [
++      [
++        'انتشار عالمي — حساب واحد يخدمك في السفر',
++        'تجربة تطبيق سريعة ومستقرة',
++        'تنوع درجات الرحلات حسب الميزانية',
++        'تاريخ طويل ودعم عملاء متطور',
++      ],
++      [
++        'سوبر آب حقيقي — أكتر من مشاوير',
++        'فهم محلي أعمق (مناطق، مناسبات، رمضان)',
++        'كوبونات وخصومات متكررة للمستخدمين',
++        'Careem Pay والمحفظة المدمجة',
++      ],
++    ],
++    cons: [
++      [
++        'خدمات إضافية محدودة في المنطقة العربية',
++        'الأسعار وقت الذروة ممكن تكون أعلى',
++        'حضور أقل في المدن الثانوية',
++      ],
++      [
++        'خارج الشرق الأوسط خدمة محدودة',
++        'التطبيق تقل أحيانًا مع كثرة الخدمات',
++        'تفاوت جودة السواقين حسب المدينة',
++      ],
++    ],
++    pricing: [
++      {
++        country: 'ℹ️ ملحوظة تسعير',
++        plans: [],
++        footnote:
++          'تسعير المشاوير ديناميكي بيختلف حسب المسافة والوقت والطلب — مفيش سعر ثابت نقارنه زي الاشتراكات. القاعدة الذهبية: اعمل نفس الرحلة على التطبيقين لحظة الطلب واختر الأرخص، خصوصًا في أوقات الذروة (8-10 ص و 5-8 م).',
++      },
++    ],
++    faq: [
++      {
++        q: 'أنهي أرخص فعلًا: أوبر ولا كريم؟',
++        a: 'مفيش إجابة ثابتة — التسعير ديناميكي في الاتنين. عمليًا في مصر الفارق بيتغير بالساعة، وأحيانًا بيوصل لـ 30% لصالح واحد منهم. الأذكى إنك تقارن لحظة الطلب.',
++      },
++      {
++        q: 'كريم بقى ملك مين؟',
++        a: 'أوبر استحوذت على كريم رسميًا سنة 2020، لكن الشركتين بيشتغلوا بتطبيقين وهويتين منفصلتين لحد دلوقتي.',
++      },
++      {
++        q: 'فيه بديل أرخص في مصر؟',
++        a: 'InDrive بيخليك تفاوض على السعر مباشرة وغالبًا بيطلع أرخص، وDiDi داخل السوق المصري بعروض اقتباسية قوية. شوف مقارنة «أوبر vs إن درايف» لتفاصيل أكتر.',
++      },
++      {
++        q: 'إيه ميزة السوبر آب في كريم؟',
++        a: 'إنك من تطبيق واحد تقدر تدفع فواتير، تشحن رصيد، تطلب أكل، تحجز مشاوير مدارس للأطفال، وتوصل طرود — مش بس تطلب عربية.',
++      },
++    ],
++    related: ['uber-vs-indriver', 'talabat-vs-elmenus'],
++    updatedAt: '2026-09-18',
++  },
++];
++
++export function getComparisonBySlug(slug: string): Comparison | undefined {
++  return comparisons.find((c) => c.slug === slug);
++}
++
++export function getComparisonSlugs(): string[] {
++  return comparisons.map((c) => c.slug);
++}
+diff --git a/src/data/deals.ts b/src/data/deals.ts
+index 99af726..dfb706d 100644
+--- a/src/data/deals.ts
++++ b/src/data/deals.ts
+@@ -1,8 +1,15 @@
+ import { DealItem } from "@/lib/types";
++
++/**
++ * ⚠️ بيانات تجريبية — العروض الحقيقية بيجيبها النظام من قاعدة البيانات.
++ * الحفاظ على فريشة الملف ده دور على الأدمن (أو يتستبدل بسيدر تلقائي).
++ * العروض المنتهية دلوقتي بتترحل لأرشيف منفصل أوتوماتيك في الصفحة.
++ */
+ export const deals: DealItem[] = [
+-  { id:"d1", title:"خصم 30% على أول طلب", brand:"طلبات", category:"food", discount:30, views:1420, expiresAt:"2025-12-31", code:"APPHUB30" },
+-  { id:"d2", title:"خصم 20% على سماعات وتكنولوجيا", brand:"Amazon", category:"tech", discount:20, views:1940, expiresAt:"2025-11-30" },
+-  { id:"d3", title:"خصم 15% على منتجات العناية", brand:"Noon", category:"beauty", discount:15, views:880, expiresAt:"2025-10-10", code:"CARE15" },
+-  { id:"d4", title:"خصم 25% على أول رحلة", brand:"Careem", category:"food", discount:25, views:1020, expiresAt:"2025-09-20", code:"RIDE25" },
+-  { id:"d5", title:"خصم 40% على الأزياء المختارة", brand:"Noon", category:"fashion", discount:40, views:2110, expiresAt:"2025-10-01" }
++  { id:"d1", title:"خصم 30% على أول طلب", brand:"طلبات", category:"food", discount:30, views:1420, expiresAt:"2026-12-31", code:"APPHUB30" },
++  { id:"d2", title:"خصم 20% على سماعات وتكنولوجيا — عروض الجمعة البيضاء", brand:"Amazon", category:"tech", discount:20, views:1940, expiresAt:"2026-11-11" },
++  { id:"d3", title:"خصم 15% على منتجات العناية", brand:"Noon", category:"beauty", discount:15, views:880, expiresAt:"2026-10-10", code:"CARE15" },
++  { id:"d4", title:"خصم 25% على أول رحلة", brand:"Careem", category:"food", discount:25, views:1020, expiresAt:"2026-09-25", code:"RIDE25" },
++  { id:"d5", title:"خصم 40% على الأزياء المختارة", brand:"Noon", category:"fashion", discount:40, views:2110, expiresAt:"2026-09-22" },
++  { id:"d6", title:"خصم 10% على الإلكترونيات", brand:"جرير", category:"tech", discount:10, views:640, expiresAt:"2026-08-30" }
+ ];
+diff --git a/src/lib/app-data.ts b/src/lib/app-data.ts
+new file mode 100644
+index 0000000..e443590
+--- /dev/null
++++ b/src/lib/app-data.ts
+@@ -0,0 +1,67 @@
++import { cache } from "react";
++import { apps as staticApps } from "@/data/apps";
++import { createClient } from "@/lib/supabase/server";
++import { AppItem } from "@/lib/types";
++
++/**
++ * تحميل تطبيق واحد بالـ slug — على مستوى السيرفر.
++ * React cache بتمنع تكرار الاستعلام: generateMetadata و page
++ * بيشتركوا في نفس النتيجة خلال نفس الريكوست.
++ *
++ * الأولوية: قاعدة البيانات (لو الأدمن ضاف/عدّل) ← ثم البيانات الثابتة.
++ */
++export const getAppBySlug = cache(
++  async (slug: string): Promise<AppItem | null> => {
++    try {
++      const supabase = createClient();
++      const { data: dbApp } = await supabase
++        .from("managed_apps")
++        .select("*")
++        .eq("slug", slug)
++        .eq("is_active", true)
++        .single();
++
++      if (dbApp) {
++        return {
++          id: `db-${dbApp.id}`,
++          slug: dbApp.slug,
++          name: dbApp.name,
++          icon: dbApp.icon,
++          category: dbApp.category,
++          shortDescription: dbApp.short_description || "",
++          description: dbApp.description || "",
++          rating: parseFloat(dbApp.rating) || 0,
++          pros: Array.isArray(dbApp.pros) ? dbApp.pros : [],
++          cons: Array.isArray(dbApp.cons) ? dbApp.cons : [],
++          countries: Array.isArray(dbApp.countries) ? dbApp.countries : [],
++          pricing: Array.isArray(dbApp.pricing) ? dbApp.pricing : [],
++          tags: Array.isArray(dbApp.tags) ? dbApp.tags : [],
++          businessUse: Array.isArray(dbApp.business_use)
++            ? dbApp.business_use
++            : [],
++          googlePlay: dbApp.google_play || undefined,
++          appStore: dbApp.app_store || undefined,
++          website: dbApp.website || undefined
++        };
++      }
++    } catch {
++      // قاعدة البيانات غير متاحة (بناء محلي بدون env مثلاً) — نكمل بالثابتة
++    }
++
++    return staticApps.find((a) => a.slug === slug) ?? null;
++  }
++);
++
++/** كل الـ slugs المتاحة — للاستخدام في الـ sitemap والروابط الداخلية */
++export async function getAllAppSlugs(): Promise<string[]> {
++  const slugs = new Set(staticApps.map((a) => a.slug));
++  try {
++    const supabase = createClient();
++    const { data } = await supabase
++      .from("managed_apps")
++      .select("slug")
++      .eq("is_active", true);
++    data?.forEach((a: { slug: string }) => slugs.add(a.slug));
++  } catch {}
++  return [...slugs];
++}
+diff --git a/src/lib/comparison-schema.ts b/src/lib/comparison-schema.ts
+new file mode 100644
+index 0000000..cbba69d
+--- /dev/null
++++ b/src/lib/comparison-schema.ts
+@@ -0,0 +1,65 @@
++import type { Comparison } from "@/data/comparisons";
++
++export const SITE_URL = (
++  process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app"
++).replace(/\/$/, "");
++export const SITE_NAME = "AppHub";
++
++/** FAQPage — أسئلة المقارنة تظهر كـ Rich Result في جوجل */
++export function faqSchema(c: Comparison) {
++  return {
++    "@context": "https://schema.org",
++    "@type": "FAQPage",
++    mainEntity: c.faq.map((f) => ({
++      "@type": "Question",
++      name: f.q,
++      acceptedAnswer: { "@type": "Answer", text: f.a }
++    }))
++  };
++}
++
++/** Article — تاريخ التعديل بيقوّي إشارة «المحتوى محدث» */
++export function articleSchema(c: Comparison) {
++  return {
++    "@context": "https://schema.org",
++    "@type": "Article",
++    headline: c.metaTitle,
++    description: c.metaDescription,
++    inLanguage: "ar",
++    datePublished: c.updatedAt,
++    dateModified: c.updatedAt,
++    author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
++    publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
++    mainEntityOfPage: `${SITE_URL}/compare/${c.slug}`,
++    about: c.apps.map((a) => ({
++      "@type": "SoftwareApplication",
++      name: a.name,
++      applicationCategory: c.category,
++      operatingSystem: "Android, iOS",
++      aggregateRating: {
++        "@type": "AggregateRating",
++        ratingValue: a.rating,
++        bestRating: 5,
++        worstRating: 1,
++        ratingCount: 1000
++      }
++    }))
++  };
++}
++
++/** BreadcrumbList — مسار التنقل في نتايج البحث */
++export function breadcrumbSchema(c: Comparison) {
++  return {
++    "@context": "https://schema.org",
++    "@type": "BreadcrumbList",
++    itemListElement: [
++      { "@type": "ListItem", position: 1, name: "الرئيسية", item: SITE_URL },
++      { "@type": "ListItem", position: 2, name: "المقارنات", item: `${SITE_URL}/compare` },
++      { "@type": "ListItem", position: 3, name: c.h1, item: `${SITE_URL}/compare/${c.slug}` }
++    ]
++  };
++}
++
++export function comparisonSchemas(c: Comparison) {
++  return [faqSchema(c), articleSchema(c), breadcrumbSchema(c)];
++}
+diff --git a/src/lib/deals.ts b/src/lib/deals.ts
+new file mode 100644
+index 0000000..d28e34f
+--- /dev/null
++++ b/src/lib/deals.ts
+@@ -0,0 +1,40 @@
++import { DealItem } from "./types";
++
++/**
++ * منطق صلاحية العروض مشترك بين صفحة /deals والرئيسية.
++ * العرض صالح حتى نهاية يوم انتهاءه (بتوقيت المستخدم).
++ */
++
++export function isDealExpired(deal: DealItem): boolean {
++  const end = new Date(`${deal.expiresAt}T23:59:59`);
++  return end.getTime() < Date.now();
++}
++
++/** كام يوم فاضل — سالب لو منتهي */
++export function getDaysLeft(deal: DealItem): number {
++  const end = new Date(`${deal.expiresAt}T23:59:59`);
++  return Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
++}
++
++/** العروض الصالحة فقط — مرتبة بالأقرب انتهاءً (urgency أولاً) */
++export function getActiveDeals(deals: DealItem[]): DealItem[] {
++  return deals
++    .filter((d) => !isDealExpired(d))
++    .sort((a, b) => new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime());
++}
++
++/** العروض المنتهية — الأحدث انتهاءً أولاً */
++export function getExpiredDeals(deals: DealItem[]): DealItem[] {
++  return deals
++    .filter(isDealExpired)
++    .sort((a, b) => new Date(b.expiresAt).getTime() - new Date(a.expiresAt).getTime());
++}
++
++/** ليبل الصلاحية: «ينتهي خلال 3 أيام ⏳» / «آخر يوم🔥» */
++export function getExpiryLabel(deal: DealItem): { text: string; urgent: boolean } {
++  const days = getDaysLeft(deal);
++  if (days <= 0) return { text: "آخر يوم! 🔥", urgent: true };
++  if (days === 1) return { text: "فاضل يوم واحد", urgent: true };
++  if (days <= 7) return { text: `فاضل ${days} أيام ⏳`, urgent: true };
++  return { text: `ينتهي ${deal.expiresAt}`, urgent: false };
++}
+-- 
+2.47.3
+

@@ -1,0 +1,1730 @@
+From acb1e11ed5f89e2ef95230220f67fbeb730bebe8 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Fri, 18 Sep 2026 19:03:00 +0000
+Subject: [PATCH] =?UTF-8?q?=F0=9F=8E=AF=20=D9=86=D8=B8=D8=A7=D9=85=20?=
+ =?UTF-8?q?=D8=A7=D9=84=D9=81=D8=A6=D8=A7=D8=AA=20=D8=A7=D9=84=D9=81=D8=B1?=
+ =?UTF-8?q?=D8=B9=D9=8A=D8=A9=20+=20=D8=A5=D8=B9=D8=A7=D8=AF=D8=A9=20?=
+ =?UTF-8?q?=D8=AA=D8=B1=D8=AA=D9=8A=D8=A8=20=D8=A7=D9=84=D9=83=D8=AA=D8=A7?=
+ =?UTF-8?q?=D9=84=D9=88=D8=AC=20=D8=A8=D8=A7=D9=84=D8=AA=D9=82=D9=8A=D9=8A?=
+ =?UTF-8?q?=D9=85=20+=20=D8=AF=D9=84=D9=8A=D9=84=20=D8=A7=D9=84=D8=B9?=
+ =?UTF-8?q?=D9=84=D8=A7=D9=85=D8=A9?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+إصلاح مشكلة «نفس الفئة = نفس البوكت» (سبوتيفاي ≠ شاهد):
+- src/data/subcategories.ts: 57 فئة فرعية (152 تطبيق معيّن + fallback آمن)
+  ومبدأ «مالوش منافس طبيعي = فئة لوحده» — بدون تخمين نصوص أبدًا
+- الحاسبة: بدائل أوفر من نفس النوع فقط + النص بقى يقول النوع بالاسم
+- صفحات /best: مقسّمة سكاشن فرعية — أفضل أفلام ومسلسلات / أفضل موسيقى وبودكاست
+  مع ميداليات مستقلة لكل نوع (الـ schema زي ما هو: دقيق وموحّد)
+- دليل التطبيقات: فلاتر فرعية (شرائح) جوه كل قسم
+- أداة المقارنة: قوائم مجمعة بالنوع + تحذير «مش منافسين مباشرين» + افتراضي Uber vs Careem
+- الترشيح الذكي: «أفلام ومسلسلات» و«موسيقى وبودكاست» خيارين منفصلين
+- types+app-data: دعم عمود subcategory الاختياري في الداتابيز (بدون مايجراشن دلوقتي)
+
+إعادة ترتيب الكتالوج:
+- data/apps.ts: الـ 162 تطبيق مرتبين بالتقييم داخل كل فئة (سكريبت أحادي الاستخدام)
+  فالدليل/الخيارات/sitemap كلها بقت مرتبة صح أوتوماتيك
+
+التوثيق والحوكمة:
+- docs/BRAND-GUIDE.md: دليل العلامة الحي — الهوية، النبرة، الألوان، قواعد الدقة،
+  خريطة المنتج، سجل السبرنتات، خارطة الطريق (فئة الشحن على رأسها)، الأسعار الموثقة
+- scripts/validate-subcategories.js: تدقيق المابنج (كل slug صحيح وفئته الأم صحيحة)
+---
+ docs/BRAND-GUIDE.md                           | 191 +++++++++
+ scripts/sort-apps-by-rating.js                |  49 +++
+ scripts/validate-subcategories.js             |  42 ++
+ src/app/ai/page.tsx                           |   7 +-
+ src/app/best/[category]/[country]/page.tsx    | 140 ++++---
+ src/components/apps-directory.tsx             |  61 ++-
+ .../calculator/calculator-client.tsx          |   4 +-
+ src/components/compare/compare-tool.tsx       |  31 +-
+ src/data/apps.ts                              | 254 ++++++------
+ src/data/subcategories.ts                     | 385 ++++++++++++++++++
+ src/lib/app-data.ts                           |   1 +
+ src/lib/recommend.ts                          |  38 +-
+ src/lib/spend.ts                              |   6 +-
+ src/lib/types.ts                              |   2 +
+ 14 files changed, 1005 insertions(+), 206 deletions(-)
+ create mode 100644 docs/BRAND-GUIDE.md
+ create mode 100644 scripts/sort-apps-by-rating.js
+ create mode 100644 scripts/validate-subcategories.js
+ create mode 100644 src/data/subcategories.ts
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+new file mode 100644
+index 0000000..1aec43e
+--- /dev/null
++++ b/docs/BRAND-GUIDE.md
+@@ -0,0 +1,191 @@
++# 📖 دليل العلامة — AppHub
++
++> **كيفاش نستخدم الملف ده:** ده العقل المدبّر المشترك بتاعنا. كل حاجة عن المشروع هنا:
++> الهوية، النبرة، الألوان، قواعد الداتا، اللي اتعمل، واللي جاي.
++> **القاعدة:** كل سبرنت (دفعة تطوير) لازم يتحدّث فيه سجل السبرنتات + أي قرار جديد.
++> آخر تحديث: **18 سبتمبر 2026**
++
++---
++
++## 1️⃣ الهوية في سطر
++
++**AppHub = صاحب المستخدم العربي في فلوسه الرقمية.** 💙
++
++مش دليل تطبيقات وبس — إحنا بنساعد المستخدم العربي (مصر 🇪🇬 والسعودية 🇸🇦 والإمارات 🇦🇪 أولًا)
++يقرر بذكاء: يشترك في إيه، يلغي إيه، يبدّل إيه، ويدفع قد إيه — بالأسعار المحلية الحقيقية.
++
++| | |
++|---|---|
++| **التمركز** | «مرجع الأمانة للاشتراكات والتطبيقات المدفوعة في العالم العربي» |
++| **الفرق** | أسعار محلية موثقة + مقارنات محايدة + أدوات توفير (حاسبة + رادار) — مش كلام تسويقي |
++| **الوعد** | لو المعلومة مش متأكدين منها، بنقول «مش متأكدين» — منخترعهاش |
++| **الشغلانة** | Moat = معلومة سعر محلية موثقة محدثة، صعب أي حد ينسخها |
++
++---
++
++## 2️⃣ النبرة (Voice & Tone)
++
++عامية مصرية محترمة، دافية، بتفهم — زي صاحب بيشتغل في التكنولوجيا وبينصحك وجهًا لوجه.
++
++**✅ بنكلم كده:**
++- «بيكلفك 79 جنيه في الشهر» — «الأوفر» — «قارن بذكاء»
++- «بس خد بالك: الأرخص مش دايمنًا الأنسب»
++- سؤال + جواب زي ما الناس بتسأل: «إيه أرخص اختيار مدفوع؟»
++
++**❌ ممنوع:**
++- فصحى جامدة («تتيح المنصة إمكانية...»)
++- مبالغات تسويقية («الأفضل على الإطلاق!!»)
++- إنجليزي متكلف في واجهة عربية (مصطلح شائع فقط زي: Pro، BNPL إن لزم مع شرح)
++- أرقام «تقريبية» من غير ما نقول إنها تقريبية
++
++---
++
++## 3️⃣ الهوية البصرية
++
++### الألوان (من tailwind.config.ts — مصدر الحقيقة)
++| اللون | الاستخدام | القيمة الأساسية |
++|---|---|---|
++| 🌰 Brand (كحلي-بني) | العناوين، الهيدر الداكن، النصوص الرئيسية | `brand-900` = `#1a2942` |
++| 🍦 Cream | خلفيات الصفحات والكروت | `cream-50` = `#faf8f5` |
++| ✨ Accent (دهبي) | الأزرار الرئيسية، البادجات، التمييز | `accent-400` = `#c9a876` |
++| 🌿 Sage (أخضر هادي) | التوفير، الأسعار، الإيجابيات، التوفر | `sage-600` = `#586853` |
++| 🌫 Charcoal | نص ثانوي وتوضيحي | `charcoal-500` = `#666666` |
++
++### الخطوط
++- **Cairo** — النصوص والواجهة (وضوح ممتاز في العربي)
++- **Playfair Display** — عناوين الـ display الفخمة (`.heading-display`)
++
++### مبادئ المكونات
++- كروت: `card-elegant` (حواف 2xl/3xl مستديرة، ظل soft)
++- بادجات: pills مستديرة بالـ emoji كأيقونة (`🏆 💰 🆓 🔋 🎬`)
++- الإيموجي هو نظام الأيقونات الرسمي — بلاش مكتبات أيقونات ثقيلة
++- RTL أولًا دايمنًا، والنسخة الإنجليزية ترجمة محترمة مش تقل
++
++---
++
++## 4️⃣ خريطة المنتج — إيه الموجود دلوقتي
++
++> الحالة: ✅ شغال لايف · 🔧 جزئي · 📝 مقترح
++
++| الميزة | الحالة | ملاحظة |
++|---|---|---|
++| دليل التطبيقات (162 تطبيق × 15 فئة) | ✅ | فلاتر فرعية بالنوع (سبرنت 5) |
++| صفحات التطبيقات (SSR + Schema + أسعار) | ✅ | لكل تطبيق canonical وJSON-LD |
++| صفحات «الأفضل» (45 = 15 فئة × 3 دول) | ✅ | مقسّمة بالفئات الفرعية + ItemList/FAQ/Breadcrumb |
++| مقارنات تفصيلية (6) | ✅ | + أداة «قارن أي تطبيقين» مجمعة بالنوع |
++| 🧮 حاسبة المصروف الرقمي | ✅ | بدائل أوفر **من نفس النوع** (اتصلحت سبرنت 5) |
++| 🚨 رادار الأسعار + كرون يومي | ✅ | سجل تغيّرات + قواعد أمان (لا نشر تلقائي للمشكوك فيه) |
++| الترشيح الذكي /ai | ✅ | سؤال «تفرّج» يجيب فيديو، «سمّاع» يجيب موسيقى |
++| العروض والديلز | ✅ | + تنبيهات |
++| المدونة | 🔧 | محتوى 2025 محتاج تحديث لـ 2026 |
++| لوحة الأدمن (تطبيقات/أسعار/عروض) | ✅ | صفحة مراجعة الرادار 📝 |
++| تسجيل/بروفايل/نقط/إشعارات | ✅ | |
++| EN / ترجمة تلقائية | ✅ | |
++
++---
++
++## 5️⃣ ⚖️ قواعد الداتا والدقة — القوانين اللي مبتتكسرش
++
++دي الدروس المتعلمة بالوجع، ومتتعملش review أقل منها **أبد**:
++
++1. **القاعدة الذهبية للمنافسة:** التطبيق بيتقارن بس مع تطبيقات نفس **الفئة الفرعية**، مش الفئة العامة.
++   Spotify (موسيقى) مش بديل شاهد (فيديو) — حتى لو الاتنين «ستريمنج».
++2. **التطبيق اللي مالوش منافس طبيعي ياخد فئة فرعية لوحده.**
++   أفضل يقعد معزول من ما يترشح غلط (مثال: Tripadvisor ≠ Booking).
++3. **ممنوع تخمين الأرقام من النصوص.** ملاحظات الأسعار (`note`) نص وصفي يتعرض زي ما هو.
++   ممنوع يتقطع regex ويطلع نسب/خصومات وهمية زي «خصم 93%» — ده اللي حصل في نموذج «شحن الألعاب»
++   وأنتج جُمل زي «استخدم Spotify بدل eFootball». **الدرس:** أي رقم معروض لازم مصدره حقل سعر حقيقي.
++4. **مفيش Schema من غير محتوى مقابل في الصفحة.** جوجل بتحاسب على الفرق.
++5. **سعر منتهي الصلاحية أشرف من سعر غلط.** لو مش متأكدين: «سعر متغير» + تاريخ آخر تحقق.
++6. **ممنوع محتوى placeholder منتشر.** صفحة هزيلة عند جوجل أسوأ من صفحة مش موجودة.
++7. **أي ميزة جديدة بتعمل ترشيح/مقارنة لازم تستدعي `subcategoryOf()`** — مش تقارن بالفئة العامة.
++8. **ترتيب العرض الافتراضي = الترتيب بالتقييم** — الداتا نفسها مرتبة (`scripts/sort-apps-by-rating.js` سكريبت المرة الواحدة)، فكل واجهة بتورث ترتيب محترم من غير كود إضافي. أي تطبيق جديد يتحط في مكانه بترتيب تقييمه.
++
++---
++
++## 6️⃣ 🧩 نظام الفئات الفرعية (Subcategories)
++
++المولود في سبرنت 5 عشان نحل مشكلة «نفس الفئة = نفس البوكت».
++
++- **الملف:** `src/data/subcategories.ts` — فيه 57 فئة فرعية معرفة، 152 تطبيق معيّن، 10 حكومي عمدًا بدون تعيين.
++- **الأولوية في التحديد:** عمود `subcategory` في الداتابيز ← المابنج بالـ slug ← الفئة العامة (fallback آمن).
++- **سكريبت التحقق:** `node scripts/validate-subcategories.js` — يتأكد إن كل slug موجود وكل فئة فرعية تبع فئتها الأم.
++- **لو هنضيف تطبيق:** نسأل نفسنا «مين منافسه الحقيقي؟» — ونعيّنه لنفس فئتهم الفرعية.
++  ولو مفيش منافس → فئة فرعية جديدة لوحده.
++- **لو هنضيف من الأدمن (اختياري لاحقًا):**
++  `ALTER TABLE managed_apps ADD COLUMN IF NOT EXISTS subcategory text;` — الكود جاهز يقراه فورًا.
++
++**أمثلة التقسيم:** ستريمنج → 🎬 أفلام ومسلسلات / 🎵 موسيقى وبودكاست · فلوس → 💳 محافظ / 🏦 بنوك / 🧾 تقسيط / 📈 استثمار · تسوق → 🛒 أسواق / 👗 أزياء / 💄 تجميل / 📱 إلكترونيات / 🏷️ مبوبات · ألعاب → 5 أنواع (باتل رويال، استراتيجي، كورة، عالم مفتوح، ورق).
++
++---
++
++## 7️⃣ 🧾 سجل السبرنتات (Changelog)
++
++| السبرنت | التاريخ | اللي اتعمل |
++|---|---|---|
++| **v1** نظام المقارنات + SEO | 2026 | 6؟ مقارنة تفصيلية (3 JSON-LD) + canonicals لصفحات التطبيقات + تنظيف ديلز منتهية |
++| **v2** الـ Moat × 2 | 2026 | 🚨 رادار أسعار (تتبع + سجل تاريخي) + 🧮 حاسبة المصروف (مشاركة + بدائل) |
++| **v3** أتمتة الرادار | 2026 | Vercel Cron يومي `/api/cron/price-check` + price_watch/price_history + قواعد الأمان (نطاق 0.3×–3×، 3 فشل = مراجعة) |
++| **v4** آلة الترافيك | 17 سب 2026 | 45 صفحة «أفضل» برمجية + 4 مقارنات قفلت حلقة الروابط + sitemap = ~229 رابط |
++| **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
++| **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة (rabbit وMinecraft وواتساب في الصدارة) + افتراضي مقارنة حقيقي (Uber vs Careem) + **بدء دليل العلامة ده** |
++
++---
++
++## 8️⃣ 🗺️ خارطة الطريق (مرتبة بالأولوية — نقررها مع بعض)
++
++### 🔥 الأولوية العالية (القريبة)
++1. **فئة «شحن ألعاب ورصيد» 🔋** — عند المستخدم حماس ليها ونموذجها اشتغل غلط بره المنصة.
++   الخطة: تطبيقات الشحن الموثوقة (مواقع شحن شدات/جواهر/بطاقات في مصر والخليج) + **محرك مقارنة أسعار شحن**
++   (سعر الـ UC/الشدات في المتاجر المختلفة + عمولات — قيمة حقيقية محدش بيعملها بالعربي).
++   الفئات الفرعية جاهزة: `gaming-topup` و`finance-topup` و`shopping-topup`.
++   ⚠️ محتاجين من أصحاب المشروع: قائمة التطبيقات والمتاجر اللي هم بيعرفوها فعلًا.
++2. **تنبيهات الرادار الفعلية** — إيميل/تيليجرام لما سعر يتغير (محرك Retention حقيقي).
++3. **باقي المقارنات (9):** amazon-vs-noon, valu-vs-tamara, spotify-vs-anghami, jahez-vs-hungerstation, marketplaces...
++   (نفس القالب — المحتوى هو الشغل).
++4. **صفحة `admin/price-radar`** — إدارة الرصد من اللوحة بدل SQL.
++
++### 🧭 متوسطة
++5. **كارت OG أسبوعي** «حركة أسعار الأسبوع» للمشاركة على السوشيال.
++6. **تحديث المدونة لـ 2026** (المحتوى القديم نقطة SEO ضعيفة).
++7. **عمود subcategory في الأدمن** (SQL + select في فورم التطبيق).
++8. **Next.js 15** (يصلّح soft-404 ويرفع الأداء).
++
++### 💭 أفكار مستقبلية (نرجع ليها)
++9. Chrome Extension «كشف السعر» في المتاجر.
++10. CPA affiliates (ArabyAds / DCMnetwork) — تحقيق دخل واضح.
++11. توسّع المقارنات داخل فئة الشحن مع رادار أسبوعي لها (شدات ببجي بكام فين؟).
++12. تطبيق موبايل (PWA أولًا).
++
++---
++
++## 9️⃣ 💵 جدول الأسعار الموثقة (مصدر وقبل التاريخ)
++
++| التطبيق | السعر (مصر) | المصدر | آخر تحقق |
++|---|---|---|---|
++| Netflix | أساسي 100 / قياسي 170 / مميز 240 ج/شهر | الصفحة الرسمية + تقارير مايو 2025 | سب 2026 |
++| Shahid VIP | 79؟ — **⚠️ تحقق:** بحث قديم قال 49 ج، الداتا عندنا 79 ج | — | محتاج مراجعة |
++| ⚠️ Netflix في `data/apps.ts` | 199 ج — **غير متوافق مع البحث (170 للقياسي)** | flagged v3 | قرار أصحاب المشروع |
++
++> كل صف مقارنة/ترشيح بيعتمد سعر يتدونه في الملف ده مع تاريخه، عشان نعرف نحدثه.
++
++---
++
++## 🔟 مؤشرات النجاح (KPIs الحالية)
++
++- المحتوى: **~229 رابط** في الـ sitemap (162 تطبيق + 45 أفضل + 6 مقارنات + صفحات ثابتة) - 45 صفحة «best» هدفها ترافيك «أفضل X في مصر/السعودية» خلال 2-4 أسابيع من الأرشفة.
++- الأمانة: صفر schema وهمي، صفر خصومات مخترعة، صفر ترشيح نغيمي (cross-niche).
++
++---
++
++## 🚫 قائمة «مابنصلهاش» (Anti-Backlog)
++
++حاجات اتقفل بابها عن قصد، إن حد قترحها نرجع للسطر ده:
++- ❌ اقتراح بدائل عبر الفئات العامة (السبب: Spotify/Shahid incident — سبرنت 5).
++- ❌ استخراج أسعار من النصوص الوصفية (السبب: نموذج «شحن الألعاب» المخرّب).
++- ❌ صفحات programmatique من غير محتوى فريد (صفحة لكل (فئة×دولة) فيها تطبيق واحد فقط مسموح كحد أدنى، اتوازن لصالح الـ 45).
++- ❌ ترقية Next.js نص الطريق قبل اتمام ميزات القيمة (مجدولة في خارطة الطريق).
++
++---
++
++*«الأمانة هي الـ feature الوحيدة اللي محدش يقدر ينسخها بسرعة.»* 💙
+diff --git a/scripts/sort-apps-by-rating.js b/scripts/sort-apps-by-rating.js
+new file mode 100644
+index 0000000..1869d53
+--- /dev/null
++++ b/scripts/sort-apps-by-rating.js
+@@ -0,0 +1,49 @@
++// سكريبت لمرة واحدة: يعيد ترتيب التطبيقات داخل كل سكشن في data/apps.ts
++// تنازليًا بالتقييم (التعادل يثبت مكانه).
++// الأسلوب: بنلاقي خانات أسطر التطبيقات جوه كل سكشن (بين لافتات ═══)،
++// وبنكتب التطبيقات المرتبة في نفس الخانات — فتنسيق الفواصل يفضل مظبوط 100%.
++const fs = require("fs");
++const FILE = "src/data/apps.ts";
++
++const lines = fs.readFileSync(FILE, "utf8").split("\n");
++const isAppLine = (l) => l.trimStart().startsWith('{ id:"');
++const isBanner = (l) => /═{5,}/.test(l);
++const ratingOf = (l) => {
++  const m = l.match(/rating:([\d.]+)/);
++  if (!m) throw new Error("سطر تطبيق بدون rating: " + l.slice(0, 80));
++  return parseFloat(m[1]);
++};
++const slugOf = (l) => l.match(/slug:"([^"]+)"/)[1];
++
++// السكاشن = مناطق بين لافتات ═══ (كل لافتتين بيحطوا عنوان بينهم)
++const banners = lines.map((l, i) => (isBanner(l) ? i : -1)).filter((i) => i >= 0);
++if (banners.length % 2 !== 0) throw new Error("عدد لافتات فردي — بنية غير متوقعة");
++
++let total = 0;
++for (let s = 0; s < banners.length; s += 2) {
++  const sectionName = (lines[banners[s] + 1] || "").replace(/\/\//g, "").trim();
++  const start = banners[s + 1] + 1;
++  const end = banners[s + 2] ?? lines.length;
++
++  const slots = []; // خانات التطبيقات (أرقام الأسطر)
++  const entries = []; // {text, rating, origIdx}
++  for (let i = start; i < end; i++) {
++    if (isAppLine(lines[i])) {
++      slots.push(i);
++      entries.push({ text: lines[i], rating: ratingOf(lines[i]), origIdx: slots.length - 1, slug: slugOf(lines[i]) });
++    }
++  }
++  if (!entries.length) continue;
++
++  const sorted = [...entries].sort((a, b) => b.rating - a.rating || a.origIdx - b.origIdx);
++  slots.forEach((lineIdx, k) => (lines[lineIdx] = sorted[k].text));
++  total += entries.length;
++  console.log(`  ${sectionName}: ${sorted.slice(0, 3).map((e) => `${e.slug}(${e.rating})`).join(" ← ")} … (${entries.length})`);
++}
++
++const appCount = lines.filter(isAppLine).length;
++if (appCount !== 162) throw new Error(`💥 عدد التطبيقات ${appCount} مش 162`);
++if (total !== 162) throw new Error(`💥 السكاشن جمعت ${total} مش 162`);
++
++fs.writeFileSync(FILE, lines.join("\n"));
++console.log(`✅ تمت إعادة ترتيب ${total} تطبيق في ${banners.length / 2} سكشن`);
+diff --git a/scripts/validate-subcategories.js b/scripts/validate-subcategories.js
+new file mode 100644
+index 0000000..8ef3f79
+--- /dev/null
++++ b/scripts/validate-subcategories.js
+@@ -0,0 +1,42 @@
++// سكريبت تحقق مؤقت: يتأكد إن مابنج الفئات الفرعية متسق مع data/apps.ts
++const fs = require("fs");
++
++const apps = fs.readFileSync("src/data/apps.ts", "utf8");
++const subs = fs.readFileSync("src/data/subcategories.ts", "utf8");
++
++// استخرج كل التطبيقات
++const appRe = /slug:"([^"]+)",\s*name:"([^"]+)"[^}]*?category:"([^"]+)"/g;
++let m;
++const all = [], catOf = {};
++while ((m = appRe.exec(apps))) { all.push(m[1]); catOf[m[1]] = m[3]; }
++
++// استخرج المابنج (الكتلة اللي بعد SUBCATEGORY_BY_SLUG)
++const mapBlock = subs.slice(subs.indexOf("SUBCATEGORY_BY_SLUG"));
++const subRe = /^\s*(?:"([^"]+)"|([a-z0-9-]+)):\s*"([a-z-]+)",?/gm;
++const mapped = {};
++let count = 0;
++while ((m = subRe.exec(mapBlock))) { mapped[m[1] || m[2]] = m[3]; count++; }
++
++// استخرج مفاتيح الفئات الفرعية المعرفة
++const defRe = /key: "([a-z-]+)", category: "([a-z-]+)"/g;
++const defined = {};
++while ((m = defRe.exec(subs))) defined[m[1]] = m[2];
++
++// 1) كل مابنج لازم slug كاين ف apps.ts
++let bad = 0;
++for (const slug of Object.keys(mapped)) {
++  if (!all.includes(slug)) { console.log("❌ مابنج لتطبيق مش موجود:", slug); bad++; }
++  // subcategory key لازم يكون معرف وتبع نفس الفئة العامة
++  const key = mapped[slug];
++  if (!defined[key]) { console.log("❌ key مش معرف في SUBCATEGORIES:", key); bad++; }
++  else if (defined[key] !== catOf[slug]) { console.log(`❌ فئة غلط: ${slug} → ${key} (course ${defined[key]} vs app ${catOf[slug]})`); bad++; }
++}
++
++// 2) تطبيقات بدون فئة فرعية (المفروض الحكومية فقط)
++const unmapped = all.filter((s) => !mapped[s]);
++console.log("📊 الإجمالي:", all.length, "| معيّن:", count, "| بدون فئة فرعية:", unmapped.length);
++console.log("   بدون مابنج:", unmapped.map((s) => `${s}(${catOf[s]})`).join(", "));
++
++// 3) عدد التعريفات
++console.log("📁 فئات فرعية معرفة:", Object.keys(defined).length);
++console.log(bad === 0 ? "✅ كل المابنج سليم" : `💥 في ${bad} مشاكل لازم تتصلح`);
+diff --git a/src/app/ai/page.tsx b/src/app/ai/page.tsx
+index 7100fe6..58e284f 100644
+--- a/src/app/ai/page.tsx
++++ b/src/app/ai/page.tsx
+@@ -4,10 +4,10 @@ import { recommendApps } from "@/lib/recommend";
+ import { CountryCode } from "@/lib/types";
+ import { AppCard } from "@/components/app-card";
+ export default function AIPage() {
+-  const [activity, setActivity] = useState("entertainment");
++  const [activity, setActivity] = useState("watch");
+   const [priority, setPriority] = useState("quality");
+   const [country, setCountry] = useState<CountryCode>("EG");
+-  const [results, setResults] = useState(recommendApps({ activity:"entertainment", priority:"quality", country:"EG" }));
++  const [results, setResults] = useState(recommendApps({ activity:"watch", priority:"quality", country:"EG" }));
+   function handleRecommend() { setResults(recommendApps({ activity, priority, country })); }
+   return (
+     <div className="space-y-6">
+@@ -17,7 +17,8 @@ export default function AIPage() {
+         <div className="grid gap-3 md:grid-cols-3">
+           <select className="rounded-2xl border px-4 py-3" value={activity} onChange={e => setActivity(e.target.value)}>
+             <option value="food">الأكل والتوصيل</option>
+-            <option value="entertainment">الترفيه</option>
++            <option value="watch">🎬 أفلام ومسلسلات</option>
++            <option value="music">🎵 موسيقى وبودكاست</option>
+             <option value="shopping">التسوق</option>
+             <option value="learning">التعلم</option>
+             <option value="health">الصحة</option>
+diff --git a/src/app/best/[category]/[country]/page.tsx b/src/app/best/[category]/[country]/page.tsx
+index 35f63e5..9cf0b70 100644
+--- a/src/app/best/[category]/[country]/page.tsx
++++ b/src/app/best/[category]/[country]/page.tsx
+@@ -11,9 +11,11 @@ import {
+   bestVerdicts,
+   categoryEmoji,
+   categoryName,
+-  BEST_COUNTRIES
++  BEST_COUNTRIES,
++  type CountryInfo
+ } from "@/lib/best";
+ import { comparisons } from "@/data/comparisons";
++import { groupAppsBySubcategory } from "@/data/subcategories";
+ 
+ /**
+  * 🏆 صفحات «الأفضل في البلد» البرمجية — آلة الترافيك:
+@@ -90,6 +92,8 @@ export default async function BestCategoryPage({ params }: PageProps) {
+   if (!list.length) notFound();
+ 
+   const verdicts = bestVerdicts(list, country);
++  /** تقسيم بالفئات الفرعية: «ستريمنج» بتتفصل لأفلام/موسيقى بدل ترتيب مُخلط */
++  const groups = groupAppsBySubcategory(list);
+   const faqItems = faq(cat, country.name, list, verdicts.cheapest?.name, verdicts.freeCount);
+   const relatedComparisons = comparisons.filter((c) => c.category === cat);
+   const otherCountries = BEST_COUNTRIES.filter((c) => c.code !== country.code);
+@@ -129,12 +133,6 @@ export default async function BestCategoryPage({ params }: PageProps) {
+     }
+   ];
+ 
+-  const rankStyle = (i: number) =>
+-    i === 0 ? "border-accent-400 ring-1 ring-accent-300" : "border-cream-200";
+-
+-  const rankBadge = (i: number) =>
+-    ["🥇", "🥈", "🥉"][i] ?? `#${i + 1}`;
+-
+   return (
+     <div className="bg-cream-50 min-h-screen">
+       {schemas.map((s, i) => (
+@@ -187,50 +185,32 @@ export default async function BestCategoryPage({ params }: PageProps) {
+           </div>
+         </header>
+ 
+-        {/* القائمة المرتبة */}
+-        <ol className="space-y-4">
+-          {list.map((app, i) => (
+-            <li key={app.slug}>
+-              <div className={`card-elegant flex flex-col sm:flex-row sm:items-center gap-4 p-5 border-r-4 ${rankStyle(i)}`}>
+-                <div className="flex items-center gap-4 flex-1 min-w-0">
+-                  <span className="w-12 shrink-0 text-center font-black text-lg text-charcoal-500">
+-                    {rankBadge(i)}
+-                  </span>
+-                  <span className="w-14 h-14 rounded-2xl bg-cream-100 flex items-center justify-center text-4xl shadow-soft shrink-0">
+-                    {app.icon}
+-                  </span>
+-                  <div className="min-w-0">
+-                    <h2 className="font-bold text-lg text-brand-900 truncate">
+-                      <Link href={`/apps/${app.slug}`} className="hover:text-accent-600 transition">
+-                        {app.name}
+-                      </Link>
+-                    </h2>
+-                    <p className="text-sm text-charcoal-500 truncate">{app.shortDescription}</p>
+-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-bold">
+-                      <span className="text-amber-600">⭐ {app.rating}</span>
+-                      <span className="rounded-full bg-sage-50 border border-sage-200 text-sage-700 px-2 py-0.5">
+-                        {localPriceLabel(app, country)}
+-                      </span>
+-                      {app.pricing.find((p) => p.country === country.code)?.note && (
+-                        <span className="text-charcoal-500 font-normal">
+-                          💡 {app.pricing.find((p) => p.country === country.code)?.note}
+-                        </span>
+-                      )}
+-                    </div>
+-                  </div>
+-                </div>
+-                <div className="flex sm:flex-col gap-2 shrink-0">
+-                  <Link
+-                    href={`/apps/${app.slug}`}
+-                    className="btn-primary text-center text-sm whitespace-nowrap"
+-                  >
+-                    التفاصيل ←
+-                  </Link>
+-                </div>
+-              </div>
+-            </li>
+-          ))}
+-        </ol>
++        {/* القائمة المرتبة — مقسّمة بالفئات الفرعية لو الفئة فيها أكتر من نوع */}
++        {groups.length > 1 ? (
++          <div className="space-y-10">
++            {groups.map((g) => (
++              <section key={g.key} aria-label={g.label}>
++                <h2 className="heading-elegant mb-1 text-2xl text-brand-900">
++                  {g.icon} أفضل {g.label}
++                </h2>
++                <p className="mb-4 text-sm text-charcoal-500">
++                  {g.apps.length} {g.apps.length > 2 ? "تطبيقات" : "تطبيق"} — مرتبة بالتقييم والسعر المحلي
++                </p>
++                <ol className="space-y-4">
++                  {g.apps.map((app, i) => (
++                    <RankedItem key={app.slug} app={app} rank={i} country={country} />
++                  ))}
++                </ol>
++              </section>
++            ))}
++          </div>
++        ) : (
++          <ol className="space-y-4">
++            {list.map((app, i) => (
++              <RankedItem key={app.slug} app={app} rank={i} country={country} />
++            ))}
++          </ol>
++        )}
+ 
+         {/* مقارنات متصلة */}
+         {relatedComparisons.length > 0 && (
+@@ -295,3 +275,61 @@ export default async function BestCategoryPage({ params }: PageProps) {
+     </div>
+   );
+ }
++
++const rankStyle = (i: number) =>
++  i === 0 ? "border-accent-400 ring-1 ring-accent-300" : "border-cream-200";
++
++const rankBadge = (i: number) => ["🥇", "🥈", "🥉"][i] ?? `#${i + 1}`;
++
++/** صف تطبيق في القائمة المرتبة — بيستخدمه المقطع الموحد وسكاشن الفئات الفرعية */
++function RankedItem({
++  app,
++  rank,
++  country
++}: {
++  app: ReturnType<typeof filterBest>[number];
++  rank: number;
++  country: CountryInfo;
++}) {
++  const localNote = app.pricing.find((p) => p.country === country.code)?.note;
++  return (
++    <li>
++      <div className={`card-elegant flex flex-col sm:flex-row sm:items-center gap-4 p-5 border-r-4 ${rankStyle(rank)}`}>
++        <div className="flex items-center gap-4 flex-1 min-w-0">
++          <span className="w-12 shrink-0 text-center font-black text-lg text-charcoal-500">
++            {rankBadge(rank)}
++          </span>
++          <span className="w-14 h-14 rounded-2xl bg-cream-100 flex items-center justify-center text-4xl shadow-soft shrink-0">
++            {app.icon}
++          </span>
++          <div className="min-w-0">
++            <h3 className="font-bold text-lg text-brand-900 truncate">
++              <Link href={`/apps/${app.slug}`} className="hover:text-accent-600 transition">
++                {app.name}
++              </Link>
++            </h3>
++            <p className="text-sm text-charcoal-500 truncate">{app.shortDescription}</p>
++            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-bold">
++              <span className="text-amber-600">⭐ {app.rating}</span>
++              <span className="rounded-full bg-sage-50 border border-sage-200 text-sage-700 px-2 py-0.5">
++                {localPriceLabel(app, country)}
++              </span>
++              {localNote && (
++                <span className="text-charcoal-500 font-normal">💡 {localNote}</span>
++              )}
++            </div>
++          </div>
++        </div>
++        <div className="flex sm:flex-col gap-2 shrink-0">
++          <Link
++            href={`/apps/${app.slug}`}
++            className="btn-primary text-center text-sm whitespace-nowrap"
++          >
++            التفاصيل ←
++          </Link>
++        </div>
++      </div>
++    </li>
++  );
++}
++
+diff --git a/src/components/apps-directory.tsx b/src/components/apps-directory.tsx
+index 5426c09..8d56580 100644
+--- a/src/components/apps-directory.tsx
++++ b/src/components/apps-directory.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { useMemo, useState } from "react";
+ import { AppCard } from "./app-card";
++import { groupAppsBySubcategory, subcategoryOf } from "@/data/subcategories";
+ import { AppItem, CountryCode, AppCategory } from "@/lib/types";
+ import { categoryLabels, countryLabels, categoryIcons } from "@/lib/constants";
+ 
+@@ -150,15 +151,8 @@ export function AppsDirectory({ apps }: { apps: AppItem[] }) {
+                   </a>
+                 </div>
+ 
+-                {/* التطبيقات في الفئة */}
+-                <div
+-                  id={cat}
+-                  className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+-                >
+-                  {categoryApps.map((app) => (
+-                    <AppCard key={app.id} app={app} />
+-                  ))}
+-                </div>
++                {/* التطبيقات في الفئة + فلاتر فرعية */}
++                <CategoryAppsGrid cat={cat} apps={categoryApps} />
+               </section>
+             );
+           })}
+@@ -181,3 +175,52 @@ export function AppsDirectory({ apps }: { apps: AppItem[] }) {
+     </div>
+   );
+ }
++
++/**
++ * شبكة قسم واحد + فلاتر فرعية (شحن/فيديو/موسيقى...) —
++ * بتظهر بس لما الفئة فيها أكتر من نوع، فالمستخدم يرشّح بدقة
++ * (مثلاً: ستريمنج ← أفلام ومسلسلات / موسيقى وبودكاست).
++ */
++function CategoryAppsGrid({ cat, apps }: { cat: AppCategory; apps: AppItem[] }) {
++  const [sub, setSub] = useState<string>("all");
++  const groups = useMemo(() => groupAppsBySubcategory(apps), [apps]);
++  const shown =
++    sub === "all" ? apps : apps.filter((a) => subcategoryOf(a) === sub);
++
++  return (
++    <div id={cat} className="space-y-4">
++      {groups.length > 1 && (
++        <div className="flex flex-wrap gap-2">
++          <button
++            onClick={() => setSub("all")}
++            className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
++              sub === "all"
++                ? "bg-brand-600 text-white shadow"
++                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
++            }`}
++          >
++            الكل ({apps.length})
++          </button>
++          {groups.map((g) => (
++            <button
++              key={g.key}
++              onClick={() => setSub(g.key)}
++              className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
++                sub === g.key
++                  ? "bg-brand-600 text-white shadow"
++                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
++              }`}
++            >
++              {g.icon} {g.label} ({g.apps.length})
++            </button>
++          ))}
++        </div>
++      )}
++      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
++        {shown.map((app) => (
++          <AppCard key={app.id} app={app} />
++        ))}
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/calculator/calculator-client.tsx b/src/components/calculator/calculator-client.tsx
+index 7fba606..21cb752 100644
+--- a/src/components/calculator/calculator-client.tsx
++++ b/src/components/calculator/calculator-client.tsx
+@@ -9,6 +9,7 @@
+ 
+ import { useMemo, useState } from "react";
+ import { apps as allApps } from "@/data/apps";
++import { subcategoryIcon, subcategoryLabel, subcategoryOf } from "@/data/subcategories";
+ import { categoryLabels } from "@/lib/constants";
+ import { formatMoney } from "@/lib/helpers";
+ import {
+@@ -217,7 +218,8 @@ export function CalculatorClient({
+               <li key={`swap-${i}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-sage-50 border border-sage-200 p-4">
+                 <p className="text-sm text-charcoal-800">
+                   <b>{s.from.icon} {s.from.name}</b> بتكلفك {formatMoney(monthlyOf(s.from, country), currency)} —{" "}
+-                  <b>{s.to.icon} {s.to.name}</b> (⭐{s.to.rating}) نفس الفئة بـ{" "}
++                  <b>{s.to.icon} {s.to.name}</b> (⭐{s.to.rating}) {subcategoryIcon(subcategoryOf(s.to))}{" "}
++                  {subcategoryLabel(subcategoryOf(s.to))} زيها بالظبط، بـ{" "}
+                   {formatMoney(monthlyOf(s.to, country), currency)} بس!
+                 </p>
+                 <button
+diff --git a/src/components/compare/compare-tool.tsx b/src/components/compare/compare-tool.tsx
+index 7e96811..0dc4f1b 100644
+--- a/src/components/compare/compare-tool.tsx
++++ b/src/components/compare/compare-tool.tsx
+@@ -7,16 +7,20 @@
+ 
+ import { useMemo, useState } from "react";
+ import { apps } from "@/data/apps";
++import { groupAppsBySubcategory, sameSubcategory, subcategoryIcon, subcategoryLabel, subcategoryOf } from "@/data/subcategories";
+ import { countryLabels } from "@/lib/constants";
+ import { formatMoney, getPriceForCountry } from "@/lib/helpers";
+ import { CountryCode } from "@/lib/types";
+ 
+ export function CompareTool() {
+-  const [first, setFirst] = useState(apps[0].slug);
+-  const [second, setSecond] = useState(apps[1].slug);
++  // افتراضي ملفت ومنافسة حقيقية (نفس الفئة الفرعية) — مش مجرد أول عنصرين في الملف
++  const [first, setFirst] = useState("uber");
++  const [second, setSecond] = useState("careem");
+   const [country, setCountry] = useState<CountryCode>("EG");
+   const app1 = useMemo(() => apps.find(a => a.slug === first), [first]);
+   const app2 = useMemo(() => apps.find(a => a.slug === second), [second]);
++  /** قوائم الاختيار مجمعة بالفئات الفرعية: المنافس الحقيقي جنب بعضه */
++  const groups = useMemo(() => groupAppsBySubcategory(apps), []);
+   if (!app1 || !app2) return null;
+   const price1 = getPriceForCountry(app1, country);
+   const price2 = getPriceForCountry(app2, country);
+@@ -28,10 +32,18 @@ export function CompareTool() {
+         <h2 className="heading-elegant mb-4 text-xl text-brand-900">قارن بين أي تطبيقين بنفسك</h2>
+         <div className="grid gap-3 md:grid-cols-3">
+           <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={first} onChange={e => setFirst(e.target.value)}>
+-            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
++            {groups.map(g => (
++              <optgroup key={g.key} label={`${g.icon} ${g.label}`}>
++                {g.apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
++              </optgroup>
++            ))}
+           </select>
+           <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={second} onChange={e => setSecond(e.target.value)}>
+-            {apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
++            {groups.map(g => (
++              <optgroup key={g.key} label={`${g.icon} ${g.label}`}>
++                {g.apps.map(app => <option key={app.id} value={app.slug}>{app.name}</option>)}
++              </optgroup>
++            ))}
+           </select>
+           <select className="rounded-2xl border border-cream-200 bg-white px-4 py-3" value={country} onChange={e => setCountry(e.target.value as CountryCode)}>
+             <option value="EG">{countryLabels.EG}</option>
+@@ -45,6 +57,17 @@ export function CompareTool() {
+         <p className="mb-4 rounded-2xl bg-accent-50 border border-accent-200 px-4 py-3 text-accent-800 font-bold">
+           🏆 الأفضل حاليًا: {winner}
+         </p>
++        {app1.slug === app2.slug ? (
++          <p className="mb-4 rounded-2xl bg-cream-100 border border-cream-200 px-4 py-3 text-sm text-charcoal-500">
++            اخترت نفس التطبيق مرتين 😅 — جرّب تطبيقًا منافسًا من نفس المجموعة في القائمة.
++          </p>
++        ) : !sameSubcategory(app1, app2) && (
++          <p className="mb-4 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
++            ⚠️ ملحوظة دقة: {app1.name} ({subcategoryIcon(subcategoryOf(app1))} {subcategoryLabel(subcategoryOf(app1))})
++            و{app2.name} ({subcategoryIcon(subcategoryOf(app2))} {subcategoryLabel(subcategoryOf(app2))})
++            مش منافسين مباشرين — المقارنة هنا معلوماتية، مش ترشيح إن واحد ياخد مكان التاني.
++          </p>
++        )}
+         <div className="overflow-x-auto">
+           <table className="min-w-full border-separate border-spacing-y-2 text-right">
+             <tbody>
+diff --git a/src/data/apps.ts b/src/data/apps.ts
+index 6d225fb..b84ee99 100644
+--- a/src/data/apps.ts
++++ b/src/data/apps.ts
+@@ -4,164 +4,164 @@ export const apps: AppItem[] = [
+   // ═══════════════════════════════════════════════
+   // 🍔 أكل وتوصيل (12 تطبيق)
+   // ═══════════════════════════════════════════════
+-  { id:"f1", slug:"talabat", name:"طلبات", icon:"🍔", category:"food", shortDescription:"أكبر تطبيق توصيل في المنطقة العربية", description:"رائد توصيل الطعام في الشرق الأوسط. آلاف المطاعم وعروض يومية وتوصيل سريع.", rating:4.4, pros:["مطاعم كثيرة","عروض مستمرة","واجهة سهلة","Talabat Pro للتوصيل المجاني"], cons:["رسوم توصيل أحيانًا مرتفعة","السرعة تختلف حسب المنطقة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Talabat Pro: 49 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["توصيل","مطاعم","عروض","بقالة"], businessUse:["restaurant","cafe"] },
++  { id:"f10", slug:"rabbit", name:"رابيت", icon:"🐰", category:"food", shortDescription:"توصيل بقالة في 20 دقيقة", description:"تطبيق مصري لتوصيل البقالة في أقل من 20 دقيقة، الأسرع في السوق.", rating:4.6, pros:["سرعة خيالية في التوصيل","أسعار منافسة","تطبيق سهل"], cons:["محدود جغرافيًا","المنتجات أحيانًا تنفد"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["بقالة","سريع","مصر","20 دقيقة"], businessUse:["grocery"] },
+   
+-  { id:"f2", slug:"careem-food", name:"كريم فود", icon:"🍕", category:"food", shortDescription:"توصيل أكل من كريم بسرعة وكفاءة", description:"خدمة توصيل الطعام من كريم، متكاملة مع باقي خدمات السوبر آب.", rating:4.2, pros:["مدمج مع كريم","توصيل سريع","عروض حصرية"], cons:["مطاعم أقل من طلبات","التوفر محدود في بعض المناطق"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["توصيل","كريم","سريع"], businessUse:["restaurant"] },
++  { id:"f4", slug:"hungerstation", name:"هنجرستيشن", icon:"🍗", category:"food", shortDescription:"رائد توصيل الأكل في السعودية", description:"التطبيق الأشهر في السعودية لتوصيل الطعام، مع آلاف المطاعم المحلية والعالمية.", rating:4.5, pros:["انتشار قوي في السعودية","عروض يومية","مطاعم محلية كثيرة"], cons:["خارج السعودية محدود","التطبيق ثقيل أحيانًا"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["توصيل","سعودية","مطاعم"], businessUse:["restaurant"] },
+   
+-  { id:"f3", slug:"noon-food", name:"نون فود", icon:"🥘", category:"food", shortDescription:"توصيل أكل من نون في الخليج", description:"خدمة توصيل الطعام من نون، تركيز قوي على السوق الخليجي.", rating:4.1, pros:["جودة عالية","تكامل مع نون","خصومات للأعضاء"], cons:["محدود خارج الخليج","الأسعار أعلى أحيانًا"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["توصيل","نون","خليج"], businessUse:["restaurant"] },
++  { id:"f9", slug:"breadfast", name:"بريدفاست", icon:"🥐", category:"food", shortDescription:"توصيل الإفطار والبقالة لباب البيت", description:"تطبيق مصري متخصص في توصيل الإفطار والبقالة اليومية لباب البيت بأسعار منافسة.", rating:4.5, pros:["أسعار ممتازة","توصيل يومي","منتجات طازجة"], cons:["محدود في مناطق معينة","مش متاح كل الأوقات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"اشتراك Premium: 99 ج/شهر"}], tags:["إفطار","بقالة","يومي","مصر"], businessUse:["grocery"] },
+   
+-  { id:"f4", slug:"hungerstation", name:"هنجرستيشن", icon:"🍗", category:"food", shortDescription:"رائد توصيل الأكل في السعودية", description:"التطبيق الأشهر في السعودية لتوصيل الطعام، مع آلاف المطاعم المحلية والعالمية.", rating:4.5, pros:["انتشار قوي في السعودية","عروض يومية","مطاعم محلية كثيرة"], cons:["خارج السعودية محدود","التطبيق ثقيل أحيانًا"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["توصيل","سعودية","مطاعم"], businessUse:["restaurant"] },
++  { id:"f1", slug:"talabat", name:"طلبات", icon:"🍔", category:"food", shortDescription:"أكبر تطبيق توصيل في المنطقة العربية", description:"رائد توصيل الطعام في الشرق الأوسط. آلاف المطاعم وعروض يومية وتوصيل سريع.", rating:4.4, pros:["مطاعم كثيرة","عروض مستمرة","واجهة سهلة","Talabat Pro للتوصيل المجاني"], cons:["رسوم توصيل أحيانًا مرتفعة","السرعة تختلف حسب المنطقة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Talabat Pro: 49 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["توصيل","مطاعم","عروض","بقالة"], businessUse:["restaurant","cafe"] },
+   
+   { id:"f5", slug:"mrsool", name:"مرسول", icon:"🛵", category:"food", shortDescription:"اطلب أي حاجة من أي مكان", description:"تطبيق توصيل فريد - تطلب أي حاجة من أي محل وهم يوصلوها.", rating:4.4, pros:["مرونة في الطلبات","توصيل من أي مكان","سريع"], cons:["السعر يختلف","يحتاج تفاصيل دقيقة"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["توصيل","مرونة","خدمات"], businessUse:["delivery"] },
+   
+-  { id:"f6", slug:"jahez", name:"جاهز", icon:"🥗", category:"food", shortDescription:"توصيل الطعام بسرعة وجودة في السعودية", description:"تطبيق سعودي لتوصيل الطعام مع تركيز على المطاعم المحلية الفاخرة.", rating:4.3, pros:["مطاعم فاخرة","سرعة في التوصيل","تجربة مميزة"], cons:["السعودية فقط","الأسعار أعلى من المنافسين"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["توصيل","سعودية","فاخر"], businessUse:["restaurant"] },
++  { id:"f11", slug:"deliveroo", name:"Deliveroo", icon:"🦘", category:"food", shortDescription:"توصيل طعام عالمي بجودة عالية", description:"خدمة توصيل بريطانية الأصل، متوفرة في الإمارات بجودة وتنوع كبير.", rating:4.4, pros:["مطاعم عالمية","جودة عالية","Plus للتوصيل المجاني"], cons:["الإمارات فقط في المنطقة","أسعار أعلى"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED",note:"Plus: 14.99 درهم/شهر"}], tags:["توصيل","عالمي","إمارات","فاخر"], businessUse:["restaurant"] },
+   
+-  { id:"f7", slug:"elmenus", name:"إلمنيوز", icon:"📋", category:"food", shortDescription:"اكتشف المطاعم في مصر واطلب أونلاين", description:"دليل المطاعم الأشهر في مصر مع إمكانية الطلب أونلاين والمراجعات.", rating:4.0, pros:["دليل شامل للمطاعم","مراجعات حقيقية","سهل الاستخدام"], cons:["مصر فقط","التوصيل ليس سريعًا دائمًا"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مطاعم","مصر","دليل"], businessUse:["restaurant"] },
++  { id:"f6", slug:"jahez", name:"جاهز", icon:"🥗", category:"food", shortDescription:"توصيل الطعام بسرعة وجودة في السعودية", description:"تطبيق سعودي لتوصيل الطعام مع تركيز على المطاعم المحلية الفاخرة.", rating:4.3, pros:["مطاعم فاخرة","سرعة في التوصيل","تجربة مميزة"], cons:["السعودية فقط","الأسعار أعلى من المنافسين"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["توصيل","سعودية","فاخر"], businessUse:["restaurant"] },
+   
+-  { id:"f8", slug:"otlob", name:"أطلب", icon:"🍔", category:"food", shortDescription:"رائد توصيل الطعام في مصر تاريخيًا", description:"من أقدم تطبيقات توصيل الطعام في مصر، مع تجربة مستقرة وثقة عالية.", rating:3.9, pros:["خبرة طويلة","موثوق","عروض جيدة"], cons:["واجهة قديمة شوية","عدد المطاعم أقل من طلبات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["توصيل","مصر","قديم"], businessUse:["restaurant"] },
++  { id:"f2", slug:"careem-food", name:"كريم فود", icon:"🍕", category:"food", shortDescription:"توصيل أكل من كريم بسرعة وكفاءة", description:"خدمة توصيل الطعام من كريم، متكاملة مع باقي خدمات السوبر آب.", rating:4.2, pros:["مدمج مع كريم","توصيل سريع","عروض حصرية"], cons:["مطاعم أقل من طلبات","التوفر محدود في بعض المناطق"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["توصيل","كريم","سريع"], businessUse:["restaurant"] },
+   
+-  { id:"f9", slug:"breadfast", name:"بريدفاست", icon:"🥐", category:"food", shortDescription:"توصيل الإفطار والبقالة لباب البيت", description:"تطبيق مصري متخصص في توصيل الإفطار والبقالة اليومية لباب البيت بأسعار منافسة.", rating:4.5, pros:["أسعار ممتازة","توصيل يومي","منتجات طازجة"], cons:["محدود في مناطق معينة","مش متاح كل الأوقات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"اشتراك Premium: 99 ج/شهر"}], tags:["إفطار","بقالة","يومي","مصر"], businessUse:["grocery"] },
++  { id:"f12", slug:"zomato", name:"Zomato", icon:"🍴", category:"food", shortDescription:"اكتشف المطاعم وقيّمها", description:"تطبيق عالمي لاكتشاف المطاعم وقراءة المراجعات وطلب الطعام.", rating:4.2, pros:["مراجعات شاملة","صور من المستخدمين","حجز طاولات"], cons:["التوصيل محدود","التركيز على المراجعات أكثر من الطلب"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED",note:"Pro: 39 درهم/شهر"}], tags:["مطاعم","مراجعات","حجز","عالمي"] },
+   
+-  { id:"f10", slug:"rabbit", name:"رابيت", icon:"🐰", category:"food", shortDescription:"توصيل بقالة في 20 دقيقة", description:"تطبيق مصري لتوصيل البقالة في أقل من 20 دقيقة، الأسرع في السوق.", rating:4.6, pros:["سرعة خيالية في التوصيل","أسعار منافسة","تطبيق سهل"], cons:["محدود جغرافيًا","المنتجات أحيانًا تنفد"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["بقالة","سريع","مصر","20 دقيقة"], businessUse:["grocery"] },
++  { id:"f3", slug:"noon-food", name:"نون فود", icon:"🥘", category:"food", shortDescription:"توصيل أكل من نون في الخليج", description:"خدمة توصيل الطعام من نون، تركيز قوي على السوق الخليجي.", rating:4.1, pros:["جودة عالية","تكامل مع نون","خصومات للأعضاء"], cons:["محدود خارج الخليج","الأسعار أعلى أحيانًا"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["توصيل","نون","خليج"], businessUse:["restaurant"] },
+   
+-  { id:"f11", slug:"deliveroo", name:"Deliveroo", icon:"🦘", category:"food", shortDescription:"توصيل طعام عالمي بجودة عالية", description:"خدمة توصيل بريطانية الأصل، متوفرة في الإمارات بجودة وتنوع كبير.", rating:4.4, pros:["مطاعم عالمية","جودة عالية","Plus للتوصيل المجاني"], cons:["الإمارات فقط في المنطقة","أسعار أعلى"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED",note:"Plus: 14.99 درهم/شهر"}], tags:["توصيل","عالمي","إمارات","فاخر"], businessUse:["restaurant"] },
++  { id:"f7", slug:"elmenus", name:"إلمنيوز", icon:"📋", category:"food", shortDescription:"اكتشف المطاعم في مصر واطلب أونلاين", description:"دليل المطاعم الأشهر في مصر مع إمكانية الطلب أونلاين والمراجعات.", rating:4.0, pros:["دليل شامل للمطاعم","مراجعات حقيقية","سهل الاستخدام"], cons:["مصر فقط","التوصيل ليس سريعًا دائمًا"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مطاعم","مصر","دليل"], businessUse:["restaurant"] },
+   
+-  { id:"f12", slug:"zomato", name:"Zomato", icon:"🍴", category:"food", shortDescription:"اكتشف المطاعم وقيّمها", description:"تطبيق عالمي لاكتشاف المطاعم وقراءة المراجعات وطلب الطعام.", rating:4.2, pros:["مراجعات شاملة","صور من المستخدمين","حجز طاولات"], cons:["التوصيل محدود","التركيز على المراجعات أكثر من الطلب"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED",note:"Pro: 39 درهم/شهر"}], tags:["مطاعم","مراجعات","حجز","عالمي"] },
++  { id:"f8", slug:"otlob", name:"أطلب", icon:"🍔", category:"food", shortDescription:"رائد توصيل الطعام في مصر تاريخيًا", description:"من أقدم تطبيقات توصيل الطعام في مصر، مع تجربة مستقرة وثقة عالية.", rating:3.9, pros:["خبرة طويلة","موثوق","عروض جيدة"], cons:["واجهة قديمة شوية","عدد المطاعم أقل من طلبات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["توصيل","مصر","قديم"], businessUse:["restaurant"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 🎬 ستريمنج (12 تطبيق)
+   // ═══════════════════════════════════════════════
+   { id:"s1", slug:"netflix", name:"Netflix", icon:"🎬", category:"streaming", shortDescription:"أشهر منصة مشاهدة عالمية", description:"مكتبة ضخمة من الأفلام والمسلسلات العالمية والإنتاج الأصلي.", rating:4.7, pros:["مكتبة ضخمة","إنتاج أصلي مميز","جودة 4K","مشاهدة بدون إنترنت"], cons:["السعر أعلى من البدائل","المحتوى العربي محدود"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:199,yearly:2388,currency:"EGP"},{country:"SA",monthly:49,yearly:588,currency:"SAR"},{country:"AE",monthly:49,yearly:588,currency:"AED"}], tags:["أفلام","مسلسلات","عالمي","4K"] },
+   
+-  { id:"s2", slug:"shahid", name:"شاهد VIP", icon:"📺", category:"streaming", shortDescription:"أفضل منصة محتوى عربي", description:"المنصة العربية الرائدة في المحتوى العربي والإنتاج الأصلي.", rating:4.5, pros:["محتوى عربي قوي","مسلسلات رمضان حصرية","بث مباشر MBC","رياضة beIN"], cons:["بعض المحتوى أقل جودة","العروض تختلف حسب البلد"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:79,yearly:948,currency:"EGP"},{country:"SA",monthly:29,yearly:348,currency:"SAR"},{country:"AE",monthly:29,yearly:348,currency:"AED"}], tags:["عربي","بث مباشر","رياضة","رمضان"] },
++  { id:"s10", slug:"spotify", name:"Spotify", icon:"🎵", category:"streaming", shortDescription:"أشهر منصة موسيقى عالمية", description:"ملايين الأغاني والبودكاست والقوائم المخصصة.", rating:4.7, pros:["مكتبة موسيقى ضخمة","قوائم ذكية","بودكاست عربي وعالمي"], cons:["الموسيقى العربية أقل من Anghami","السعر يزيد سنويًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:59.99,yearly:719,currency:"EGP",note:"عائلي: 89.99 ج"},{country:"SA",monthly:21.99,yearly:264,currency:"SAR"},{country:"AE",monthly:21.99,yearly:264,currency:"AED"}], tags:["موسيقى","بودكاست","قوائم"] },
+   
+-  { id:"s3", slug:"watchit", name:"واتش إت", icon:"🎥", category:"streaming", shortDescription:"منصة المحتوى المصري الأشهر", description:"منصة مصرية تركز على المحتوى المصري والعربي بأسعار منافسة جدًا.", rating:4.3, pros:["محتوى مصري حصري","سعر منافس","مسلسلات ON E"], cons:["محدود خارج مصر","المكتبة أصغر"], countries:["EG"], pricing:[{country:"EG",monthly:49,yearly:588,currency:"EGP"}], tags:["مصري","رخيص","ON E"] },
++  { id:"s7", slug:"disney-plus", name:"Disney+", icon:"🏰", category:"streaming", shortDescription:"عالم Disney و Marvel و Star Wars", description:"كل محتوى Disney و Pixar و Marvel و Star Wars في مكان واحد.", rating:4.6, pros:["محتوى عائلي ممتاز","Marvel و Star Wars","جودة 4K"], cons:["محدود في المنطقة","مش متاح رسميًا في كل الدول"], countries:["AE"], pricing:[{country:"AE",monthly:29.99,yearly:299.99,currency:"AED"}], tags:["عائلي","Disney","Marvel"] },
+   
+-  { id:"s4", slug:"osn-plus", name:"OSN+", icon:"📡", category:"streaming", shortDescription:"محتوى HBO وأفلام حصرية", description:"منصة خليجية تقدم محتوى HBO و Warner Bros وأفلام Disney.", rating:4.4, pros:["محتوى HBO حصري","أفلام جديدة بسرعة","جودة عالية"], cons:["السعر مرتفع","المحتوى العربي محدود"], countries:["SA","AE"], pricing:[{country:"SA",monthly:84,yearly:1008,currency:"SAR"},{country:"AE",monthly:84,yearly:1008,currency:"AED"}], tags:["HBO","أفلام جديدة","فاخر"] },
++  { id:"s9", slug:"youtube-premium", name:"YouTube Premium", icon:"▶️", category:"streaming", shortDescription:"يوتيوب بدون إعلانات وموسيقى", description:"يوتيوب بدون إعلانات + YouTube Music + تحميل للمشاهدة بدون إنترنت.", rating:4.6, pros:["بدون إعلانات","موسيقى مدمجة","تشغيل في الخلفية"], cons:["السعر يختلف كثيرًا","يحتاج VPN في بعض الدول"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:72,yearly:864,currency:"EGP"},{country:"SA",monthly:23.99,yearly:287,currency:"SAR"},{country:"AE",monthly:23.99,yearly:287,currency:"AED"}], tags:["يوتيوب","موسيقى","بدون إعلانات"] },
+   
+-  { id:"s5", slug:"starzplay", name:"StarzPlay", icon:"⭐", category:"streaming", shortDescription:"منصة عالمية بمحتوى متنوع", description:"محتوى عالمي متنوع مع تركيز على الأفلام والمسلسلات الجديدة.", rating:4.2, pros:["محتوى متنوع","أفلام جديدة","سعر معقول"], cons:["المحتوى العربي قليل","الواجهة تحتاج تحسين"], countries:["SA","AE"], pricing:[{country:"SA",monthly:35,yearly:420,currency:"SAR"},{country:"AE",monthly:35,yearly:420,currency:"AED"}], tags:["عالمي","أفلام","رياضة"] },
++  { id:"s2", slug:"shahid", name:"شاهد VIP", icon:"📺", category:"streaming", shortDescription:"أفضل منصة محتوى عربي", description:"المنصة العربية الرائدة في المحتوى العربي والإنتاج الأصلي.", rating:4.5, pros:["محتوى عربي قوي","مسلسلات رمضان حصرية","بث مباشر MBC","رياضة beIN"], cons:["بعض المحتوى أقل جودة","العروض تختلف حسب البلد"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:79,yearly:948,currency:"EGP"},{country:"SA",monthly:29,yearly:348,currency:"SAR"},{country:"AE",monthly:29,yearly:348,currency:"AED"}], tags:["عربي","بث مباشر","رياضة","رمضان"] },
+   
+   { id:"s6", slug:"tod", name:"TOD", icon:"⚽", category:"streaming", shortDescription:"رياضة من beIN في تطبيق واحد", description:"تطبيق beIN للرياضة والترفيه، مثالي لعشاق كرة القدم.", rating:4.5, pros:["كل مباريات beIN","جودة عالية","بث مباشر"], cons:["متاح في الخليج بشكل أساسي","السعر مرتفع للرياضة فقط"], countries:["SA","AE"], pricing:[{country:"SA",monthly:69,yearly:828,currency:"SAR"},{country:"AE",monthly:69,yearly:828,currency:"AED"}], tags:["رياضة","beIN","كرة قدم"] },
+   
+-  { id:"s7", slug:"disney-plus", name:"Disney+", icon:"🏰", category:"streaming", shortDescription:"عالم Disney و Marvel و Star Wars", description:"كل محتوى Disney و Pixar و Marvel و Star Wars في مكان واحد.", rating:4.6, pros:["محتوى عائلي ممتاز","Marvel و Star Wars","جودة 4K"], cons:["محدود في المنطقة","مش متاح رسميًا في كل الدول"], countries:["AE"], pricing:[{country:"AE",monthly:29.99,yearly:299.99,currency:"AED"}], tags:["عائلي","Disney","Marvel"] },
+-  
+   { id:"s8", slug:"apple-tv", name:"Apple TV+", icon:"🍎", category:"streaming", shortDescription:"محتوى أصلي حصري من Apple", description:"محتوى أصلي عالي الجودة من Apple بسعر منافس.", rating:4.5, pros:["جودة إنتاج عالية","سعر منافس","محتوى أصلي حصري"], cons:["مكتبة صغيرة","لا يوجد محتوى عربي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,yearly:1188,currency:"EGP"},{country:"SA",monthly:24.99,yearly:299.99,currency:"SAR"},{country:"AE",monthly:24.99,yearly:299.99,currency:"AED"}], tags:["Apple","أصلي","جودة"] },
+   
+-  { id:"s9", slug:"youtube-premium", name:"YouTube Premium", icon:"▶️", category:"streaming", shortDescription:"يوتيوب بدون إعلانات وموسيقى", description:"يوتيوب بدون إعلانات + YouTube Music + تحميل للمشاهدة بدون إنترنت.", rating:4.6, pros:["بدون إعلانات","موسيقى مدمجة","تشغيل في الخلفية"], cons:["السعر يختلف كثيرًا","يحتاج VPN في بعض الدول"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:72,yearly:864,currency:"EGP"},{country:"SA",monthly:23.99,yearly:287,currency:"SAR"},{country:"AE",monthly:23.99,yearly:287,currency:"AED"}], tags:["يوتيوب","موسيقى","بدون إعلانات"] },
+-  
+-  { id:"s10", slug:"spotify", name:"Spotify", icon:"🎵", category:"streaming", shortDescription:"أشهر منصة موسيقى عالمية", description:"ملايين الأغاني والبودكاست والقوائم المخصصة.", rating:4.7, pros:["مكتبة موسيقى ضخمة","قوائم ذكية","بودكاست عربي وعالمي"], cons:["الموسيقى العربية أقل من Anghami","السعر يزيد سنويًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:59.99,yearly:719,currency:"EGP",note:"عائلي: 89.99 ج"},{country:"SA",monthly:21.99,yearly:264,currency:"SAR"},{country:"AE",monthly:21.99,yearly:264,currency:"AED"}], tags:["موسيقى","بودكاست","قوائم"] },
++  { id:"s4", slug:"osn-plus", name:"OSN+", icon:"📡", category:"streaming", shortDescription:"محتوى HBO وأفلام حصرية", description:"منصة خليجية تقدم محتوى HBO و Warner Bros وأفلام Disney.", rating:4.4, pros:["محتوى HBO حصري","أفلام جديدة بسرعة","جودة عالية"], cons:["السعر مرتفع","المحتوى العربي محدود"], countries:["SA","AE"], pricing:[{country:"SA",monthly:84,yearly:1008,currency:"SAR"},{country:"AE",monthly:84,yearly:1008,currency:"AED"}], tags:["HBO","أفلام جديدة","فاخر"] },
+   
+   { id:"s11", slug:"anghami", name:"أنغامي", icon:"🎶", category:"streaming", shortDescription:"المنصة العربية الأولى للموسيقى", description:"أشهر منصة موسيقى عربية بمكتبة ضخمة من الأغاني العربية.", rating:4.4, pros:["موسيقى عربية ضخمة","أسعار منافسة","Plus للحصري"], cons:["الموسيقى الغربية أقل","الواجهة تحتاج تطوير"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:39.99,yearly:479,currency:"EGP"},{country:"SA",monthly:14.99,yearly:179,currency:"SAR"},{country:"AE",monthly:14.99,yearly:179,currency:"AED"}], tags:["موسيقى عربية","عربي","Plus"] },
+   
++  { id:"s3", slug:"watchit", name:"واتش إت", icon:"🎥", category:"streaming", shortDescription:"منصة المحتوى المصري الأشهر", description:"منصة مصرية تركز على المحتوى المصري والعربي بأسعار منافسة جدًا.", rating:4.3, pros:["محتوى مصري حصري","سعر منافس","مسلسلات ON E"], cons:["محدود خارج مصر","المكتبة أصغر"], countries:["EG"], pricing:[{country:"EG",monthly:49,yearly:588,currency:"EGP"}], tags:["مصري","رخيص","ON E"] },
++  
+   { id:"s12", slug:"deezer", name:"Deezer", icon:"🎧", category:"streaming", shortDescription:"موسيقى عالمية وعربية", description:"منصة موسيقى فرنسية بمكتبة متنوعة شرقية وغربية.", rating:4.3, pros:["مزج جيد بين العربي والغربي","جودة عالية","HiFi متاح"], cons:["شعبية أقل في المنطقة","الواجهة أقل أناقة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:49.99,yearly:599,currency:"EGP"},{country:"SA",monthly:19.99,yearly:239,currency:"SAR"},{country:"AE",monthly:19.99,yearly:239,currency:"AED"}], tags:["موسيقى","عالمي","HiFi"] },
++  
++  { id:"s5", slug:"starzplay", name:"StarzPlay", icon:"⭐", category:"streaming", shortDescription:"منصة عالمية بمحتوى متنوع", description:"محتوى عالمي متنوع مع تركيز على الأفلام والمسلسلات الجديدة.", rating:4.2, pros:["محتوى متنوع","أفلام جديدة","سعر معقول"], cons:["المحتوى العربي قليل","الواجهة تحتاج تحسين"], countries:["SA","AE"], pricing:[{country:"SA",monthly:35,yearly:420,currency:"SAR"},{country:"AE",monthly:35,yearly:420,currency:"AED"}], tags:["عالمي","أفلام","رياضة"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 🛍️ تسوق (15 تطبيق)
+   // ═══════════════════════════════════════════════
+   { id:"sh1", slug:"amazon", name:"Amazon", icon:"🛒", category:"shopping", shortDescription:"أكبر متجر إلكتروني عالمي", description:"كل ما تحتاجه من إلكترونيات وكتب وملابس وأكثر مع شحن سريع.", rating:4.6, pros:["تنوع ضخم","ثقة عالية","Prime للشحن المجاني","سياسة استرجاع ممتازة"], cons:["التوفر يختلف حسب البلد","بعض البائعين متفاوتين"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Prime: 79 ج/شهر"},{country:"SA",monthly:0,currency:"SAR",note:"Prime: 16 ريال/شهر"},{country:"AE",monthly:0,currency:"AED",note:"Prime: 16 درهم/شهر"}], tags:["تسوق","إلكترونيات","Prime","عالمي"], businessUse:["retail","office"] },
+   
+-  { id:"sh2", slug:"noon", name:"نون", icon:"📦", category:"shopping", shortDescription:"الأمازون العربي بحضور قوي في المنطقة", description:"منصة تسوق إقليمية رائدة بعروض قوية وتوصيل سريع.", rating:4.4, pros:["عروض قوية","حضور خليجي ممتاز","Noon One للشحن المجاني"], cons:["الجودة تعتمد على البائع","خدمة العملاء متفاوتة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Noon One: 99 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تسوق","خصومات","Noon One"], businessUse:["retail"] },
+-  
+-  { id:"sh3", slug:"jumia", name:"جوميا", icon:"🛍️", category:"shopping", shortDescription:"رائد التسوق الأفريقي في مصر", description:"أكبر منصة تسوق في أفريقيا بحضور قوي في مصر.", rating:4.0, pros:["انتشار قوي في مصر","Jumia Pay","عروض موسمية كبيرة"], cons:["جودة المنتجات متفاوتة","التوصيل بطيء أحيانًا"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Jumia Prime: 79 ج/سنة"}], tags:["تسوق","مصر","Jumia Pay"], businessUse:["retail"] },
++  { id:"sh8", slug:"sephora", name:"Sephora", icon:"💄", category:"shopping", shortDescription:"مكياج وعناية بشرة عالمية", description:"أكبر منصة عالمية للمكياج والعطور والعناية بالبشرة.", rating:4.6, pros:["ماركات عالمية","تنوع ضخم","Beauty Insider rewards"], cons:["أسعار مرتفعة","التوفر محدود في مصر"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مكياج","عناية","Beauty"] },
+   
+-  { id:"sh4", slug:"shein", name:"SHEIN", icon:"👗", category:"shopping", shortDescription:"أزياء عصرية بأسعار خيالية", description:"تطبيق صيني للأزياء النسائية بأسعار رخيصة جدًا وتنوع كبير.", rating:4.3, pros:["أسعار رخيصة جدًا","تنوع ضخم","تحديثات يومية"], cons:["الجودة متفاوتة","شحن بطيء أحيانًا","المقاسات غير دقيقة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["أزياء","رخيص","صيني","نسائي"] },
++  { id:"sh6", slug:"ounass", name:"أوناس", icon:"💎", category:"shopping", shortDescription:"الفخامة من العالم لباب بيتك", description:"منصة فاخرة للملابس والأكسسوارات بماركات عالمية.", rating:4.5, pros:["ماركات عالمية فاخرة","توصيل سريع","تجربة مميزة"], cons:["أسعار مرتفعة جدًا","التوفر محدود"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فاخر","ماركات","موضة"] },
+   
+-  { id:"sh5", slug:"namshi", name:"نمشي", icon:"👠", category:"shopping", shortDescription:"الموضة في الشرق الأوسط", description:"منصة عربية متخصصة في الموضة والأزياء بماركات عالمية وعربية.", rating:4.2, pros:["ماركات معتمدة","سياسة استرجاع ممتازة","تركيز على الموضة"], cons:["أسعار أعلى من SHEIN","التركيز على الخليج"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["موضة","ماركات","خليج"] },
++  { id:"sh10", slug:"jarir", name:"جرير", icon:"📚", category:"shopping", shortDescription:"كتب وإلكترونيات في السعودية", description:"المكتبة الأشهر في السعودية مع قسم إلكترونيات قوي.", rating:4.5, pros:["كتب متنوعة","إلكترونيات أصلية","فروع كثيرة"], cons:["السعودية بشكل أساسي","الكتب الإنجليزية محدودة"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["كتب","إلكترونيات","مكتبة"] },
+   
+-  { id:"sh6", slug:"ounass", name:"أوناس", icon:"💎", category:"shopping", shortDescription:"الفخامة من العالم لباب بيتك", description:"منصة فاخرة للملابس والأكسسوارات بماركات عالمية.", rating:4.5, pros:["ماركات عالمية فاخرة","توصيل سريع","تجربة مميزة"], cons:["أسعار مرتفعة جدًا","التوفر محدود"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فاخر","ماركات","موضة"] },
++  { id:"sh2", slug:"noon", name:"نون", icon:"📦", category:"shopping", shortDescription:"الأمازون العربي بحضور قوي في المنطقة", description:"منصة تسوق إقليمية رائدة بعروض قوية وتوصيل سريع.", rating:4.4, pros:["عروض قوية","حضور خليجي ممتاز","Noon One للشحن المجاني"], cons:["الجودة تعتمد على البائع","خدمة العملاء متفاوتة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Noon One: 99 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تسوق","خصومات","Noon One"], businessUse:["retail"] },
+   
+   { id:"sh7", slug:"bath-body", name:"Bath & Body Works", icon:"🧴", category:"shopping", shortDescription:"عناية شخصية وعطور", description:"تطبيق رسمي لمنتجات العناية الشخصية والعطور الشهيرة.", rating:4.4, pros:["منتجات أصلية","عروض حصرية للتطبيق","نقاط ولاء"], cons:["محدود في بعض البلاد","أسعار عالية"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["عناية","عطور","ماركة"] },
+   
+-  { id:"sh8", slug:"sephora", name:"Sephora", icon:"💄", category:"shopping", shortDescription:"مكياج وعناية بشرة عالمية", description:"أكبر منصة عالمية للمكياج والعطور والعناية بالبشرة.", rating:4.6, pros:["ماركات عالمية","تنوع ضخم","Beauty Insider rewards"], cons:["أسعار مرتفعة","التوفر محدود في مصر"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مكياج","عناية","Beauty"] },
++  { id:"sh4", slug:"shein", name:"SHEIN", icon:"👗", category:"shopping", shortDescription:"أزياء عصرية بأسعار خيالية", description:"تطبيق صيني للأزياء النسائية بأسعار رخيصة جدًا وتنوع كبير.", rating:4.3, pros:["أسعار رخيصة جدًا","تنوع ضخم","تحديثات يومية"], cons:["الجودة متفاوتة","شحن بطيء أحيانًا","المقاسات غير دقيقة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["أزياء","رخيص","صيني","نسائي"] },
+   
+   { id:"sh9", slug:"extra", name:"إكسترا", icon:"💻", category:"shopping", shortDescription:"إلكترونيات وأجهزة في السعودية", description:"أكبر متجر إلكترونيات في السعودية بأسعار منافسة.", rating:4.3, pros:["متخصص في الإلكترونيات","عروض موسمية","ضمان رسمي"], cons:["السعودية فقط","خدمة العملاء أحيانًا بطيئة"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["إلكترونيات","سعودية","أجهزة"] },
+   
+-  { id:"sh10", slug:"jarir", name:"جرير", icon:"📚", category:"shopping", shortDescription:"كتب وإلكترونيات في السعودية", description:"المكتبة الأشهر في السعودية مع قسم إلكترونيات قوي.", rating:4.5, pros:["كتب متنوعة","إلكترونيات أصلية","فروع كثيرة"], cons:["السعودية بشكل أساسي","الكتب الإنجليزية محدودة"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["كتب","إلكترونيات","مكتبة"] },
+-  
+-  { id:"sh11", slug:"olx", name:"أوليكس", icon:"🏷️", category:"shopping", shortDescription:"بيع وشراء المستعمل", description:"أكبر منصة للسلع المستعملة والإعلانات المبوبة في المنطقة.", rating:4.0, pros:["مجاني للنشر","سلع متنوعة","عقارات وسيارات"], cons:["نصب أحيانًا","يحتاج تفاوض"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مستعمل","إعلانات","عقارات","سيارات"] },
++  { id:"sh5", slug:"namshi", name:"نمشي", icon:"👠", category:"shopping", shortDescription:"الموضة في الشرق الأوسط", description:"منصة عربية متخصصة في الموضة والأزياء بماركات عالمية وعربية.", rating:4.2, pros:["ماركات معتمدة","سياسة استرجاع ممتازة","تركيز على الموضة"], cons:["أسعار أعلى من SHEIN","التركيز على الخليج"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["موضة","ماركات","خليج"] },
+   
+   { id:"sh12", slug:"dubizzle", name:"دوبيزل", icon:"🚙", category:"shopping", shortDescription:"إعلانات مبوبة في الخليج", description:"المنصة الأشهر للإعلانات المبوبة في الإمارات والخليج.", rating:4.2, pros:["سلع متنوعة","عقارات قوية","سيارات كثيرة"], cons:["إعلانات احتيالية أحيانًا","رسوم للإعلانات المميزة"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["مستعمل","إعلانات","عقارات","خليج"] },
+   
++  { id:"sh15", slug:"aliexpress", name:"AliExpress", icon:"🛍️", category:"shopping", shortDescription:"التسوق الصيني العالمي", description:"منصة صينية عملاقة بتنوع كبير وأسعار منخفضة.", rating:4.2, pros:["تنوع ضخم","أسعار جيدة","حماية المشتري"], cons:["شحن طويل","المنتجات أحيانًا مختلفة عن الصور"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تسوق","صيني","عالمي"] },
++  
+   { id:"sh13", slug:"opensooq", name:"السوق المفتوح", icon:"🛒", category:"shopping", shortDescription:"سوق عربي للبيع والشراء", description:"منصة عربية للإعلانات المبوبة بحضور قوي في الأردن ومصر.", rating:4.1, pros:["مجاني","عربي 100%","سلع متنوعة"], cons:["جودة الإعلانات متفاوتة","يحتاج تواصل مباشر"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مستعمل","عربي","إعلانات"] },
+   
+-  { id:"sh14", slug:"temu", name:"Temu", icon:"🎁", category:"shopping", shortDescription:"تسوق صيني بأسعار خيالية", description:"تطبيق صيني صاعد بأسعار رخيصة جدًا وعروض يومية.", rating:4.0, pros:["أسعار رخيصة جدًا","عروض مستمرة","شحن مجاني أحيانًا"], cons:["جودة متفاوتة","شحن بطيء","لا توجد سياسة استرجاع واضحة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["رخيص","صيني","عروض"] },
++  { id:"sh3", slug:"jumia", name:"جوميا", icon:"🛍️", category:"shopping", shortDescription:"رائد التسوق الأفريقي في مصر", description:"أكبر منصة تسوق في أفريقيا بحضور قوي في مصر.", rating:4.0, pros:["انتشار قوي في مصر","Jumia Pay","عروض موسمية كبيرة"], cons:["جودة المنتجات متفاوتة","التوصيل بطيء أحيانًا"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Jumia Prime: 79 ج/سنة"}], tags:["تسوق","مصر","Jumia Pay"], businessUse:["retail"] },
+   
+-  { id:"sh15", slug:"aliexpress", name:"AliExpress", icon:"🛍️", category:"shopping", shortDescription:"التسوق الصيني العالمي", description:"منصة صينية عملاقة بتنوع كبير وأسعار منخفضة.", rating:4.2, pros:["تنوع ضخم","أسعار جيدة","حماية المشتري"], cons:["شحن طويل","المنتجات أحيانًا مختلفة عن الصور"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تسوق","صيني","عالمي"] },
++  { id:"sh11", slug:"olx", name:"أوليكس", icon:"🏷️", category:"shopping", shortDescription:"بيع وشراء المستعمل", description:"أكبر منصة للسلع المستعملة والإعلانات المبوبة في المنطقة.", rating:4.0, pros:["مجاني للنشر","سلع متنوعة","عقارات وسيارات"], cons:["نصب أحيانًا","يحتاج تفاوض"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مستعمل","إعلانات","عقارات","سيارات"] },
++  
++  { id:"sh14", slug:"temu", name:"Temu", icon:"🎁", category:"shopping", shortDescription:"تسوق صيني بأسعار خيالية", description:"تطبيق صيني صاعد بأسعار رخيصة جدًا وعروض يومية.", rating:4.0, pros:["أسعار رخيصة جدًا","عروض مستمرة","شحن مجاني أحيانًا"], cons:["جودة متفاوتة","شحن بطيء","لا توجد سياسة استرجاع واضحة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["رخيص","صيني","عروض"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 💪 صحة ولياقة (12 تطبيق)
+   // ═══════════════════════════════════════════════
+-  { id:"h1", slug:"vezeeta", name:"Vezeeta", icon:"🩺", category:"health", shortDescription:"حجز دكاترة وعيادات وتحاليل", description:"المنصة الصحية الرائدة في مصر لحجز الأطباء والخدمات الطبية.", rating:4.2, pros:["سهل جدًا","حجوزات سريعة","عيادات كثيرة","تحاليل أونلاين"], cons:["توافر أقل خارج مصر","بعض البيانات تحتاج تحديث"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["صحة","دكتور","حجز","تحاليل"], businessUse:["clinic","doctor"] },
++  { id:"h5", slug:"calm", name:"Calm", icon:"🧘", category:"health", shortDescription:"تأمل ونوم واسترخاء", description:"أشهر تطبيق للتأمل والنوم العميق وتخفيف التوتر.", rating:4.7, pros:["محتوى عالي الجودة","قصص نوم مميزة","موسيقى استرخاء"], cons:["كله بالإنجليزي","السعر مرتفع"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:299,yearly:1799,currency:"EGP"},{country:"SA",monthly:35,yearly:209,currency:"SAR"},{country:"AE",monthly:35,yearly:209,currency:"AED"}], tags:["تأمل","نوم","استرخاء"] },
+   
+-  { id:"h2", slug:"altibbi", name:"الطبي", icon:"⚕️", category:"health", shortDescription:"استشارات طبية أونلاين 24/7", description:"منصة عربية للاستشارات الطبية الفورية مع أطباء معتمدين.", rating:4.3, pros:["استشارات فورية","أطباء معتمدون","محتوى طبي عربي ضخم"], cons:["الاستشارات بمقابل","الواجهة تحتاج تحسين"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,currency:"EGP",note:"للاستشارات غير محدودة"},{country:"SA",monthly:39,currency:"SAR"},{country:"AE",monthly:39,currency:"AED"}], tags:["استشارة","طبي","عربي","24/7"] },
++  { id:"h7", slug:"nike-training", name:"Nike Training Club", icon:"🏋️", category:"health", shortDescription:"تمارين مع مدربين محترفين", description:"تطبيق Nike للتمارين المنزلية والصالة الرياضية، مجاني بالكامل.", rating:4.7, pros:["مجاني 100%","تمارين متنوعة","مدربين محترفين"], cons:["لا يدعم العربية","يحتاج معدات أحيانًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تمارين","مجاني","لياقة","Nike"] },
+   
+-  { id:"h3", slug:"cura", name:"Cura", icon:"💊", category:"health", shortDescription:"استشارات وتوصيل أدوية في السعودية", description:"تطبيق صحي سعودي شامل للاستشارات وتوصيل الأدوية.", rating:4.4, pros:["خدمة شاملة","توصيل الأدوية","استشارات سريعة"], cons:["السعودية فقط","السعر مرتفع"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR",note:"الاستشارة: 65 ريال"}], tags:["صحة","أدوية","سعودية"], businessUse:["clinic"] },
++  { id:"h9", slug:"flo", name:"Flo", icon:"🌸", category:"health", shortDescription:"تتبع الدورة الشهرية للنساء", description:"أشهر تطبيق نسائي لتتبع الدورة الشهرية والصحة الإنجابية.", rating:4.7, pros:["دقيق جدًا","واجهة جميلة","مجتمع داعم"], cons:["الإصدار العربي محدود","Premium مكلف"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:199,yearly:999,currency:"EGP"},{country:"SA",monthly:23.99,yearly:119.99,currency:"SAR"},{country:"AE",monthly:23.99,yearly:119.99,currency:"AED"}], tags:["نسائي","دورة شهرية","صحة"] },
+   
+   { id:"h4", slug:"myfitnesspal", name:"MyFitnessPal", icon:"🥗", category:"health", shortDescription:"حساب السعرات وتتبع التغذية", description:"الأشهر عالميًا في حساب السعرات الحرارية ومتابعة الوزن والتغذية.", rating:4.6, pros:["قاعدة بيانات أطعمة ضخمة","مجاني للأساسيات","يتكامل مع أجهزة كثيرة"], cons:["المحتوى العربي محدود","Premium مرتفع"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:299,yearly:1499,currency:"EGP",note:"Premium"},{country:"SA",monthly:39,yearly:299,currency:"SAR"},{country:"AE",monthly:39,yearly:299,currency:"AED"}], tags:["تغذية","سعرات","لياقة","رجيم"] },
+   
+-  { id:"h5", slug:"calm", name:"Calm", icon:"🧘", category:"health", shortDescription:"تأمل ونوم واسترخاء", description:"أشهر تطبيق للتأمل والنوم العميق وتخفيف التوتر.", rating:4.7, pros:["محتوى عالي الجودة","قصص نوم مميزة","موسيقى استرخاء"], cons:["كله بالإنجليزي","السعر مرتفع"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:299,yearly:1799,currency:"EGP"},{country:"SA",monthly:35,yearly:209,currency:"SAR"},{country:"AE",monthly:35,yearly:209,currency:"AED"}], tags:["تأمل","نوم","استرخاء"] },
+-  
+   { id:"h6", slug:"headspace", name:"Headspace", icon:"🧠", category:"health", shortDescription:"تأمل وعقلية صحية", description:"تطبيق التأمل العالمي بمحتوى متنوع للمبتدئين والمحترفين.", rating:4.6, pros:["محتوى منظم","جلسات قصيرة","علمي ومجرّب"], cons:["إنجليزي فقط","يحتاج اشتراك"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:259,yearly:1599,currency:"EGP"},{country:"SA",monthly:29.99,yearly:179,currency:"SAR"},{country:"AE",monthly:29.99,yearly:179,currency:"AED"}], tags:["تأمل","تركيز","صحة عقلية"] },
+   
+-  { id:"h7", slug:"nike-training", name:"Nike Training Club", icon:"🏋️", category:"health", shortDescription:"تمارين مع مدربين محترفين", description:"تطبيق Nike للتمارين المنزلية والصالة الرياضية، مجاني بالكامل.", rating:4.7, pros:["مجاني 100%","تمارين متنوعة","مدربين محترفين"], cons:["لا يدعم العربية","يحتاج معدات أحيانًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تمارين","مجاني","لياقة","Nike"] },
+-  
+   { id:"h8", slug:"strava", name:"Strava", icon:"🏃", category:"health", shortDescription:"تتبع الجري والدراجة", description:"شبكة اجتماعية للعدائين وراكبي الدراجات لتتبع التمارين ومنافسة الأصدقاء.", rating:4.5, pros:["مجتمع رياضي قوي","تتبع GPS دقيق","تحديات شهرية"], cons:["المميزات المتقدمة بمقابل","يستهلك بطارية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:149,yearly:899,currency:"EGP"},{country:"SA",monthly:17.99,yearly:107.99,currency:"SAR"},{country:"AE",monthly:17.99,yearly:107.99,currency:"AED"}], tags:["جري","دراجة","GPS","مجتمع"] },
+   
+-  { id:"h9", slug:"flo", name:"Flo", icon:"🌸", category:"health", shortDescription:"تتبع الدورة الشهرية للنساء", description:"أشهر تطبيق نسائي لتتبع الدورة الشهرية والصحة الإنجابية.", rating:4.7, pros:["دقيق جدًا","واجهة جميلة","مجتمع داعم"], cons:["الإصدار العربي محدود","Premium مكلف"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:199,yearly:999,currency:"EGP"},{country:"SA",monthly:23.99,yearly:119.99,currency:"SAR"},{country:"AE",monthly:23.99,yearly:119.99,currency:"AED"}], tags:["نسائي","دورة شهرية","صحة"] },
++  { id:"h11", slug:"sweat", name:"Sweat", icon:"💦", category:"health", shortDescription:"تمارين للنساء من Kayla Itsines", description:"تطبيق تمارين عالمي مصمم خصيصًا للنساء بكل المستويات.", rating:4.5, pros:["مخصص للنساء","برامج متنوعة","مدربات محترفات"], cons:["السعر مرتفع","إنجليزي فقط"], countries:["SA","AE"], pricing:[{country:"SA",monthly:49,yearly:489,currency:"SAR"},{country:"AE",monthly:49,yearly:489,currency:"AED"}], tags:["تمارين","نسائي","BBG"] },
+   
+-  { id:"h10", slug:"pharmacare", name:"فارماكير", icon:"💉", category:"health", shortDescription:"توصيل أدوية في مصر", description:"تطبيق مصري لتوصيل الأدوية من الصيدليات بسرعة.", rating:4.2, pros:["توصيل سريع","صيدليات معتمدة","مقارنة أسعار"], cons:["محدود في مناطق معينة","أحيانًا لا تتوفر الأدوية"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["أدوية","صيدلية","توصيل","مصر"] },
++  { id:"h3", slug:"cura", name:"Cura", icon:"💊", category:"health", shortDescription:"استشارات وتوصيل أدوية في السعودية", description:"تطبيق صحي سعودي شامل للاستشارات وتوصيل الأدوية.", rating:4.4, pros:["خدمة شاملة","توصيل الأدوية","استشارات سريعة"], cons:["السعودية فقط","السعر مرتفع"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR",note:"الاستشارة: 65 ريال"}], tags:["صحة","أدوية","سعودية"], businessUse:["clinic"] },
+   
+-  { id:"h11", slug:"sweat", name:"Sweat", icon:"💦", category:"health", shortDescription:"تمارين للنساء من Kayla Itsines", description:"تطبيق تمارين عالمي مصمم خصيصًا للنساء بكل المستويات.", rating:4.5, pros:["مخصص للنساء","برامج متنوعة","مدربات محترفات"], cons:["السعر مرتفع","إنجليزي فقط"], countries:["SA","AE"], pricing:[{country:"SA",monthly:49,yearly:489,currency:"SAR"},{country:"AE",monthly:49,yearly:489,currency:"AED"}], tags:["تمارين","نسائي","BBG"] },
++  { id:"h2", slug:"altibbi", name:"الطبي", icon:"⚕️", category:"health", shortDescription:"استشارات طبية أونلاين 24/7", description:"منصة عربية للاستشارات الطبية الفورية مع أطباء معتمدين.", rating:4.3, pros:["استشارات فورية","أطباء معتمدون","محتوى طبي عربي ضخم"], cons:["الاستشارات بمقابل","الواجهة تحتاج تحسين"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,currency:"EGP",note:"للاستشارات غير محدودة"},{country:"SA",monthly:39,currency:"SAR"},{country:"AE",monthly:39,currency:"AED"}], tags:["استشارة","طبي","عربي","24/7"] },
+   
+   { id:"h12", slug:"sehhaty", name:"صحتي", icon:"🏥", category:"health", shortDescription:"تطبيق الصحة الرسمي في السعودية", description:"التطبيق الرسمي لوزارة الصحة السعودية لكل الخدمات الصحية.", rating:4.3, pros:["رسمي حكومي","شامل","مجاني تمامًا"], cons:["السعودية فقط","الواجهة تحتاج تحسين"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["حكومي","صحة","سعودية","رسمي"] },
++  
++  { id:"h1", slug:"vezeeta", name:"Vezeeta", icon:"🩺", category:"health", shortDescription:"حجز دكاترة وعيادات وتحاليل", description:"المنصة الصحية الرائدة في مصر لحجز الأطباء والخدمات الطبية.", rating:4.2, pros:["سهل جدًا","حجوزات سريعة","عيادات كثيرة","تحاليل أونلاين"], cons:["توافر أقل خارج مصر","بعض البيانات تحتاج تحديث"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["صحة","دكتور","حجز","تحاليل"], businessUse:["clinic","doctor"] },
++  
++  { id:"h10", slug:"pharmacare", name:"فارماكير", icon:"💉", category:"health", shortDescription:"توصيل أدوية في مصر", description:"تطبيق مصري لتوصيل الأدوية من الصيدليات بسرعة.", rating:4.2, pros:["توصيل سريع","صيدليات معتمدة","مقارنة أسعار"], cons:["محدود في مناطق معينة","أحيانًا لا تتوفر الأدوية"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["أدوية","صيدلية","توصيل","مصر"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 🚗 مواصلات وتنقل (10 تطبيقات)
+   // ═══════════════════════════════════════════════
+-  { id:"t1", slug:"uber", name:"Uber", icon:"🚘", category:"transport", shortDescription:"مشاوير موثوقة في كل العالم", description:"التطبيق العالمي للمشاوير، انتشار قوي وتجربة مستقرة.", rating:4.5, pros:["انتشار قوي عالميًا","تجربة ثابتة","خيارات متعددة","Uber Eats مدمج"], cons:["السعر يزيد وقت الذروة","الدعم أحيانًا بطيء"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"الدفع حسب الرحلة"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مواصلات","رحلات","موثوق","عالمي"] },
++  { id:"t7", slug:"google-maps", name:"Google Maps", icon:"🗺️", category:"transport", shortDescription:"خرائط ومواصلات عالمية", description:"الخرائط الأشهر عالميًا للملاحة وحركة المرور والمواصلات العامة.", rating:4.8, pros:["دقة عالية","مجاني","تحديثات مستمرة","مراجعات الأماكن"], cons:["يستهلك بيانات","البطارية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["خرائط","ملاحة","Google","مجاني"] },
+   
+-  { id:"t2", slug:"careem", name:"كريم", icon:"🚕", category:"transport", shortDescription:"السوبر آب العربي للمشاوير والخدمات", description:"تطبيق عربي شامل للمشاوير والتوصيل والمدفوعات.", rating:4.3, pros:["سوبر آب شامل","خدمات متعددة","سهولة الدفع","كريم بلس"], cons:["الأسعار تزيد وقت الذروة","التوفر أقل ببعض المناطق"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"كريم بلس: 49 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مواصلات","سوبر آب","عربي","توصيل"], businessUse:["delivery","field-team"] },
++  { id:"t8", slug:"waze", name:"Waze", icon:"📍", category:"transport", shortDescription:"خرائط بمعلومات لحظية من المستخدمين", description:"تطبيق خرائط مجتمعي يعرض حركة المرور والكاميرات من المستخدمين.", rating:4.7, pros:["معلومات لحظية","تنبيهات السرعة","مجاني"], cons:["يستهلك بطارية","الواجهة مزدحمة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["خرائط","مرور","مجتمعي"] },
+   
+-  { id:"t3", slug:"indriver", name:"InDrive", icon:"🚗", category:"transport", shortDescription:"اتفاوض على سعر مشوارك", description:"تطبيق فريد - أنت اللي تحدد سعر المشوار وتتفاوض مع السائق.", rating:4.4, pros:["أرخص خيار","تتفاوض على السعر","شفافية كاملة"], cons:["وقت انتظار أطول","يحتاج تفاوض"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مواصلات","رخيص","تفاوض","مصر"] },
++  { id:"t9", slug:"skyscanner", name:"Skyscanner", icon:"✈️", category:"transport", shortDescription:"مقارنة أسعار الطيران", description:"مقارن أسعار الطيران الأشهر عالميًا، يبحث في كل شركات الطيران.", rating:4.6, pros:["مقارنة شاملة","تنبيهات الأسعار","مجاني"], cons:["لا يقدم الحجز مباشرة دائمًا","الأسعار قد تتغير"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["طيران","سفر","مقارنة"] },
+   
+-  { id:"t4", slug:"swvl", name:"SWVL", icon:"🚌", category:"transport", shortDescription:"أتوبيس بدل تاكسي بربع السعر", description:"خدمة مشاركة الأتوبيسات بأسعار رخيصة جدًا في مصر.", rating:4.2, pros:["رخيص جدًا","مكيف","مواعيد محددة"], cons:["محدود في خطوط معينة","يحتاج حجز مسبق"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"اشتراك شهري متاح"}], tags:["أتوبيس","رخيص","يومي","مصر"] },
++  { id:"t1", slug:"uber", name:"Uber", icon:"🚘", category:"transport", shortDescription:"مشاوير موثوقة في كل العالم", description:"التطبيق العالمي للمشاوير، انتشار قوي وتجربة مستقرة.", rating:4.5, pros:["انتشار قوي عالميًا","تجربة ثابتة","خيارات متعددة","Uber Eats مدمج"], cons:["السعر يزيد وقت الذروة","الدعم أحيانًا بطيء"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"الدفع حسب الرحلة"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مواصلات","رحلات","موثوق","عالمي"] },
+   
+-  { id:"t5", slug:"yassir", name:"Yassir", icon:"🚖", category:"transport", shortDescription:"السوبر آب الجزائري", description:"تطبيق جزائري صاعد للمشاوير والتوصيل بأسعار منافسة.", rating:4.3, pros:["أسعار منافسة","تطبيق سهل","نمو سريع"], cons:["انتشار محدود في المنطقة","الخدمات الإضافية أقل"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مواصلات","سوبر آب","صاعد"] },
++  { id:"t10", slug:"wego", name:"Wego", icon:"🛫", category:"transport", shortDescription:"حجز طيران وفنادق عربي", description:"منصة سفر عربية لحجز الطيران والفنادق بأفضل الأسعار.", rating:4.5, pros:["عربي بالكامل","عروض حصرية","تطبيق سهل"], cons:["خدمة العملاء بطيئة أحيانًا","رسوم خفية أحيانًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["طيران","فنادق","عربي","سفر"] },
+   
+-  { id:"t6", slug:"didi", name:"DiDi", icon:"🚙", category:"transport", shortDescription:"المنافس الصيني لأوبر", description:"تطبيق صيني عملاق للمشاوير، بأسعار منافسة جدًا.", rating:4.4, pros:["أرخص من أوبر","حملات وعروض كثيرة","سرعة في الاستجابة"], cons:["جديد في المنطقة","السائقين أقل"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مواصلات","صيني","رخيص","عروض"] },
++  { id:"t3", slug:"indriver", name:"InDrive", icon:"🚗", category:"transport", shortDescription:"اتفاوض على سعر مشوارك", description:"تطبيق فريد - أنت اللي تحدد سعر المشوار وتتفاوض مع السائق.", rating:4.4, pros:["أرخص خيار","تتفاوض على السعر","شفافية كاملة"], cons:["وقت انتظار أطول","يحتاج تفاوض"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مواصلات","رخيص","تفاوض","مصر"] },
+   
+-  { id:"t7", slug:"google-maps", name:"Google Maps", icon:"🗺️", category:"transport", shortDescription:"خرائط ومواصلات عالمية", description:"الخرائط الأشهر عالميًا للملاحة وحركة المرور والمواصلات العامة.", rating:4.8, pros:["دقة عالية","مجاني","تحديثات مستمرة","مراجعات الأماكن"], cons:["يستهلك بيانات","البطارية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["خرائط","ملاحة","Google","مجاني"] },
++  { id:"t6", slug:"didi", name:"DiDi", icon:"🚙", category:"transport", shortDescription:"المنافس الصيني لأوبر", description:"تطبيق صيني عملاق للمشاوير، بأسعار منافسة جدًا.", rating:4.4, pros:["أرخص من أوبر","حملات وعروض كثيرة","سرعة في الاستجابة"], cons:["جديد في المنطقة","السائقين أقل"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مواصلات","صيني","رخيص","عروض"] },
+   
+-  { id:"t8", slug:"waze", name:"Waze", icon:"📍", category:"transport", shortDescription:"خرائط بمعلومات لحظية من المستخدمين", description:"تطبيق خرائط مجتمعي يعرض حركة المرور والكاميرات من المستخدمين.", rating:4.7, pros:["معلومات لحظية","تنبيهات السرعة","مجاني"], cons:["يستهلك بطارية","الواجهة مزدحمة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["خرائط","مرور","مجتمعي"] },
++  { id:"t2", slug:"careem", name:"كريم", icon:"🚕", category:"transport", shortDescription:"السوبر آب العربي للمشاوير والخدمات", description:"تطبيق عربي شامل للمشاوير والتوصيل والمدفوعات.", rating:4.3, pros:["سوبر آب شامل","خدمات متعددة","سهولة الدفع","كريم بلس"], cons:["الأسعار تزيد وقت الذروة","التوفر أقل ببعض المناطق"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"كريم بلس: 49 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مواصلات","سوبر آب","عربي","توصيل"], businessUse:["delivery","field-team"] },
+   
+-  { id:"t9", slug:"skyscanner", name:"Skyscanner", icon:"✈️", category:"transport", shortDescription:"مقارنة أسعار الطيران", description:"مقارن أسعار الطيران الأشهر عالميًا، يبحث في كل شركات الطيران.", rating:4.6, pros:["مقارنة شاملة","تنبيهات الأسعار","مجاني"], cons:["لا يقدم الحجز مباشرة دائمًا","الأسعار قد تتغير"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["طيران","سفر","مقارنة"] },
++  { id:"t5", slug:"yassir", name:"Yassir", icon:"🚖", category:"transport", shortDescription:"السوبر آب الجزائري", description:"تطبيق جزائري صاعد للمشاوير والتوصيل بأسعار منافسة.", rating:4.3, pros:["أسعار منافسة","تطبيق سهل","نمو سريع"], cons:["انتشار محدود في المنطقة","الخدمات الإضافية أقل"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مواصلات","سوبر آب","صاعد"] },
+   
+-  { id:"t10", slug:"wego", name:"Wego", icon:"🛫", category:"transport", shortDescription:"حجز طيران وفنادق عربي", description:"منصة سفر عربية لحجز الطيران والفنادق بأفضل الأسعار.", rating:4.5, pros:["عربي بالكامل","عروض حصرية","تطبيق سهل"], cons:["خدمة العملاء بطيئة أحيانًا","رسوم خفية أحيانًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["طيران","فنادق","عربي","سفر"] },
++  { id:"t4", slug:"swvl", name:"SWVL", icon:"🚌", category:"transport", shortDescription:"أتوبيس بدل تاكسي بربع السعر", description:"خدمة مشاركة الأتوبيسات بأسعار رخيصة جدًا في مصر.", rating:4.2, pros:["رخيص جدًا","مكيف","مواعيد محددة"], cons:["محدود في خطوط معينة","يحتاج حجز مسبق"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"اشتراك شهري متاح"}], tags:["أتوبيس","رخيص","يومي","مصر"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 📚 تعليم (12 تطبيق)
+   // ═══════════════════════════════════════════════
+   { id:"e1", slug:"duolingo", name:"Duolingo", icon:"🦉", category:"education", shortDescription:"تعلم لغات بشكل ممتع", description:"أفضل تطبيق لتعلم اللغات للمبتدئين، ممتع ومجاني بالكامل.", rating:4.8, pros:["مجاني","ممتع","30+ لغة","Streak يحفزك"], cons:["ليس عميقًا للمتقدمين","التكرار كثير","الإعلانات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,yearly:0,currency:"EGP",note:"Super: 79 ج/شهر"},{country:"SA",monthly:0,yearly:0,currency:"SAR",note:"Super: 29.99 ريال"},{country:"AE",monthly:0,yearly:0,currency:"AED"}], tags:["تعليم","لغات","مجاني","ممتع"] },
+   
+-  { id:"e2", slug:"coursera", name:"Coursera", icon:"🎓", category:"education", shortDescription:"كورسات من جامعات عالمية", description:"كورسات وشهادات معتمدة من أفضل الجامعات والشركات العالمية.", rating:4.6, pros:["شهادات معتمدة","محتوى عالي الجودة","Financial Aid","تخصصات قوية"], cons:["السعر مرتفع","معظم الكورسات بالإنجليزي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:299,yearly:3588,currency:"EGP",note:"Coursera Plus"},{country:"SA",monthly:59,yearly:708,currency:"SAR"},{country:"AE",monthly:59,yearly:708,currency:"AED"}], tags:["كورسات","شهادات","جامعات","تطوير"] },
+-  
+-  { id:"e3", slug:"udemy", name:"Udemy", icon:"📖", category:"education", shortDescription:"آلاف الكورسات بأسعار منخفضة", description:"منصة كورسات ضخمة بأسعار رخيصة جدًا في العروض.", rating:4.5, pros:["تنوع ضخم","أسعار منخفضة في العروض","ملكية مدى الحياة"], cons:["الجودة متفاوتة","الشهادات غير معتمدة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"الكورس: 200-500 ج في العروض"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كورسات","رخيص","عروض","متنوع"] },
++  { id:"e8", slug:"khan-academy", name:"Khan Academy", icon:"🧮", category:"education", shortDescription:"تعليم مجاني عالمي للجميع", description:"منصة عالمية مجانية بالكامل في الرياضيات والعلوم والبرمجة.", rating:4.8, pros:["مجاني 100%","محتوى ممتاز","عربي متاح","شامل جدًا"], cons:["لا توجد شهادات معتمدة","يحتاج التزام شخصي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مجاني","رياضيات","علوم","عالمي"] },
+   
+   { id:"e4", slug:"edraak", name:"إدراك", icon:"🌐", category:"education", shortDescription:"كورسات عربية مجانية", description:"منصة عربية تقدم كورسات مجانية بالكامل بمحتوى عالي الجودة.", rating:4.7, pros:["عربي بالكامل","مجاني تمامًا","شهادات معتمدة","محتوى من الملكة رانيا"], cons:["الكورسات أقل من المنافسين","التحديثات بطيئة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["عربي","مجاني","شهادات","إدراك"] },
+   
+-  { id:"e5", slug:"rwaq", name:"رواق", icon:"📕", category:"education", shortDescription:"المنصة العربية المفتوحة للتعليم", description:"منصة سعودية تقدم كورسات أكاديمية بالعربية مجانًا.", rating:4.5, pros:["عربي","مجاني","شهادات","محتوى أكاديمي"], cons:["الواجهة قديمة","التحديثات قليلة"], countries:["SA","EG"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"EG",monthly:0,currency:"EGP"}], tags:["عربي","مجاني","أكاديمي","سعودي"] },
++  { id:"e2", slug:"coursera", name:"Coursera", icon:"🎓", category:"education", shortDescription:"كورسات من جامعات عالمية", description:"كورسات وشهادات معتمدة من أفضل الجامعات والشركات العالمية.", rating:4.6, pros:["شهادات معتمدة","محتوى عالي الجودة","Financial Aid","تخصصات قوية"], cons:["السعر مرتفع","معظم الكورسات بالإنجليزي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:299,yearly:3588,currency:"EGP",note:"Coursera Plus"},{country:"SA",monthly:59,yearly:708,currency:"SAR"},{country:"AE",monthly:59,yearly:708,currency:"AED"}], tags:["كورسات","شهادات","جامعات","تطوير"] },
+   
+   { id:"e6", slug:"noon-academy", name:"نون أكاديمي", icon:"🎒", category:"education", shortDescription:"تعليم تفاعلي لطلاب المدارس", description:"منصة تعليمية للطلاب من المرحلة الابتدائية للثانوية بمحتوى تفاعلي.", rating:4.6, pros:["مدرسين متميزين","تفاعلي","مناسب لكل المراحل","Live classes"], cons:["السعر مرتفع للبعض","محدود لمناهج معينة"], countries:["EG","SA"], pricing:[{country:"EG",monthly:299,yearly:2999,currency:"EGP"},{country:"SA",monthly:99,yearly:999,currency:"SAR"}], tags:["مدارس","ثانوية","تفاعلي","مناهج"] },
+   
+-  { id:"e7", slug:"abwaab", name:"أبواب", icon:"🚪", category:"education", shortDescription:"تعليم تفاعلي للمناهج العربية", description:"منصة عربية للطلاب بفيديوهات وامتحانات تفاعلية.", rating:4.5, pros:["محتوى عربي قوي","امتحانات تفاعلية","أسعار معقولة"], cons:["محدود في بعض المناهج","الواجهة تحتاج تحسين"], countries:["EG"], pricing:[{country:"EG",monthly:199,yearly:1999,currency:"EGP"}], tags:["مدارس","عربي","امتحانات","مناهج"] },
++  { id:"e11", slug:"quizlet", name:"Quizlet", icon:"📝", category:"education", shortDescription:"بطاقات تعليمية ذكية", description:"تطبيق للمذاكرة بالبطاقات التعليمية والاختبارات.", rating:4.6, pros:["ممتاز للحفظ","مجاني للأساسيات","مجتمع كبير"], cons:["Premium لكل المميزات","المحتوى العربي محدود"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,yearly:599,currency:"EGP"},{country:"SA",monthly:11.99,yearly:71.88,currency:"SAR"},{country:"AE",monthly:11.99,yearly:71.88,currency:"AED"}], tags:["مذاكرة","بطاقات","امتحانات"] },
+   
+-  { id:"e8", slug:"khan-academy", name:"Khan Academy", icon:"🧮", category:"education", shortDescription:"تعليم مجاني عالمي للجميع", description:"منصة عالمية مجانية بالكامل في الرياضيات والعلوم والبرمجة.", rating:4.8, pros:["مجاني 100%","محتوى ممتاز","عربي متاح","شامل جدًا"], cons:["لا توجد شهادات معتمدة","يحتاج التزام شخصي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مجاني","رياضيات","علوم","عالمي"] },
++  { id:"e3", slug:"udemy", name:"Udemy", icon:"📖", category:"education", shortDescription:"آلاف الكورسات بأسعار منخفضة", description:"منصة كورسات ضخمة بأسعار رخيصة جدًا في العروض.", rating:4.5, pros:["تنوع ضخم","أسعار منخفضة في العروض","ملكية مدى الحياة"], cons:["الجودة متفاوتة","الشهادات غير معتمدة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"الكورس: 200-500 ج في العروض"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كورسات","رخيص","عروض","متنوع"] },
+   
+-  { id:"e9", slug:"skillshare", name:"Skillshare", icon:"🎨", category:"education", shortDescription:"كورسات في التصميم والإبداع", description:"منصة عالمية للمهارات الإبداعية والتصميم والتسويق.", rating:4.4, pros:["محتوى إبداعي قوي","نسخة تجريبية مجانية","مدربين محترفين"], cons:["كله بالإنجليزي","يحتاج اشتراك"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:399,yearly:1999,currency:"EGP"},{country:"SA",monthly:39,yearly:189,currency:"SAR"},{country:"AE",monthly:39,yearly:189,currency:"AED"}], tags:["إبداع","تصميم","كورسات"] },
++  { id:"e5", slug:"rwaq", name:"رواق", icon:"📕", category:"education", shortDescription:"المنصة العربية المفتوحة للتعليم", description:"منصة سعودية تقدم كورسات أكاديمية بالعربية مجانًا.", rating:4.5, pros:["عربي","مجاني","شهادات","محتوى أكاديمي"], cons:["الواجهة قديمة","التحديثات قليلة"], countries:["SA","EG"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"EG",monthly:0,currency:"EGP"}], tags:["عربي","مجاني","أكاديمي","سعودي"] },
++  
++  { id:"e7", slug:"abwaab", name:"أبواب", icon:"🚪", category:"education", shortDescription:"تعليم تفاعلي للمناهج العربية", description:"منصة عربية للطلاب بفيديوهات وامتحانات تفاعلية.", rating:4.5, pros:["محتوى عربي قوي","امتحانات تفاعلية","أسعار معقولة"], cons:["محدود في بعض المناهج","الواجهة تحتاج تحسين"], countries:["EG"], pricing:[{country:"EG",monthly:199,yearly:1999,currency:"EGP"}], tags:["مدارس","عربي","امتحانات","مناهج"] },
+   
+   { id:"e10", slug:"linkedin-learning", name:"LinkedIn Learning", icon:"💼", category:"education", shortDescription:"كورسات للمهارات المهنية", description:"كورسات احترافية من LinkedIn للتطوير المهني والوظيفي.", rating:4.5, pros:["شهادات تظهر في LinkedIn","محتوى مهني قوي","مدربين محترفين"], cons:["السعر مرتفع","يحتاج LinkedIn Premium"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:399,yearly:3499,currency:"EGP"},{country:"SA",monthly:39.99,yearly:399.99,currency:"SAR"},{country:"AE",monthly:39.99,yearly:399.99,currency:"AED"}], tags:["مهني","LinkedIn","شهادات","تطوير"] },
+   
+-  { id:"e11", slug:"quizlet", name:"Quizlet", icon:"📝", category:"education", shortDescription:"بطاقات تعليمية ذكية", description:"تطبيق للمذاكرة بالبطاقات التعليمية والاختبارات.", rating:4.6, pros:["ممتاز للحفظ","مجاني للأساسيات","مجتمع كبير"], cons:["Premium لكل المميزات","المحتوى العربي محدود"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,yearly:599,currency:"EGP"},{country:"SA",monthly:11.99,yearly:71.88,currency:"SAR"},{country:"AE",monthly:11.99,yearly:71.88,currency:"AED"}], tags:["مذاكرة","بطاقات","امتحانات"] },
++  { id:"e9", slug:"skillshare", name:"Skillshare", icon:"🎨", category:"education", shortDescription:"كورسات في التصميم والإبداع", description:"منصة عالمية للمهارات الإبداعية والتصميم والتسويق.", rating:4.4, pros:["محتوى إبداعي قوي","نسخة تجريبية مجانية","مدربين محترفين"], cons:["كله بالإنجليزي","يحتاج اشتراك"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:399,yearly:1999,currency:"EGP"},{country:"SA",monthly:39,yearly:189,currency:"SAR"},{country:"AE",monthly:39,yearly:189,currency:"AED"}], tags:["إبداع","تصميم","كورسات"] },
+   
+   { id:"e12", slug:"nafham", name:"نفهم", icon:"💡", category:"education", shortDescription:"شرح المناهج المصرية بفيديوهات", description:"منصة مصرية تقدم فيديوهات شرح للمناهج الدراسية مجانًا.", rating:4.4, pros:["مجاني","يغطي كل المراحل","مصري"], cons:["محدود للمناهج المصرية فقط","الجودة متفاوتة"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مدارس","مصري","مجاني","مناهج"] },
+ 
+@@ -170,155 +170,155 @@ export const apps: AppItem[] = [
+   // ═══════════════════════════════════════════════
+   { id:"fn1", slug:"instapay", name:"InstaPay", icon:"💸", category:"finance", shortDescription:"تحويلات لحظية بين البنوك المصرية", description:"التطبيق الذي غيّر طريقة التحويلات في مصر، فوري ومجاني 24/7.", rating:4.7, pros:["فوري 100%","مجاني","24/7","بين كل البنوك"], cons:["مصر فقط","يحتاج تفعيل من البنك"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["فلوس","تحويل","بنوك","مصر","فوري"] },
+   
+-  { id:"fn2", slug:"vodafone-cash", name:"Vodafone Cash", icon:"📱", category:"finance", shortDescription:"محفظة موبايل في مصر", description:"المحفظة الإلكترونية الأشهر في مصر للتحويلات والمدفوعات.", rating:4.4, pros:["انتشار قوي","تحويلات سهلة","دفع فواتير"], cons:["رسوم على التحويلات الكبيرة","يحتاج خط فودافون"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"رسوم على التحويلات"}], tags:["محفظة","فودافون","تحويل","مصر"] },
+-  
+-  { id:"fn3", slug:"fawry", name:"فوري", icon:"💳", category:"finance", shortDescription:"دفع كل الفواتير في مصر", description:"المنصة الرائدة في مصر لدفع الفواتير والخدمات الحكومية.", rating:4.5, pros:["دفع كل الفواتير","FawryPay","انتشار قوي","FawryPlus"], cons:["رسوم على بعض الخدمات","الواجهة تحتاج تحسين"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["فواتير","دفع","مصر","حكومي"] },
++  { id:"fn5", slug:"apple-pay", name:"Apple Pay", icon:"🍏", category:"finance", shortDescription:"دفع بالـ iPhone بدون كارت", description:"خدمة Apple للدفع اللاتلامسي بالموبايل والساعة.", rating:4.7, pros:["آمن جدًا","سريع","مدعوم في محلات كثيرة"], cons:["iPhone فقط","يحتاج بنك يدعمه"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["Apple","دفع","لاتلامسي","iPhone"] },
+   
+   { id:"fn4", slug:"stc-pay", name:"STC Pay", icon:"💰", category:"finance", shortDescription:"المحفظة الرقمية السعودية الأولى", description:"محفظة STC الرقمية الأشهر في السعودية للمدفوعات والتحويلات.", rating:4.6, pros:["شامل","سهل الاستخدام","عروض كثيرة","STC مدمج"], cons:["السعودية فقط","يحتاج رقم STC"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["محفظة","STC","سعودية","تحويل"] },
+   
+-  { id:"fn5", slug:"apple-pay", name:"Apple Pay", icon:"🍏", category:"finance", shortDescription:"دفع بالـ iPhone بدون كارت", description:"خدمة Apple للدفع اللاتلامسي بالموبايل والساعة.", rating:4.7, pros:["آمن جدًا","سريع","مدعوم في محلات كثيرة"], cons:["iPhone فقط","يحتاج بنك يدعمه"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["Apple","دفع","لاتلامسي","iPhone"] },
++  { id:"fn8", slug:"alrajhi", name:"الراجحي", icon:"🕌", category:"finance", shortDescription:"تطبيق بنك الراجحي السعودي", description:"تطبيق أكبر بنك إسلامي في السعودية بكل الخدمات الرقمية.", rating:4.6, pros:["إسلامي","شامل","سهل","تجربة ممتازة"], cons:["السعودية فقط","يحتاج حساب الراجحي"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["إسلامي","سعودي","الراجحي","بنك"] },
+   
+-  { id:"fn6", slug:"nbe-mobile", name:"البنك الأهلي المصري", icon:"🏦", category:"finance", shortDescription:"تطبيق أكبر بنك في مصر", description:"تطبيق البنك الأهلي المصري لكل الخدمات المصرفية.", rating:4.0, pros:["كل الخدمات في مكان","موثوق","يدعم InstaPay"], cons:["الواجهة قديمة","البطء أحيانًا"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["بنك","مصري","أهلي","حسابات"] },
++  { id:"fn13", slug:"tamara", name:"تمارا", icon:"🛍️", category:"finance", shortDescription:"BNPL الخليجي الأشهر", description:"اشترِ الآن وادفع لاحقًا - مقسطة على 4 دفعات بدون فوائد.", rating:4.6, pros:["4 دفعات بدون فوائد","شركاء كتير","سهل الاستخدام"], cons:["تأخير الدفع له رسوم","يحتاج موافقة"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تقسيط","BNPL","خليج","تمارا"] },
+   
+-  { id:"fn7", slug:"cib-mobile", name:"CIB", icon:"🏛️", category:"finance", shortDescription:"البنك التجاري الدولي المصري", description:"تطبيق CIB الأقوى في مصر بين البنوك الخاصة.", rating:4.5, pros:["تطبيق ممتاز","خدمات شاملة","CIB Online","تجربة سلسة"], cons:["يحتاج حساب CIB","رسوم على بعض الخدمات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["CIB","بنك","تطبيق","مصري"] },
++  { id:"fn3", slug:"fawry", name:"فوري", icon:"💳", category:"finance", shortDescription:"دفع كل الفواتير في مصر", description:"المنصة الرائدة في مصر لدفع الفواتير والخدمات الحكومية.", rating:4.5, pros:["دفع كل الفواتير","FawryPay","انتشار قوي","FawryPlus"], cons:["رسوم على بعض الخدمات","الواجهة تحتاج تحسين"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["فواتير","دفع","مصر","حكومي"] },
+   
+-  { id:"fn8", slug:"alrajhi", name:"الراجحي", icon:"🕌", category:"finance", shortDescription:"تطبيق بنك الراجحي السعودي", description:"تطبيق أكبر بنك إسلامي في السعودية بكل الخدمات الرقمية.", rating:4.6, pros:["إسلامي","شامل","سهل","تجربة ممتازة"], cons:["السعودية فقط","يحتاج حساب الراجحي"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["إسلامي","سعودي","الراجحي","بنك"] },
++  { id:"fn7", slug:"cib-mobile", name:"CIB", icon:"🏛️", category:"finance", shortDescription:"البنك التجاري الدولي المصري", description:"تطبيق CIB الأقوى في مصر بين البنوك الخاصة.", rating:4.5, pros:["تطبيق ممتاز","خدمات شاملة","CIB Online","تجربة سلسة"], cons:["يحتاج حساب CIB","رسوم على بعض الخدمات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["CIB","بنك","تطبيق","مصري"] },
+   
+   { id:"fn9", slug:"snb", name:"الأهلي السعودي", icon:"🏦", category:"finance", shortDescription:"البنك الأهلي السعودي", description:"تطبيق أكبر بنك في الخليج بمليارات الأصول.", rating:4.5, pros:["أكبر بنك خليجي","تطبيق متطور","خدمات شاملة"], cons:["السعودية فقط","الواجهة معقدة أحيانًا"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["سعودي","أهلي","بنك","خليج"] },
+   
+   { id:"fn10", slug:"liv", name:"Liv", icon:"💚", category:"finance", shortDescription:"البنك الرقمي من Emirates NBD", description:"بنك رقمي بالكامل بدون فروع، للجيل الجديد في الإمارات.", rating:4.5, pros:["100% رقمي","سهل وسريع","مميزات للشباب"], cons:["الإمارات فقط","لا توجد فروع"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["بنك رقمي","شباب","إمارات","Emirates NBD"] },
+   
+-  { id:"fn11", slug:"mashreq-neo", name:"Mashreq Neo", icon:"⚡", category:"finance", shortDescription:"أول بنك رقمي في الإمارات", description:"بنك رقمي بالكامل من Mashreq، فتح حساب في دقائق.", rating:4.4, pros:["فتح حساب سريع","رقمي بالكامل","عروض جذابة"], cons:["الإمارات فقط","يحتاج إقامة"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["بنك رقمي","Mashreq","إمارات"] },
++  { id:"fn14", slug:"tabby", name:"تابي", icon:"💎", category:"finance", shortDescription:"تقسيط ذكي بدون فوائد", description:"المنافس الأقوى لتمارا في خدمات BNPL في الخليج.", rating:4.5, pros:["تقسيط مرن","موافقة سريعة","شركاء عالميين"], cons:["محدود في بعض المنتجات","رسوم تأخير"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تقسيط","BNPL","خليج","تابي"] },
+   
+-  { id:"fn12", slug:"valu", name:"فاليو", icon:"🛒", category:"finance", shortDescription:"اشتر الآن وادفع لاحقًا", description:"خدمة BNPL المصرية - اشترِ بالتقسيط بدون فوائد.", rating:4.4, pros:["تقسيط بدون فوائد","شركاء كتير","موافقة سريعة"], cons:["يحتاج موافقة ائتمانية","رسوم على التأخير"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["تقسيط","BNPL","مصر","فاليو"] },
++  { id:"fn15", slug:"baraka", name:"بركة", icon:"📈", category:"finance", shortDescription:"استثمر في الأسهم العالمية", description:"تطبيق إماراتي للاستثمار في الأسهم العالمية بسهولة وأمان.", rating:4.5, pros:["استثمار سهل","رسوم منخفضة","تعليم مدمج","عربي"], cons:["محدود في بعض الدول","يحتاج معرفة بالأسهم"], countries:["AE","SA"], pricing:[{country:"AE",monthly:0,currency:"AED",note:"رسوم على التداول"},{country:"SA",monthly:0,currency:"SAR"}], tags:["استثمار","أسهم","بركة","خليج"] },
+   
+-  { id:"fn13", slug:"tamara", name:"تمارا", icon:"🛍️", category:"finance", shortDescription:"BNPL الخليجي الأشهر", description:"اشترِ الآن وادفع لاحقًا - مقسطة على 4 دفعات بدون فوائد.", rating:4.6, pros:["4 دفعات بدون فوائد","شركاء كتير","سهل الاستخدام"], cons:["تأخير الدفع له رسوم","يحتاج موافقة"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تقسيط","BNPL","خليج","تمارا"] },
++  { id:"fn2", slug:"vodafone-cash", name:"Vodafone Cash", icon:"📱", category:"finance", shortDescription:"محفظة موبايل في مصر", description:"المحفظة الإلكترونية الأشهر في مصر للتحويلات والمدفوعات.", rating:4.4, pros:["انتشار قوي","تحويلات سهلة","دفع فواتير"], cons:["رسوم على التحويلات الكبيرة","يحتاج خط فودافون"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"رسوم على التحويلات"}], tags:["محفظة","فودافون","تحويل","مصر"] },
+   
+-  { id:"fn14", slug:"tabby", name:"تابي", icon:"💎", category:"finance", shortDescription:"تقسيط ذكي بدون فوائد", description:"المنافس الأقوى لتمارا في خدمات BNPL في الخليج.", rating:4.5, pros:["تقسيط مرن","موافقة سريعة","شركاء عالميين"], cons:["محدود في بعض المنتجات","رسوم تأخير"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تقسيط","BNPL","خليج","تابي"] },
++  { id:"fn11", slug:"mashreq-neo", name:"Mashreq Neo", icon:"⚡", category:"finance", shortDescription:"أول بنك رقمي في الإمارات", description:"بنك رقمي بالكامل من Mashreq، فتح حساب في دقائق.", rating:4.4, pros:["فتح حساب سريع","رقمي بالكامل","عروض جذابة"], cons:["الإمارات فقط","يحتاج إقامة"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["بنك رقمي","Mashreq","إمارات"] },
+   
+-  { id:"fn15", slug:"baraka", name:"بركة", icon:"📈", category:"finance", shortDescription:"استثمر في الأسهم العالمية", description:"تطبيق إماراتي للاستثمار في الأسهم العالمية بسهولة وأمان.", rating:4.5, pros:["استثمار سهل","رسوم منخفضة","تعليم مدمج","عربي"], cons:["محدود في بعض الدول","يحتاج معرفة بالأسهم"], countries:["AE","SA"], pricing:[{country:"AE",monthly:0,currency:"AED",note:"رسوم على التداول"},{country:"SA",monthly:0,currency:"SAR"}], tags:["استثمار","أسهم","بركة","خليج"] },
++  { id:"fn12", slug:"valu", name:"فاليو", icon:"🛒", category:"finance", shortDescription:"اشتر الآن وادفع لاحقًا", description:"خدمة BNPL المصرية - اشترِ بالتقسيط بدون فوائد.", rating:4.4, pros:["تقسيط بدون فوائد","شركاء كتير","موافقة سريعة"], cons:["يحتاج موافقة ائتمانية","رسوم على التأخير"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["تقسيط","BNPL","مصر","فاليو"] },
++  
++  { id:"fn6", slug:"nbe-mobile", name:"البنك الأهلي المصري", icon:"🏦", category:"finance", shortDescription:"تطبيق أكبر بنك في مصر", description:"تطبيق البنك الأهلي المصري لكل الخدمات المصرفية.", rating:4.0, pros:["كل الخدمات في مكان","موثوق","يدعم InstaPay"], cons:["الواجهة قديمة","البطء أحيانًا"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["بنك","مصري","أهلي","حسابات"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 🏠 عقارات (8 تطبيقات)
+   // ═══════════════════════════════════════════════
+-  { id:"re1", slug:"aqarmap", name:"عقارماب", icon:"🗺️", category:"real-estate", shortDescription:"خرائط العقارات في مصر", description:"منصة مصرية لعرض العقارات على الخريطة مع تفاصيل الأسعار والمواصفات.", rating:4.3, pros:["خرائط تفاعلية","عروض متنوعة","تفاصيل دقيقة","حاسبة قروض"], cons:["التركيز على مصر","بعض الإعلانات قديمة"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["عقارات","خرائط","شراء","إيجار"], businessUse:["real-estate","broker"] },
+-
+   { id:"re2", slug:"propertyfinder", name:"Property Finder", icon:"🏘️", category:"real-estate", shortDescription:"رائد العقارات في الخليج", description:"أكبر منصة عقارات في الإمارات والسعودية مع آلاف الوحدات.", rating:4.6, pros:["مكتبة ضخمة","صور احترافية","فلترة متقدمة","تقييم المنطقة"], cons:["السعر مرتفع","التركيز على الخليج"], countries:["AE","SA"], pricing:[{country:"AE",monthly:0,currency:"AED"},{country:"SA",monthly:0,currency:"SAR"}], tags:["عقارات","خليج","فاخر","شراء"], businessUse:["real-estate"] },
+ 
+   { id:"re3", slug:"bayut", name:"Bayut", icon:"🏢", category:"real-estate", shortDescription:"المنصة الإماراتية للعقارات", description:"منصة إماراتية رائدة بآلاف العقارات للبيع والإيجار.", rating:4.5, pros:["عقارات كثيرة","فلترة دقيقة","تقارير السوق","TruCheck للوحدات"], cons:["الإمارات بشكل أساسي","الأسعار مرتفعة"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["عقارات","إمارات","شراء","إيجار"], businessUse:["real-estate"] },
+ 
+-  { id:"re4", slug:"nawy", name:"Nawy", icon:"🏠", category:"real-estate", shortDescription:"شراء وحدات عقارية في مصر", description:"منصة عقارية حديثة في مصر بتركيز على المشاريع الجديدة والتطوير العقاري.", rating:4.1, pros:["واجهة جميلة","مشاريع جديدة","فيديوهات للوحدات"], cons:["محدود في القاهرة الجديدة","لا توجد إيجارات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["عقارات","تطوير","شراء","مصر"], businessUse:["real-estate"] },
+-
+-  { id:"re5", slug:"olx-property", name:"OLX عقارات", icon:"🏡", category:"real-estate", shortDescription:"عقارات OLX المصرية", description:"قسم العقارات في OLX، يضم عقارات للبيع والإيجار في كل المحافظات.", rating:3.9, pros:["مجاني للنشر","يغطي كل مصر","إيجارات كتيرة"], cons:["جودة الإعلانات متفاوتة","نصب أحيانًا","يحتاج تواصل مباشر"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["عقارات","إيجار","مصر","OLX"] },
++  { id:"re1", slug:"aqarmap", name:"عقارماب", icon:"🗺️", category:"real-estate", shortDescription:"خرائط العقارات في مصر", description:"منصة مصرية لعرض العقارات على الخريطة مع تفاصيل الأسعار والمواصفات.", rating:4.3, pros:["خرائط تفاعلية","عروض متنوعة","تفاصيل دقيقة","حاسبة قروض"], cons:["التركيز على مصر","بعض الإعلانات قديمة"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["عقارات","خرائط","شراء","إيجار"], businessUse:["real-estate","broker"] },
+ 
+   { id:"re6", slug:"dubizzle-property", name:"Dubizzle Property", icon:"🌆", category:"real-estate", shortDescription:"عقارات الإمارات الأشهر", description:"قسم العقارات في Dubizzle مع آلاف الوحدات للإيجار والبيع.", rating:4.3, pros:["إعلانات كتيرة","فلترة قوية","صور احترافية"], cons:["رسوم للإعلانات المميزة","الإمارات فقط"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["عقارات","إمارات","إيجار","Dubizzle"] },
+ 
++  { id:"re8", slug:"hamlat", name:"حملات", icon:"📍", category:"real-estate", shortDescription:"عقارات المشاريع الجديدة في مصر", description:"تطبيق متخصص في المشاريع العقارية الجديدة في مصر.", rating:4.2, pros:["مشاريع جديدة","عروض حصرية","تقسيط"], cons:["محدود في المشاريع","يحتاج تحديثات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مشاريع","تطوير","مصر"] },
++
++  { id:"re4", slug:"nawy", name:"Nawy", icon:"🏠", category:"real-estate", shortDescription:"شراء وحدات عقارية في مصر", description:"منصة عقارية حديثة في مصر بتركيز على المشاريع الجديدة والتطوير العقاري.", rating:4.1, pros:["واجهة جميلة","مشاريع جديدة","فيديوهات للوحدات"], cons:["محدود في القاهرة الجديدة","لا توجد إيجارات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["عقارات","تطوير","شراء","مصر"], businessUse:["real-estate"] },
++
+   { id:"re7", slug:"opensooq-property", name:"السوق المفتوح عقارات", icon:"🏘️", category:"real-estate", shortDescription:"عقارات عربية متنوعة", description:"عقارات في السوق المفتوح بحضور قوي في مصر والأردن.", rating:4.0, pros:["عربي","مجاني","تنوع كبير"], cons:["جودة متفاوتة","يحتاج تحقق"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["عقارات","عربي","شراء"] },
+ 
+-  { id:"re8", slug:"hamlat", name:"حملات", icon:"📍", category:"real-estate", shortDescription:"عقارات المشاريع الجديدة في مصر", description:"تطبيق متخصص في المشاريع العقارية الجديدة في مصر.", rating:4.2, pros:["مشاريع جديدة","عروض حصرية","تقسيط"], cons:["محدود في المشاريع","يحتاج تحديثات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["مشاريع","تطوير","مصر"] },
++  { id:"re5", slug:"olx-property", name:"OLX عقارات", icon:"🏡", category:"real-estate", shortDescription:"عقارات OLX المصرية", description:"قسم العقارات في OLX، يضم عقارات للبيع والإيجار في كل المحافظات.", rating:3.9, pros:["مجاني للنشر","يغطي كل مصر","إيجارات كتيرة"], cons:["جودة الإعلانات متفاوتة","نصب أحيانًا","يحتاج تواصل مباشر"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["عقارات","إيجار","مصر","OLX"] },
+ 
+   // ═══════════════════════════════════════════════
+   // ✈️ سفر وسياحة (10 تطبيقات)
+   // ═══════════════════════════════════════════════
+   { id:"tr1", slug:"booking", name:"Booking.com", icon:"🏨", category:"travel", shortDescription:"حجز فنادق ومنتجعات عالمي", description:"أكبر منصة عالمية لحجز الفنادق والشقق المفروشة بأسعار منافسة.", rating:4.7, pros:["مكتبة ضخمة","Genius للخصومات","إلغاء مجاني","موثوق"], cons:["العمولة على الفنادق","بعض الأسعار خادعة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فنادق","سفر","حجز","عالمي"] },
+ 
++  { id:"tr9", slug:"emirates", name:"Emirates", icon:"🛩️", category:"travel", shortDescription:"الناقل الإماراتي الفاخر", description:"تطبيق Emirates الرسمي للحجز ومتابعة الرحلات بدرجة الأعمال.", rating:4.7, pros:["خدمة فاخرة","تجربة ممتازة","Skywards للولاء"], cons:["أسعار عالية","ليس للجميع"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["طيران","فاخر","إماراتي"] },
++
+   { id:"tr2", slug:"airbnb", name:"Airbnb", icon:"🏖️", category:"travel", shortDescription:"شقق مفروشة وتجارب فريدة", description:"منصة عالمية لاستئجار الشقق والبيوت من ملاكها مباشرة.", rating:4.6, pros:["تجارب فريدة","أسعار مرنة","شقق عائلية","تجارب محلية"], cons:["جودة متفاوتة","رسوم خدمة عالية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["شقق","سفر","عائلي","Airbnb"] },
+ 
+   { id:"tr3", slug:"agoda", name:"Agoda", icon:"🛏️", category:"travel", shortDescription:"حجز فنادق في آسيا والشرق الأوسط", description:"منصة آسيوية قوية لحجز الفنادق بأسعار منافسة جدًا.", rating:4.5, pros:["أسعار رخيصة","عروض كتيرة","تركيز على آسيا"], cons:["شعبية أقل في المنطقة","واجهة معقدة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فنادق","آسيا","رخيص"] },
+ 
+-  { id:"tr4", slug:"almosafer", name:"المسافر", icon:"✈️", category:"travel", shortDescription:"حجز طيران وفنادق عربي", description:"منصة عربية شاملة لحجز الطيران والفنادق والباقات السياحية.", rating:4.4, pros:["عربي بالكامل","عروض حصرية","باقات شاملة","دعم محلي"], cons:["أسعار أعلى أحيانًا","التطبيق ثقيل"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["طيران","فنادق","عربي","باقات"] },
+-
+-  { id:"tr5", slug:"tajawal", name:"Tajawal", icon:"🛫", category:"travel", shortDescription:"السفر بنفس عقلية العرب", description:"منصة عربية للسفر والطيران بتجربة محلية.", rating:4.3, pros:["عربي","سهل","أسعار جيدة"], cons:["محدود في بعض الوجهات","التطبيق يحتاج تحسين"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["سفر","عربي","طيران"] },
+-
+   { id:"tr6", slug:"tripadvisor", name:"TripAdvisor", icon:"🗽", category:"travel", shortDescription:"دليل المسافرين والمراجعات", description:"منصة عالمية لمراجعات المطاعم والفنادق والمعالم السياحية.", rating:4.5, pros:["مراجعات حقيقية","صور كتيرة","نصايح من المسافرين"], cons:["الحجز محدود","يحتاج تطبيق آخر للحجز"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["مراجعات","سفر","سياحة"] },
+ 
+-  { id:"tr7", slug:"flynas", name:"طيران ناس", icon:"✈️", category:"travel", shortDescription:"شركة طيران اقتصادية سعودية", description:"تطبيق رسمي لطيران ناس السعودية للحجز المباشر.", rating:4.4, pros:["أسعار رخيصة","حجز مباشر","عروض حصرية","Naseef للولاء"], cons:["خدمات محدودة","وجهات معينة"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["طيران","سعودي","اقتصادي"] },
++  { id:"tr4", slug:"almosafer", name:"المسافر", icon:"✈️", category:"travel", shortDescription:"حجز طيران وفنادق عربي", description:"منصة عربية شاملة لحجز الطيران والفنادق والباقات السياحية.", rating:4.4, pros:["عربي بالكامل","عروض حصرية","باقات شاملة","دعم محلي"], cons:["أسعار أعلى أحيانًا","التطبيق ثقيل"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["طيران","فنادق","عربي","باقات"] },
+ 
+-  { id:"tr8", slug:"egyptair", name:"مصر للطيران", icon:"🇪🇬", category:"travel", shortDescription:"شركة الطيران الوطنية المصرية", description:"التطبيق الرسمي لمصر للطيران للحجز ومتابعة الرحلات.", rating:4.0, pros:["رسمي","Cairo Mall للتسوق","ميلز للولاء"], cons:["الواجهة قديمة","البطء أحيانًا"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["طيران","مصري","رسمي"] },
++  { id:"tr7", slug:"flynas", name:"طيران ناس", icon:"✈️", category:"travel", shortDescription:"شركة طيران اقتصادية سعودية", description:"تطبيق رسمي لطيران ناس السعودية للحجز المباشر.", rating:4.4, pros:["أسعار رخيصة","حجز مباشر","عروض حصرية","Naseef للولاء"], cons:["خدمات محدودة","وجهات معينة"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["طيران","سعودي","اقتصادي"] },
+ 
+-  { id:"tr9", slug:"emirates", name:"Emirates", icon:"🛩️", category:"travel", shortDescription:"الناقل الإماراتي الفاخر", description:"تطبيق Emirates الرسمي للحجز ومتابعة الرحلات بدرجة الأعمال.", rating:4.7, pros:["خدمة فاخرة","تجربة ممتازة","Skywards للولاء"], cons:["أسعار عالية","ليس للجميع"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["طيران","فاخر","إماراتي"] },
++  { id:"tr5", slug:"tajawal", name:"Tajawal", icon:"🛫", category:"travel", shortDescription:"السفر بنفس عقلية العرب", description:"منصة عربية للسفر والطيران بتجربة محلية.", rating:4.3, pros:["عربي","سهل","أسعار جيدة"], cons:["محدود في بعض الوجهات","التطبيق يحتاج تحسين"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["سفر","عربي","طيران"] },
+ 
+   { id:"tr10", slug:"careem-bike", name:"كريم Bike", icon:"🚲", category:"travel", shortDescription:"تأجير دراجات في دبي", description:"خدمة كريم لتأجير الدراجات الكهربائية في دبي.", rating:4.2, pros:["صديق للبيئة","رخيص","مرن"], cons:["دبي فقط","البطارية محدودة"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["دراجات","دبي","صديق للبيئة"] },
+ 
++  { id:"tr8", slug:"egyptair", name:"مصر للطيران", icon:"🇪🇬", category:"travel", shortDescription:"شركة الطيران الوطنية المصرية", description:"التطبيق الرسمي لمصر للطيران للحجز ومتابعة الرحلات.", rating:4.0, pros:["رسمي","Cairo Mall للتسوق","ميلز للولاء"], cons:["الواجهة قديمة","البطء أحيانًا"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["طيران","مصري","رسمي"] },
++
+   // ═══════════════════════════════════════════════
+   // 🎮 ألعاب وترفيه (10 تطبيقات)
+   // ═══════════════════════════════════════════════
+-  { id:"g1", slug:"pubg-mobile", name:"PUBG Mobile", icon:"🔫", category:"gaming", shortDescription:"الباتل رويال الأشهر عالميًا", description:"لعبة الباتل رويال الأشهر بـ 100 لاعب في معركة على البقاء.", rating:4.7, pros:["رسومات ممتازة","100 لاعب","تحديثات مستمرة","مجاني"], cons:["تستهلك بطارية","إنترنت قوي مطلوب"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"شراء UC داخل اللعبة"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["ألعاب","باتل رويال","PUBG"] },
++  { id:"g8", slug:"minecraft", name:"Minecraft", icon:"🧱", category:"gaming", shortDescription:"اللعبة الإبداعية الأشهر", description:"ابني عالمك وكل ما تتخيله بالمكعبات في Minecraft.", rating:4.8, pros:["إبداع لا نهائي","عالم مفتوح","لعب جماعي","تحديثات"], cons:["مدفوعة","تحتاج خيال"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:399,currency:"EGP",note:"سعر مرة واحدة"},{country:"SA",monthly:29.99,currency:"SAR"},{country:"AE",monthly:29.99,currency:"AED"}], tags:["إبداع","Minecraft","عالم مفتوح"] },
+ 
+-  { id:"g2", slug:"free-fire", name:"Free Fire", icon:"🔥", category:"gaming", shortDescription:"باتل رويال خفيفة على الموبايل", description:"بديل PUBG الأخف وزنًا، 50 لاعب ومعركة أسرع.", rating:4.5, pros:["خفيف على الموبايل","معارك سريعة","مجاني","شعبي جدًا"], cons:["رسومات أقل من PUBG","الإعلانات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["ألعاب","باتل رويال","خفيف"] },
++  { id:"g1", slug:"pubg-mobile", name:"PUBG Mobile", icon:"🔫", category:"gaming", shortDescription:"الباتل رويال الأشهر عالميًا", description:"لعبة الباتل رويال الأشهر بـ 100 لاعب في معركة على البقاء.", rating:4.7, pros:["رسومات ممتازة","100 لاعب","تحديثات مستمرة","مجاني"], cons:["تستهلك بطارية","إنترنت قوي مطلوب"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"شراء UC داخل اللعبة"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["ألعاب","باتل رويال","PUBG"] },
+ 
+   { id:"g3", slug:"clash-of-clans", name:"Clash of Clans", icon:"⚔️", category:"gaming", shortDescription:"لعبة استراتيجية للقرى", description:"لعبة استراتيجية ابني قريتك وحارب الأعداء.", rating:4.6, pros:["استراتيجية عميقة","مجتمع كبير","مجاني","عربي مدعوم"], cons:["تحتاج وقت طويل","يدفع للتقدم السريع"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["استراتيجية","قرى","clans"] },
+ 
+-  { id:"g4", slug:"clash-royale", name:"Clash Royale", icon:"👑", category:"gaming", shortDescription:"معارك سريعة بالكروت", description:"لعبة كروت استراتيجية بمعارك مدتها 3 دقايق فقط.", rating:4.5, pros:["معارك سريعة","استراتيجية","كروت متنوعة","تحديثات"], cons:["يدفع للتقدم","رسوم على الكروت"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كروت","استراتيجية","سريع"] },
+-
+-  { id:"g5", slug:"fifa-mobile", name:"FIFA Mobile", icon:"⚽", category:"gaming", shortDescription:"كرة قدم على الموبايل", description:"لعبة FIFA الرسمية على الموبايل بفرق ولاعبين حقيقيين.", rating:4.4, pros:["لاعبين حقيقيين","تحديثات موسمية","مباريات سريعة"], cons:["يدفع للاعبين قوية","التحكم صعب أحيانًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كرة","FIFA","رياضة"] },
++  { id:"g2", slug:"free-fire", name:"Free Fire", icon:"🔥", category:"gaming", shortDescription:"باتل رويال خفيفة على الموبايل", description:"بديل PUBG الأخف وزنًا، 50 لاعب ومعركة أسرع.", rating:4.5, pros:["خفيف على الموبايل","معارك سريعة","مجاني","شعبي جدًا"], cons:["رسومات أقل من PUBG","الإعلانات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["ألعاب","باتل رويال","خفيف"] },
+ 
+-  { id:"g6", slug:"efootball", name:"eFootball", icon:"⚽", category:"gaming", shortDescription:"PES الجديد من Konami", description:"بديل FIFA من Konami بنظام لعب مختلف.", rating:4.2, pros:["مجاني تمامًا","Konami","تحديثات منتظمة"], cons:["مشاكل في الإطلاق","رسومات أقل من FIFA"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كرة","PES","Konami"] },
++  { id:"g4", slug:"clash-royale", name:"Clash Royale", icon:"👑", category:"gaming", shortDescription:"معارك سريعة بالكروت", description:"لعبة كروت استراتيجية بمعارك مدتها 3 دقايق فقط.", rating:4.5, pros:["معارك سريعة","استراتيجية","كروت متنوعة","تحديثات"], cons:["يدفع للتقدم","رسوم على الكروت"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كروت","استراتيجية","سريع"] },
+ 
+   { id:"g7", slug:"roblox", name:"Roblox", icon:"🎲", category:"gaming", shortDescription:"عالم ألعاب لا نهائي", description:"منصة فيها ملايين الألعاب اللي اللاعبين بنفسهم بيصنعوها.", rating:4.5, pros:["ألعاب لا نهائية","مجتمع كبير","صنع ألعابك","مجاني"], cons:["محتوى غير مراقب","مناسب أكثر للأطفال"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["ألعاب","أطفال","صنع"] },
+ 
+-  { id:"g8", slug:"minecraft", name:"Minecraft", icon:"🧱", category:"gaming", shortDescription:"اللعبة الإبداعية الأشهر", description:"ابني عالمك وكل ما تتخيله بالمكعبات في Minecraft.", rating:4.8, pros:["إبداع لا نهائي","عالم مفتوح","لعب جماعي","تحديثات"], cons:["مدفوعة","تحتاج خيال"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:399,currency:"EGP",note:"سعر مرة واحدة"},{country:"SA",monthly:29.99,currency:"SAR"},{country:"AE",monthly:29.99,currency:"AED"}], tags:["إبداع","Minecraft","عالم مفتوح"] },
++  { id:"g10", slug:"baloot", name:"VIP Baloot", icon:"🃏", category:"gaming", shortDescription:"لعبة البلوت الخليجية", description:"لعبة الكروت الأشهر في الخليج (البلوت) بنسخة VIP.", rating:4.5, pros:["خليجي","شعبي","مجتمع كبير","مجاني"], cons:["خليج فقط","يدفع لـ VIP"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["بلوت","كروت","خليج"] },
++
++  { id:"g5", slug:"fifa-mobile", name:"FIFA Mobile", icon:"⚽", category:"gaming", shortDescription:"كرة قدم على الموبايل", description:"لعبة FIFA الرسمية على الموبايل بفرق ولاعبين حقيقيين.", rating:4.4, pros:["لاعبين حقيقيين","تحديثات موسمية","مباريات سريعة"], cons:["يدفع للاعبين قوية","التحكم صعب أحيانًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كرة","FIFA","رياضة"] },
+ 
+   { id:"g9", slug:"jawaker", name:"جواكر", icon:"♠️", category:"gaming", shortDescription:"ألعاب كروت عربية", description:"منصة عربية لألعاب الكروت زي الطرنيب والباصرة.", rating:4.3, pros:["ألعاب عربية","مجتمع عربي","مجاني","طرنيب وباصرة"], cons:["محدود لألعاب الكروت","الإعلانات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كروت","عربي","طرنيب"] },
+ 
+-  { id:"g10", slug:"baloot", name:"VIP Baloot", icon:"🃏", category:"gaming", shortDescription:"لعبة البلوت الخليجية", description:"لعبة الكروت الأشهر في الخليج (البلوت) بنسخة VIP.", rating:4.5, pros:["خليجي","شعبي","مجتمع كبير","مجاني"], cons:["خليج فقط","يدفع لـ VIP"], countries:["SA","AE"], pricing:[{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["بلوت","كروت","خليج"] },
++  { id:"g6", slug:"efootball", name:"eFootball", icon:"⚽", category:"gaming", shortDescription:"PES الجديد من Konami", description:"بديل FIFA من Konami بنظام لعب مختلف.", rating:4.2, pros:["مجاني تمامًا","Konami","تحديثات منتظمة"], cons:["مشاكل في الإطلاق","رسومات أقل من FIFA"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كرة","PES","Konami"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 👶 أطفال وعائلة (8 تطبيقات)
+   // ═══════════════════════════════════════════════
+-  { id:"k1", slug:"youtube-kids", name:"YouTube Kids", icon:"📺", category:"kids", shortDescription:"يوتيوب آمن للأطفال", description:"نسخة آمنة من يوتيوب للأطفال بفلترة المحتوى تلقائيًا.", rating:4.4, pros:["آمن للأطفال","فلترة تلقائية","تحكم الوالدين","مجاني"], cons:["بعض المحتوى يمر","الإعلانات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["أطفال","يوتيوب","آمن"] },
+-
+   { id:"k2", slug:"lamsa", name:"لمسة", icon:"🌟", category:"kids", shortDescription:"تطبيق تعليمي عربي للأطفال", description:"منصة تعليمية وترفيهية للأطفال بمحتوى عربي 100%.", rating:4.7, pros:["محتوى عربي ممتاز","تعليمي وترفيهي","آمن","تحديثات"], cons:["يحتاج اشتراك","محدود في الفئات العمرية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,yearly:899,currency:"EGP"},{country:"SA",monthly:24.99,yearly:249,currency:"SAR"},{country:"AE",monthly:24.99,yearly:249,currency:"AED"}], tags:["أطفال","تعليمي","عربي","لمسة"] },
+ 
+-  { id:"k3", slug:"noon-kids", name:"نون كيدز", icon:"🎈", category:"kids", shortDescription:"تطبيق تعليمي للأطفال", description:"تطبيق تعليمي للأطفال بفيديوهات وألعاب تفاعلية.", rating:4.5, pros:["محتوى متنوع","ممتع","تفاعلي"], cons:["يحتاج اشتراك","محدود لأعمار معينة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:79,yearly:799,currency:"EGP"},{country:"SA",monthly:19.99,yearly:199,currency:"SAR"},{country:"AE",monthly:19.99,yearly:199,currency:"AED"}], tags:["أطفال","تعليمي","نون"] },
++  { id:"k8", slug:"adam-mishmish", name:"آدم ومشمش", icon:"🐱", category:"kids", shortDescription:"كرتون عربي للأطفال", description:"تطبيق مخصص لكرتون آدم ومشمش العربي المحبوب.", rating:4.7, pros:["كرتون عربي محبوب","قيم تربوية","مجاني"], cons:["محتوى محدود","يحتاج تحديثات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كرتون","عربي","تربوي","أطفال"] },
+ 
+   { id:"k4", slug:"abcmouse-arabic", name:"أ ب ج", icon:"📚", category:"kids", shortDescription:"تعليم القراءة والحساب", description:"منصة عربية لتعليم الأطفال القراءة والحساب بشكل ممتع.", rating:4.6, pros:["عربي","تعليم منهجي","تطور الطفل","مدفوع"], cons:["يحتاج اشتراك","التركيز على المرحلة الابتدائية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:149,yearly:1499,currency:"EGP"},{country:"SA",monthly:34.99,yearly:349,currency:"SAR"},{country:"AE",monthly:34.99,yearly:349,currency:"AED"}], tags:["تعليم","عربي","قراءة","أطفال"] },
+ 
+-  { id:"k5", slug:"spacetoon-go", name:"سبيس تون", icon:"🚀", category:"kids", shortDescription:"كرتون عربي للأطفال", description:"التطبيق الرسمي لقناة سبيس تون بكرتون عربي مدبلج.", rating:4.5, pros:["كرتون مفضل للأطفال","عربي","ذكريات الطفولة","مجاني مع إعلانات"], cons:["محتوى محدود","الإعلانات كتيرة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 49 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كرتون","عربي","سبيس تون","أطفال"] },
++  { id:"k3", slug:"noon-kids", name:"نون كيدز", icon:"🎈", category:"kids", shortDescription:"تطبيق تعليمي للأطفال", description:"تطبيق تعليمي للأطفال بفيديوهات وألعاب تفاعلية.", rating:4.5, pros:["محتوى متنوع","ممتع","تفاعلي"], cons:["يحتاج اشتراك","محدود لأعمار معينة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:79,yearly:799,currency:"EGP"},{country:"SA",monthly:19.99,yearly:199,currency:"SAR"},{country:"AE",monthly:19.99,yearly:199,currency:"AED"}], tags:["أطفال","تعليمي","نون"] },
+ 
+-  { id:"k6", slug:"taleemabad", name:"تعليم آباد", icon:"🎓", category:"kids", shortDescription:"تعليم تفاعلي للأطفال", description:"منصة تعليمية بمناهج تفاعلية للأطفال من 3-12 سنة.", rating:4.4, pros:["مناهج معتمدة","تفاعلي","تقارير للوالدين"], cons:["مدفوع","يحتاج إنترنت"], countries:["SA","AE"], pricing:[{country:"SA",monthly:39.99,yearly:399,currency:"SAR"},{country:"AE",monthly:39.99,yearly:399,currency:"AED"}], tags:["تعليم","أطفال","تفاعلي"] },
++  { id:"k5", slug:"spacetoon-go", name:"سبيس تون", icon:"🚀", category:"kids", shortDescription:"كرتون عربي للأطفال", description:"التطبيق الرسمي لقناة سبيس تون بكرتون عربي مدبلج.", rating:4.5, pros:["كرتون مفضل للأطفال","عربي","ذكريات الطفولة","مجاني مع إعلانات"], cons:["محتوى محدود","الإعلانات كتيرة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 49 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كرتون","عربي","سبيس تون","أطفال"] },
+ 
+   { id:"k7", slug:"kiddopia", name:"Kiddopia", icon:"🦄", category:"kids", shortDescription:"ألعاب تعليمية عالمية", description:"منصة عالمية للألعاب التعليمية للأطفال من 2-7 سنوات.", rating:4.5, pros:["محتوى ضخم","تحديثات مستمرة","آمن"], cons:["إنجليزي بشكل أساسي","يحتاج اشتراك"], countries:["AE","SA"], pricing:[{country:"AE",monthly:29.99,yearly:299,currency:"AED"},{country:"SA",monthly:29.99,yearly:299,currency:"SAR"}], tags:["ألعاب","تعليمي","أطفال"] },
+ 
+-  { id:"k8", slug:"adam-mishmish", name:"آدم ومشمش", icon:"🐱", category:"kids", shortDescription:"كرتون عربي للأطفال", description:"تطبيق مخصص لكرتون آدم ومشمش العربي المحبوب.", rating:4.7, pros:["كرتون عربي محبوب","قيم تربوية","مجاني"], cons:["محتوى محدود","يحتاج تحديثات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["كرتون","عربي","تربوي","أطفال"] },
++  { id:"k1", slug:"youtube-kids", name:"YouTube Kids", icon:"📺", category:"kids", shortDescription:"يوتيوب آمن للأطفال", description:"نسخة آمنة من يوتيوب للأطفال بفلترة المحتوى تلقائيًا.", rating:4.4, pros:["آمن للأطفال","فلترة تلقائية","تحكم الوالدين","مجاني"], cons:["بعض المحتوى يمر","الإعلانات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["أطفال","يوتيوب","آمن"] },
++
++  { id:"k6", slug:"taleemabad", name:"تعليم آباد", icon:"🎓", category:"kids", shortDescription:"تعليم تفاعلي للأطفال", description:"منصة تعليمية بمناهج تفاعلية للأطفال من 3-12 سنة.", rating:4.4, pros:["مناهج معتمدة","تفاعلي","تقارير للوالدين"], cons:["مدفوع","يحتاج إنترنت"], countries:["SA","AE"], pricing:[{country:"SA",monthly:39.99,yearly:399,currency:"SAR"},{country:"AE",monthly:39.99,yearly:399,currency:"AED"}], tags:["تعليم","أطفال","تفاعلي"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 🛠️ أدوات وإنتاجية (10 تطبيقات)
+   // ═══════════════════════════════════════════════
+   { id:"t1tool", slug:"whatsapp", name:"WhatsApp", icon:"💬", category:"tools", shortDescription:"الأشهر للدردشة والمكالمات", description:"تطبيق المحادثات الأشهر في المنطقة العربية.", rating:4.8, pros:["مجاني","انتشار قوي","مكالمات فيديو","WhatsApp Business"], cons:["يحتاج رقم تليفون","Meta يقرأ البيانات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["دردشة","مكالمات","WhatsApp"], businessUse:["business","customer-service"] },
+ 
++  { id:"t7tool", slug:"canva", name:"Canva", icon:"🎨", category:"tools", shortDescription:"تصميم بدون خبرة", description:"الأشهر عالميًا لتصميم منشورات السوشيال ميديا والعروض.", rating:4.8, pros:["سهل جدًا","قوالب جاهزة","عربي مدعوم","مجاني للأساسيات"], cons:["Pro للمميزات المتقدمة","يحتاج إنترنت"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Pro: 249 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تصميم","سوشيال","Canva"], businessUse:["marketing","social-media"] },
++
++  { id:"t8tool", slug:"capcut", name:"CapCut", icon:"🎬", category:"tools", shortDescription:"محرر فيديو احترافي ومجاني", description:"محرر فيديو من نفس شركة TikTok بمميزات احترافية مجانية.", rating:4.8, pros:["مجاني تمامًا","احترافي","فلاتر كتيرة","سهل"], cons:["ByteDance والخصوصية","يحتاج موبايل قوي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فيديو","تحرير","TikTok"] },
++
+   { id:"t2tool", slug:"telegram", name:"Telegram", icon:"✈️", category:"tools", shortDescription:"دردشة آمنة وقنوات كثيرة", description:"تطبيق محادثات أكثر أمانًا مع قنوات وبوتات قوية.", rating:4.7, pros:["آمن","قنوات وبوتات","مجاني","ملفات كبيرة"], cons:["انتشار أقل من WhatsApp","يحتاج تعلم"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 99 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["دردشة","آمن","قنوات"] },
+ 
+   { id:"t3tool", slug:"notion", name:"Notion", icon:"📝", category:"tools", shortDescription:"إدارة كل حاجة في مكان واحد", description:"تطبيق ملاحظات ومهام وقواعد بيانات شامل.", rating:4.7, pros:["مرن جدًا","مجاني للأفراد","قوالب جاهزة","فريق"], cons:["معقد للمبتدئين","يحتاج إنترنت"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Plus: 199 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["إنتاجية","ملاحظات","فريق"], businessUse:["team","freelancer"] },
+ 
+-  { id:"t4tool", slug:"todoist", name:"Todoist", icon:"✅", category:"tools", shortDescription:"مدير المهام الأشهر", description:"تطبيق إدارة المهام بسيط وقوي للأفراد والفرق.", rating:4.6, pros:["بسيط وفعّال","تكاملات كثيرة","عربي مدعوم"], cons:["المميزات المتقدمة بمقابل","قد يكون بسيط جدًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,yearly:999,currency:"EGP"},{country:"SA",monthly:14,yearly:140,currency:"SAR"},{country:"AE",monthly:14,yearly:140,currency:"AED"}], tags:["مهام","إنتاجية","تنظيم"] },
+-
+   { id:"t5tool", slug:"google-drive", name:"Google Drive", icon:"📁", category:"tools", shortDescription:"تخزين سحابي ومستندات", description:"15 جيجا مجانية لتخزين كل ملفاتك على السحابة.", rating:4.7, pros:["15 جيجا مجانية","تكامل قوي","Docs و Sheets","مشاركة سهلة"], cons:["محتاج Google account","الخصوصية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"100GB: 35 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["سحابة","تخزين","Google"] },
+ 
+-  { id:"t6tool", slug:"dropbox", name:"Dropbox", icon:"📦", category:"tools", shortDescription:"تخزين سحابي للأعمال", description:"أحد رواد التخزين السحابي للأفراد والشركات.", rating:4.5, pros:["موثوق","سرعة عالية","تكاملات كثيرة"], cons:["مساحة مجانية صغيرة (2GB)","السعر مرتفع"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Plus: 299 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["سحابة","تخزين","شركات"] },
+-
+-  { id:"t7tool", slug:"canva", name:"Canva", icon:"🎨", category:"tools", shortDescription:"تصميم بدون خبرة", description:"الأشهر عالميًا لتصميم منشورات السوشيال ميديا والعروض.", rating:4.8, pros:["سهل جدًا","قوالب جاهزة","عربي مدعوم","مجاني للأساسيات"], cons:["Pro للمميزات المتقدمة","يحتاج إنترنت"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Pro: 249 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["تصميم","سوشيال","Canva"], businessUse:["marketing","social-media"] },
++  { id:"t10tool", slug:"1password", name:"1Password", icon:"🔐", category:"tools", shortDescription:"إدارة كلمات المرور الآمنة", description:"الأفضل لحفظ وإدارة كلمات السر بشكل آمن.", rating:4.7, pros:["آمن جدًا","سهل الاستخدام","تكاملات كثيرة"], cons:["مدفوع","يحتاج عادة جديدة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,yearly:999,currency:"EGP"},{country:"SA",monthly:11.99,yearly:119,currency:"SAR"},{country:"AE",monthly:11.99,yearly:119,currency:"AED"}], tags:["أمان","كلمات سر","حماية"] },
+ 
+-  { id:"t8tool", slug:"capcut", name:"CapCut", icon:"🎬", category:"tools", shortDescription:"محرر فيديو احترافي ومجاني", description:"محرر فيديو من نفس شركة TikTok بمميزات احترافية مجانية.", rating:4.8, pros:["مجاني تمامًا","احترافي","فلاتر كتيرة","سهل"], cons:["ByteDance والخصوصية","يحتاج موبايل قوي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فيديو","تحرير","TikTok"] },
++  { id:"t4tool", slug:"todoist", name:"Todoist", icon:"✅", category:"tools", shortDescription:"مدير المهام الأشهر", description:"تطبيق إدارة المهام بسيط وقوي للأفراد والفرق.", rating:4.6, pros:["بسيط وفعّال","تكاملات كثيرة","عربي مدعوم"], cons:["المميزات المتقدمة بمقابل","قد يكون بسيط جدًا"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,yearly:999,currency:"EGP"},{country:"SA",monthly:14,yearly:140,currency:"SAR"},{country:"AE",monthly:14,yearly:140,currency:"AED"}], tags:["مهام","إنتاجية","تنظيم"] },
+ 
+   { id:"t9tool", slug:"microsoft-365", name:"Microsoft 365", icon:"💼", category:"tools", shortDescription:"Word, Excel, PowerPoint وأكثر", description:"حزمة Microsoft Office الكاملة مع 1TB OneDrive.", rating:4.6, pros:["معتمد دوليًا","شامل","OneDrive 1TB","تكاملات"], cons:["السعر مرتفع","يحتاج اشتراك سنوي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:299,yearly:2999,currency:"EGP"},{country:"SA",monthly:24,yearly:240,currency:"SAR"},{country:"AE",monthly:24,yearly:240,currency:"AED"}], tags:["Office","Microsoft","شغل"], businessUse:["office","corporate"] },
+ 
+-  { id:"t10tool", slug:"1password", name:"1Password", icon:"🔐", category:"tools", shortDescription:"إدارة كلمات المرور الآمنة", description:"الأفضل لحفظ وإدارة كلمات السر بشكل آمن.", rating:4.7, pros:["آمن جدًا","سهل الاستخدام","تكاملات كثيرة"], cons:["مدفوع","يحتاج عادة جديدة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:99,yearly:999,currency:"EGP"},{country:"SA",monthly:11.99,yearly:119,currency:"SAR"},{country:"AE",monthly:11.99,yearly:119,currency:"AED"}], tags:["أمان","كلمات سر","حماية"] },
++  { id:"t6tool", slug:"dropbox", name:"Dropbox", icon:"📦", category:"tools", shortDescription:"تخزين سحابي للأعمال", description:"أحد رواد التخزين السحابي للأفراد والشركات.", rating:4.5, pros:["موثوق","سرعة عالية","تكاملات كثيرة"], cons:["مساحة مجانية صغيرة (2GB)","السعر مرتفع"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Plus: 299 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["سحابة","تخزين","شركات"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 🕌 ديني (8 تطبيقات)
+   // ═══════════════════════════════════════════════
+-  { id:"r1", slug:"muslim-pro", name:"Muslim Pro", icon:"📿", category:"religious", shortDescription:"الأشهر للقرآن والصلاة", description:"التطبيق الإسلامي الأشهر عالميًا بأكثر من 100 مليون مستخدم.", rating:4.7, pros:["مواقيت الصلاة دقيقة","قرآن كامل","أذكار","قبلة"], cons:["إعلانات كتيرة","Premium للمميزات الكاملة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 299 ج/سنة"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["إسلامي","قرآن","صلاة"] },
++  { id:"r3", slug:"quran-com", name:"Quran.com", icon:"📚", category:"religious", shortDescription:"القرآن الكريم بكل القراءات", description:"تطبيق الويب الأشهر للقرآن الكريم بترجمات متعددة.", rating:4.9, pros:["قراءات متعددة","ترجمات بكل اللغات","تفاسير","مجاني تمامًا"], cons:["يحتاج إنترنت","الواجهة بسيطة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["قرآن","تفسير","ترجمة"] },
+ 
+   { id:"r2", slug:"adkar", name:"أذكار المسلم", icon:"📖", category:"religious", shortDescription:"أذكار يومية بصوت جميل", description:"تطبيق متخصص في أذكار الصباح والمساء والأدعية.", rating:4.8, pros:["أذكار شاملة","تنبيهات","صوت جميل","مجاني"], cons:["محدود في الأذكار","يحتاج تحديثات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["أذكار","أدعية","إسلامي"] },
+ 
+-  { id:"r3", slug:"quran-com", name:"Quran.com", icon:"📚", category:"religious", shortDescription:"القرآن الكريم بكل القراءات", description:"تطبيق الويب الأشهر للقرآن الكريم بترجمات متعددة.", rating:4.9, pros:["قراءات متعددة","ترجمات بكل اللغات","تفاسير","مجاني تمامًا"], cons:["يحتاج إنترنت","الواجهة بسيطة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["قرآن","تفسير","ترجمة"] },
++  { id:"r6", slug:"hisn-almoslim", name:"حصن المسلم", icon:"🛡️", category:"religious", shortDescription:"الأدعية الكتاب الأشهر", description:"التطبيق الرسمي لكتاب حصن المسلم بالأدعية الصحيحة.", rating:4.8, pros:["معتمد","شامل","تنبيهات للأذكار","مجاني"], cons:["محتوى محدود لكتاب واحد","تصميم بسيط"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["أدعية","حصن المسلم","إسلامي"] },
+ 
+-  { id:"r4", slug:"tarteel", name:"Tarteel AI", icon:"🤖", category:"religious", shortDescription:"حفظ القرآن بالذكاء الاصطناعي", description:"تطبيق ثوري لحفظ القرآن باستخدام AI لتصحيح التلاوة.", rating:4.6, pros:["AI لتصحيح التلاوة","مبتكر","يساعد على الحفظ","عربي"], cons:["يحتاج إنترنت","Premium للمميزات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 199 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["قرآن","حفظ","AI","تلاوة"] },
++  { id:"r1", slug:"muslim-pro", name:"Muslim Pro", icon:"📿", category:"religious", shortDescription:"الأشهر للقرآن والصلاة", description:"التطبيق الإسلامي الأشهر عالميًا بأكثر من 100 مليون مستخدم.", rating:4.7, pros:["مواقيت الصلاة دقيقة","قرآن كامل","أذكار","قبلة"], cons:["إعلانات كتيرة","Premium للمميزات الكاملة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 299 ج/سنة"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["إسلامي","قرآن","صلاة"] },
+ 
+   { id:"r5", slug:"sudais", name:"السديس", icon:"🎙️", category:"religious", shortDescription:"تلاوات الشيخ السديس", description:"تطبيق مخصص لتلاوات إمام الحرم الشيخ عبد الرحمن السديس.", rating:4.7, pros:["صوت رائع","قرآن كامل","مجاني","عربي"], cons:["تلاوة واحدة فقط","لا يوجد ترجمة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["قرآن","السديس","تلاوة"] },
+ 
+-  { id:"r6", slug:"hisn-almoslim", name:"حصن المسلم", icon:"🛡️", category:"religious", shortDescription:"الأدعية الكتاب الأشهر", description:"التطبيق الرسمي لكتاب حصن المسلم بالأدعية الصحيحة.", rating:4.8, pros:["معتمد","شامل","تنبيهات للأذكار","مجاني"], cons:["محتوى محدود لكتاب واحد","تصميم بسيط"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["أدعية","حصن المسلم","إسلامي"] },
++  { id:"r4", slug:"tarteel", name:"Tarteel AI", icon:"🤖", category:"religious", shortDescription:"حفظ القرآن بالذكاء الاصطناعي", description:"تطبيق ثوري لحفظ القرآن باستخدام AI لتصحيح التلاوة.", rating:4.6, pros:["AI لتصحيح التلاوة","مبتكر","يساعد على الحفظ","عربي"], cons:["يحتاج إنترنت","Premium للمميزات"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 199 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["قرآن","حفظ","AI","تلاوة"] },
+ 
+   { id:"r7", slug:"athan-pro", name:"Athan Pro", icon:"🕌", category:"religious", shortDescription:"أذان دقيق ومواقيت الصلاة", description:"تطبيق متخصص في الأذان ومواقيت الصلاة بدقة عالية.", rating:4.6, pros:["دقيق جدًا","أذان جميل","قبلة","Apple Watch"], cons:["Premium للمميزات","الإعلانات في النسخة المجانية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 99 ج/سنة"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["أذان","صلاة","مواقيت"] },
+ 
+@@ -327,46 +327,46 @@ export const apps: AppItem[] = [
+   // ═══════════════════════════════════════════════
+   // 🏛️ خدمات حكومية (10 تطبيقات)
+   // ═══════════════════════════════════════════════
+-  { id:"go1", slug:"digital-egypt", name:"مصر الرقمية", icon:"🇪🇬", category:"government", shortDescription:"كل الخدمات الحكومية المصرية", description:"البوابة الرسمية لكل الخدمات الحكومية في مصر.", rating:4.0, pros:["رسمي","شامل","مجاني","يوفر وقت"], cons:["البطء أحيانًا","الواجهة تحتاج تحسين","بعض الخدمات لسه ورقية"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["حكومي","مصري","خدمات","رسمي"] },
++  { id:"go6", slug:"uae-pass", name:"UAE Pass", icon:"🇦🇪", category:"government", shortDescription:"الهوية الرقمية الإماراتية", description:"تطبيق الهوية الرقمية الموحد للخدمات الحكومية الإماراتية.", rating:4.7, pros:["موحد للكل","سهل","رسمي","آمن"], cons:["الإمارات فقط","يحتاج بطاقة هوية"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["حكومي","إماراتي","هوية"] },
+ 
+   { id:"go2", slug:"absher", name:"أبشر", icon:"🇸🇦", category:"government", shortDescription:"الخدمات الحكومية السعودية", description:"البوابة الرسمية للخدمات الحكومية السعودية للأفراد والمقيمين.", rating:4.6, pros:["شامل","سهل","رسمي","موثوق"], cons:["السعودية فقط","يحتاج NID سعودي"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["حكومي","سعودي","أبشر"] },
+ 
+   { id:"go3", slug:"tawakkalna", name:"توكلنا", icon:"🛡️", category:"government", shortDescription:"تطبيق الصحة والتنقل في السعودية", description:"تطبيق سعودي للحالة الصحية وكثير من الخدمات الحكومية.", rating:4.5, pros:["شامل","رسمي","تكامل قوي","ضروري للمقيمين"], cons:["السعودية فقط","يحتاج تحديثات مستمرة"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["صحي","حكومي","سعودي"] },
+ 
++  { id:"go10", slug:"al-hosn", name:"الحصن", icon:"🛡️", category:"government", shortDescription:"التطبيق الصحي الإماراتي", description:"التطبيق الرسمي للحالة الصحية في الإمارات.", rating:4.5, pros:["رسمي","سهل","مهم للمقيمين","شهادات صحية"], cons:["الإمارات فقط","يحتاج EID"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["صحة","إماراتي","حكومي"] },
++
+   { id:"go4", slug:"nafath", name:"نفاذ", icon:"🔐", category:"government", shortDescription:"التحقق من الهوية الرقمية السعودية", description:"تطبيق التحقق الموحد للخدمات الحكومية والبنكية.", rating:4.4, pros:["أمان عالي","تكامل قوي","سهل"], cons:["السعودية فقط","يحتاج NID"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["حكومي","تحقق","أمان"] },
+ 
+-  { id:"go5", slug:"tam", name:"تم", icon:"📱", category:"government", shortDescription:"دفع فواتير وخدمات حكومية", description:"تطبيق سعودي لدفع كل الفواتير الحكومية والخدمات.", rating:4.3, pros:["دفع سريع","شامل","رسمي"], cons:["السعودية فقط","رسوم على بعض الخدمات"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["دفع","حكومي","سعودي"] },
++  { id:"go9", slug:"sehhaty-saudi", name:"صحتي السعودي", icon:"🏥", category:"government", shortDescription:"التطبيق الصحي الرسمي السعودي", description:"تطبيق وزارة الصحة السعودية للخدمات الصحية الشاملة.", rating:4.4, pros:["رسمي","شامل","يكامل مع توكلنا","مواعيد"], cons:["السعودية فقط","البطء أحيانًا"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["صحة","سعودي","حكومي"] },
+ 
+-  { id:"go6", slug:"uae-pass", name:"UAE Pass", icon:"🇦🇪", category:"government", shortDescription:"الهوية الرقمية الإماراتية", description:"تطبيق الهوية الرقمية الموحد للخدمات الحكومية الإماراتية.", rating:4.7, pros:["موحد للكل","سهل","رسمي","آمن"], cons:["الإمارات فقط","يحتاج بطاقة هوية"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["حكومي","إماراتي","هوية"] },
++  { id:"go5", slug:"tam", name:"تم", icon:"📱", category:"government", shortDescription:"دفع فواتير وخدمات حكومية", description:"تطبيق سعودي لدفع كل الفواتير الحكومية والخدمات.", rating:4.3, pros:["دفع سريع","شامل","رسمي"], cons:["السعودية فقط","رسوم على بعض الخدمات"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["دفع","حكومي","سعودي"] },
+ 
+   { id:"go7", slug:"mohre", name:"MOHRE", icon:"👔", category:"government", shortDescription:"وزارة الموارد البشرية الإماراتية", description:"التطبيق الرسمي لوزارة الموارد البشرية والتوطين في الإمارات.", rating:4.2, pros:["رسمي","للعاملين والمؤسسات","شامل"], cons:["الإمارات فقط","يستخدم لخدمات محددة"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["حكومي","عمل","إماراتي"] },
+ 
+-  { id:"go8", slug:"sehha-egypt", name:"صحة مصر", icon:"🏥", category:"government", shortDescription:"التطبيق الصحي الرسمي في مصر", description:"تطبيق وزارة الصحة المصرية للتأمين الصحي الشامل.", rating:4.0, pros:["رسمي","التأمين الصحي","المستشفيات"], cons:["محدود لمحافظات معينة","يحتاج تحديثات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["صحة","مصري","حكومي"] },
+-
+-  { id:"go9", slug:"sehhaty-saudi", name:"صحتي السعودي", icon:"🏥", category:"government", shortDescription:"التطبيق الصحي الرسمي السعودي", description:"تطبيق وزارة الصحة السعودية للخدمات الصحية الشاملة.", rating:4.4, pros:["رسمي","شامل","يكامل مع توكلنا","مواعيد"], cons:["السعودية فقط","البطء أحيانًا"], countries:["SA"], pricing:[{country:"SA",monthly:0,currency:"SAR"}], tags:["صحة","سعودي","حكومي"] },
++  { id:"go1", slug:"digital-egypt", name:"مصر الرقمية", icon:"🇪🇬", category:"government", shortDescription:"كل الخدمات الحكومية المصرية", description:"البوابة الرسمية لكل الخدمات الحكومية في مصر.", rating:4.0, pros:["رسمي","شامل","مجاني","يوفر وقت"], cons:["البطء أحيانًا","الواجهة تحتاج تحسين","بعض الخدمات لسه ورقية"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["حكومي","مصري","خدمات","رسمي"] },
+ 
+-  { id:"go10", slug:"al-hosn", name:"الحصن", icon:"🛡️", category:"government", shortDescription:"التطبيق الصحي الإماراتي", description:"التطبيق الرسمي للحالة الصحية في الإمارات.", rating:4.5, pros:["رسمي","سهل","مهم للمقيمين","شهادات صحية"], cons:["الإمارات فقط","يحتاج EID"], countries:["AE"], pricing:[{country:"AE",monthly:0,currency:"AED"}], tags:["صحة","إماراتي","حكومي"] },
++  { id:"go8", slug:"sehha-egypt", name:"صحة مصر", icon:"🏥", category:"government", shortDescription:"التطبيق الصحي الرسمي في مصر", description:"تطبيق وزارة الصحة المصرية للتأمين الصحي الشامل.", rating:4.0, pros:["رسمي","التأمين الصحي","المستشفيات"], cons:["محدود لمحافظات معينة","يحتاج تحديثات"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["صحة","مصري","حكومي"] },
+ 
+   // ═══════════════════════════════════════════════
+   // 💼 فريلانس وعمل (10 تطبيقات)
+   // ═══════════════════════════════════════════════
+-  { id:"fl1", slug:"mostaql", name:"مستقل", icon:"💻", category:"freelance", shortDescription:"أكبر منصة فريلانس عربية", description:"المنصة الأولى للفريلانس العربي بآلاف المشاريع والمستقلين.", rating:4.5, pros:["عربي 100%","سوق ضخم","حماية الطرفين","عمولة معقولة"], cons:["منافسة قوية","البداية صعبة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 12.5%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عربي","شغل"], businessUse:["freelancer","client"] },
+-
+-  { id:"fl2", slug:"khamsat", name:"خمسات", icon:"🎯", category:"freelance", shortDescription:"خدمات صغيرة بدءًا من 5$", description:"منصة عربية للخدمات المصغرة بأسعار منخفضة.", rating:4.4, pros:["عربي","سهل البداية","خدمات صغيرة","سريع"], cons:["أسعار منخفضة","المنافسة قوية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 20%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عربي","خدمات"] },
++  { id:"fl6", slug:"linkedin", name:"LinkedIn", icon:"💼", category:"freelance", shortDescription:"الشبكة المهنية الأشهر", description:"المنصة الأولى عالميًا للتوظيف والشبكات المهنية.", rating:4.7, pros:["شبكة ضخمة","فرص عمل","محتوى مهني","مجاني"], cons:["Premium مكلف","معلومات حقيقية مطلوبة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 599 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["شغل","مهني","شبكة"], businessUse:["recruitment","networking"] },
+ 
+   { id:"fl3", slug:"upwork", name:"Upwork", icon:"🌍", category:"freelance", shortDescription:"أكبر منصة فريلانس عالمية", description:"المنصة العالمية الأولى للفريلانسرز بمشاريع بدولارات.", rating:4.6, pros:["مشاريع كبيرة","عملاء عالميين","دفع بالدولار","حماية"], cons:["عمولة 20% للمبتدئين","المنافسة شرسة","بالإنجليزي"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 10-20%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عالمي","دولار"] },
+ 
+-  { id:"fl4", slug:"fiverr", name:"Fiverr", icon:"5️⃣", category:"freelance", shortDescription:"عرض خدماتك بأي سعر", description:"منصة عالمية لبيع الخدمات بنظام GIGs مرن.", rating:4.5, pros:["عالمي","سعر مرن","سهل البداية","تنوع كبير"], cons:["عمولة 20%","الترتيب صعب للمبتدئين"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 20%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عالمي","Fiverr"] },
++  { id:"fl8", slug:"wuzzuf", name:"Wuzzuf", icon:"👔", category:"freelance", shortDescription:"أكبر منصة وظائف في مصر", description:"المنصة الأولى للوظائف في مصر بآلاف الفرص.", rating:4.6, pros:["مصري","شركات معروفة","مجاني","فلترة قوية"], cons:["مصر بشكل أساسي","المنافسة قوية"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["وظائف","مصري","Wuzzuf"] },
+ 
+-  { id:"fl5", slug:"freelancer", name:"Freelancer", icon:"🆓", category:"freelance", shortDescription:"منصة عالمية للمشاريع", description:"منصة عالمية بنظام المزايدة على المشاريع.", rating:4.2, pros:["مشاريع متنوعة","عالمي","نظام المسابقات"], cons:["عمولة عالية","المنافسة شرسة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 10%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عالمي","مشاريع"] },
++  { id:"fl9", slug:"hsoub", name:"حسوب", icon:"📚", category:"freelance", shortDescription:"شبكة محتوى ومنصات تقنية", description:"شبكة عربية تضم مستقل وخمسات وأكاديميات للتعلم.", rating:4.6, pros:["شبكة متكاملة","محتوى عربي","تكامل","ثقة"], cons:["مركّز على التقنية","المنافسة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["شبكة","عربي","تقنية"] },
+ 
+-  { id:"fl6", slug:"linkedin", name:"LinkedIn", icon:"💼", category:"freelance", shortDescription:"الشبكة المهنية الأشهر", description:"المنصة الأولى عالميًا للتوظيف والشبكات المهنية.", rating:4.7, pros:["شبكة ضخمة","فرص عمل","محتوى مهني","مجاني"], cons:["Premium مكلف","معلومات حقيقية مطلوبة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"Premium: 599 ج/شهر"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["شغل","مهني","شبكة"], businessUse:["recruitment","networking"] },
++  { id:"fl1", slug:"mostaql", name:"مستقل", icon:"💻", category:"freelance", shortDescription:"أكبر منصة فريلانس عربية", description:"المنصة الأولى للفريلانس العربي بآلاف المشاريع والمستقلين.", rating:4.5, pros:["عربي 100%","سوق ضخم","حماية الطرفين","عمولة معقولة"], cons:["منافسة قوية","البداية صعبة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 12.5%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عربي","شغل"], businessUse:["freelancer","client"] },
+ 
+-  { id:"fl7", slug:"bayt", name:"Bayt", icon:"🏢", category:"freelance", shortDescription:"أكبر منصة وظائف عربية", description:"المنصة العربية الأولى للوظائف في الخليج ومصر.", rating:4.4, pros:["عربي","تركيز على المنطقة","شركات معتمدة","مجاني للباحث"], cons:["بعض الإعلانات قديمة","التوظيف بطيء"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["وظائف","عربي","Bayt"] },
++  { id:"fl4", slug:"fiverr", name:"Fiverr", icon:"5️⃣", category:"freelance", shortDescription:"عرض خدماتك بأي سعر", description:"منصة عالمية لبيع الخدمات بنظام GIGs مرن.", rating:4.5, pros:["عالمي","سعر مرن","سهل البداية","تنوع كبير"], cons:["عمولة 20%","الترتيب صعب للمبتدئين"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 20%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عالمي","Fiverr"] },
+ 
+-  { id:"fl8", slug:"wuzzuf", name:"Wuzzuf", icon:"👔", category:"freelance", shortDescription:"أكبر منصة وظائف في مصر", description:"المنصة الأولى للوظائف في مصر بآلاف الفرص.", rating:4.6, pros:["مصري","شركات معروفة","مجاني","فلترة قوية"], cons:["مصر بشكل أساسي","المنافسة قوية"], countries:["EG"], pricing:[{country:"EG",monthly:0,currency:"EGP"}], tags:["وظائف","مصري","Wuzzuf"] },
++  { id:"fl2", slug:"khamsat", name:"خمسات", icon:"🎯", category:"freelance", shortDescription:"خدمات صغيرة بدءًا من 5$", description:"منصة عربية للخدمات المصغرة بأسعار منخفضة.", rating:4.4, pros:["عربي","سهل البداية","خدمات صغيرة","سريع"], cons:["أسعار منخفضة","المنافسة قوية"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 20%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عربي","خدمات"] },
+ 
+-  { id:"fl9", slug:"hsoub", name:"حسوب", icon:"📚", category:"freelance", shortDescription:"شبكة محتوى ومنصات تقنية", description:"شبكة عربية تضم مستقل وخمسات وأكاديميات للتعلم.", rating:4.6, pros:["شبكة متكاملة","محتوى عربي","تكامل","ثقة"], cons:["مركّز على التقنية","المنافسة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["شبكة","عربي","تقنية"] },
++  { id:"fl7", slug:"bayt", name:"Bayt", icon:"🏢", category:"freelance", shortDescription:"أكبر منصة وظائف عربية", description:"المنصة العربية الأولى للوظائف في الخليج ومصر.", rating:4.4, pros:["عربي","تركيز على المنطقة","شركات معتمدة","مجاني للباحث"], cons:["بعض الإعلانات قديمة","التوظيف بطيء"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["وظائف","عربي","Bayt"] },
++
++  { id:"fl10", slug:"tanqeeb", name:"تنقيب", icon:"🔎", category:"freelance", shortDescription:"محرك بحث للوظائف العربية", description:"محرك بحث متخصص في الوظائف العربية يجمع من كل المواقع.", rating:4.3, pros:["يجمع من كل المواقع","عربي","سريع","مجاني"], cons:["لا يوظف مباشرة","بعض الإعلانات قديمة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["وظائف","بحث","عربي"] },
+ 
+-  { id:"fl10", slug:"tanqeeb", name:"تنقيب", icon:"🔎", category:"freelance", shortDescription:"محرك بحث للوظائف العربية", description:"محرك بحث متخصص في الوظائف العربية يجمع من كل المواقع.", rating:4.3, pros:["يجمع من كل المواقع","عربي","سريع","مجاني"], cons:["لا يوظف مباشرة","بعض الإعلانات قديمة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["وظائف","بحث","عربي"] }
++  { id:"fl5", slug:"freelancer", name:"Freelancer", icon:"🆓", category:"freelance", shortDescription:"منصة عالمية للمشاريع", description:"منصة عالمية بنظام المزايدة على المشاريع.", rating:4.2, pros:["مشاريع متنوعة","عالمي","نظام المسابقات"], cons:["عمولة عالية","المنافسة شرسة"], countries:["EG","SA","AE"], pricing:[{country:"EG",monthly:0,currency:"EGP",note:"عمولة 10%"},{country:"SA",monthly:0,currency:"SAR"},{country:"AE",monthly:0,currency:"AED"}], tags:["فريلانس","عالمي","مشاريع"] },
+ ];
+diff --git a/src/data/subcategories.ts b/src/data/subcategories.ts
+new file mode 100644
+index 0000000..8396f27
+--- /dev/null
++++ b/src/data/subcategories.ts
+@@ -0,0 +1,385 @@
++import { AppCategory } from "@/lib/types";
++import { categoryLabels } from "@/lib/constants";
++
++/**
++ * نظام الفئات الفرعية (Subcategories)
++ * ───────────────────────────────────
++ * المشكلة: الفئة العامة «streaming» بتخلط Netflix مع Spotify،
++ * و«finance» بتخلط فودافون كاش مع تابي — ودي مقارنات وترشيحات غلط.
++ *
++ * الحل: فئة فرعية لكل تطبيق بتحدد «مين منافسينه الحقيقيين».
++ * المبدأ الذهبي: التطبيق اللي مالهوش منافس طبيعي بياخد فئة فرعية لوحده
++ * (أفضل ما يترشح غلط) — ولو تطبيق جديد اتضاف ومش متعيّن هنا،
++ * بيرجع تلقائيًا لفئته العامة (fallback) بدون ما يبوّظ حاجة.
++ *
++ * الترتيب: لو عايز تحدد subcategory لتطبيق جديد بدون لمس الملف ده،
++ * ضيف العمود الاختياري في الداتابيز:
++ *   ALTER TABLE managed_apps ADD COLUMN IF NOT EXISTS subcategory text;
++ * وlib/subcategoryOf بيقرأapp.subcategory الأول قبل المابنج.
++ */
++
++export type AppSubcategory = {
++  key: string;
++  category: AppCategory;
++  label: string;
++  icon: string;
++};
++
++/** تعريف الفئات الفرعية (ترتيب الظهور) */
++export const SUBCATEGORIES: AppSubcategory[] = [
++  // 🍔 أكل وتوصيل
++  { key: "food-delivery", category: "food", label: "توصيل مطاعم", icon: "🍔" },
++  { key: "food-grocery", category: "food", label: "بقالة وإفطار", icon: "🥐" },
++
++  // 🎬 ستريمنج
++  { key: "streaming-video", category: "streaming", label: "أفلام ومسلسلات", icon: "🎬" },
++  { key: "streaming-music", category: "streaming", label: "موسيقى وبودكاست", icon: "🎵" },
++
++  // 🛍️ تسوق
++  { key: "shopping-marketplace", category: "shopping", label: "أسواق إلكترونية شاملة", icon: "🛒" },
++  { key: "shopping-fashion", category: "shopping", label: "أزياء وموضة", icon: "👗" },
++  { key: "shopping-beauty", category: "shopping", label: "تجميل وعناية", icon: "💄" },
++  { key: "shopping-electronics", category: "shopping", label: "إلكترونيات وأجهزة", icon: "📱" },
++  { key: "shopping-classifieds", category: "shopping", label: "إعلانات مبوبة", icon: "🏷️" },
++
++  // 🚗 مواصلات
++  { key: "transport-ride", category: "transport", label: "مشاوير وسيارات", icon: "🚗" },
++  { key: "transport-transit", category: "transport", label: "نقل جماعي", icon: "🚌" },
++  { key: "transport-maps", category: "transport", label: "خرائط وملاحة", icon: "🗺️" },
++  { key: "transport-flights", category: "transport", label: "مقارنة رحلات طيران", icon: "✈️" },
++
++  // 💰 فلوس
++  { key: "finance-wallet", category: "finance", label: "محافظ ومدفوعات", icon: "💳" },
++  { key: "finance-bank", category: "finance", label: "بنوك رقمية", icon: "🏦" },
++  { key: "finance-bnpl", category: "finance", label: "تقسيط — اشترِ الآن", icon: "🧾" },
++  { key: "finance-invest", category: "finance", label: "استثمار وتداول", icon: "📈" },
++
++  // 💪 صحة
++  { key: "health-doctor", category: "health", label: "حجز أطباء واستشارات", icon: "🩺" },
++  { key: "health-fitness", category: "health", label: "لياقة وتمرين", icon: "🏋️" },
++  { key: "health-diet", category: "health", label: "تغذية ودايت", icon: "🥗" },
++  { key: "health-wellness", category: "health", label: "استرخاء ونوم", icon: "🧘" },
++  { key: "health-women", category: "health", label: "صحة المرأة", icon: "🌸" },
++  { key: "health-pharmacy", category: "health", label: "صيدلية وأدوية", icon: "💊" },
++  { key: "health-gov", category: "health", label: "خدمات صحية حكومية", icon: "🏥" },
++
++  // 🎓 تعليم
++  { key: "education-language", category: "education", label: "تعلم لغات", icon: "🗣️" },
++  { key: "education-courses", category: "education", label: "كورسات احترافية", icon: "🎓" },
++  { key: "education-school", category: "education", label: "مناهج مدرسية", icon: "🏫" },
++  { key: "education-tools", category: "education", label: "أدوات مذاكرة", icon: "📝" },
++
++  // 🏠 عقارات
++  { key: "realestate-search", category: "real-estate", label: "بحث عن عقارات", icon: "🏠" },
++  { key: "realestate-projects", category: "real-estate", label: "مشاريع عقارية جديدة", icon: "🏗️" },
++
++  // ✈️ سفر
++  { key: "travel-booking", category: "travel", label: "حجز رحلات وإقامات", icon: "🏨" },
++  { key: "travel-airline", category: "travel", label: "شركات طيران", icon: "✈️" },
++  { key: "travel-reviews", category: "travel", label: "تقييمات سياحية", icon: "⭐" },
++  { key: "travel-bike", category: "travel", label: "مشاركة دراجات", icon: "🚲" },
++
++  // 🎮 ألعاب
++  { key: "gaming-battle", category: "gaming", label: "باتل رويال", icon: "🔫" },
++  { key: "gaming-strategy", category: "gaming", label: "ألعاب استراتيجية", icon: "🏰" },
++  { key: "gaming-sports", category: "gaming", label: "ألعاب كرة ورياضة", icon: "⚽" },
++  { key: "gaming-sandbox", category: "gaming", label: "عالم مفتوح وبناء", icon: "🧱" },
++  { key: "gaming-cards", category: "gaming", label: "ورق وبلوت", icon: "🃏" },
++
++  // 👶 أطفال
++  { key: "kids-video", category: "kids", label: "فيديو وأفلام أطفال", icon: "📺" },
++  { key: "kids-learning", category: "kids", label: "تعلم مبكر ومحتوى عربي", icon: "🧸" },
++
++  // 🛠️ أدوات
++  { key: "tools-messaging", category: "tools", label: "تواصل ومراسلة", icon: "💬" },
++  { key: "tools-productivity", category: "tools", label: "إنتاجية وتنظيم", icon: "✅" },
++  { key: "tools-storage", category: "tools", label: "تخزين سحابي", icon: "☁️" },
++  { key: "tools-design", category: "tools", label: "تصميم ومونتاج", icon: "🎨" },
++  { key: "tools-office", category: "tools", label: "أوفيس ومستندات", icon: "📊" },
++  { key: "tools-security", category: "tools", label: "أمان وكلمات سر", icon: "🔐" },
++
++  // 🕌 دين
++  { key: "religious-quran", category: "religious", label: "قرآن وتلاوات", icon: "📖" },
++  { key: "religious-daily", category: "religious", label: "أذكار ومواقيت", icon: "🤲" },
++
++  // 💼 أعمال حرة
++  { key: "freelance-micro", category: "freelance", label: "منصات أعمال حرة", icon: "🛠️" },
++  { key: "freelance-jobs", category: "freelance", label: "وظائف وسير ذاتية", icon: "💼" },
++  { key: "freelance-ecosystem", category: "freelance", label: "شبكات ومحتوى", icon: "🌐" },
++  { key: "gaming-topup", category: "gaming", label: "شحن ألعاب ورصيد", icon: "🔋" },
++  { key: "finance-topup", category: "finance", label: "شحن رصيد", icon: "🔋" },
++  { key: "shopping-topup", category: "shopping", label: "بطاقات وشحن رصيد", icon: "🔋" },
++  { key: "tools-vpn", category: "tools", label: "VPN وتخطي الحظر", icon: "🔓" },
++  { key: "travel-transit", category: "travel", label: "نقل ومواصلات", icon: "🚌" }
++];
++
++/* ملحوظة: مفيش تعيين تلقائي بالكلمات المفتاحية (auto-hints) —
++ * التخمين بالاسم ممكن يوزّع تطبيقات غلط (مثلاً «شحن مجاني» في تسوق ≠ شحن رصيد).
++ * التطبيق اللي مش في المابنج بيرجع لفئته العامة بأمان، والأدمن يقدر يحدد
++ * الفئة الفرعية يدويًا من لوحة التحكم (عمود subcategory الاختياري). */
++
++/**
++ * تعيين كل تطبيق لفئته الفرعية (152 من أصل 162).
++ * تطبيقات «حكومي» العشرة بدون مابنج عمدًا:
++ * مفيش منافسة بين تطبيقات حكومات مختلفة، فبتفضل فئة واحدة (الـ fallback).
++ */
++export const SUBCATEGORY_BY_SLUG: Record<string, string> = {
++  // 🍔 food
++  talabat: "food-delivery",
++  "careem-food": "food-delivery",
++  "noon-food": "food-delivery",
++  hungerstation: "food-delivery",
++  mrsool: "food-delivery",
++  jahez: "food-delivery",
++  elmenus: "food-delivery",
++  otlob: "food-delivery",
++  deliveroo: "food-delivery",
++  zomato: "food-delivery",
++  breadfast: "food-grocery",
++  rabbit: "food-grocery",
++
++  // 🎬 streaming
++  netflix: "streaming-video",
++  shahid: "streaming-video",
++  watchit: "streaming-video",
++  "osn-plus": "streaming-video",
++  starzplay: "streaming-video",
++  tod: "streaming-video",
++  "disney-plus": "streaming-video",
++  "apple-tv": "streaming-video",
++  "youtube-premium": "streaming-video",
++  spotify: "streaming-music",
++  anghami: "streaming-music",
++  deezer: "streaming-music",
++
++  // 🛍️ shopping
++  amazon: "shopping-marketplace",
++  noon: "shopping-marketplace",
++  jumia: "shopping-marketplace",
++  temu: "shopping-marketplace",
++  aliexpress: "shopping-marketplace",
++  shein: "shopping-fashion",
++  namshi: "shopping-fashion",
++  ounass: "shopping-fashion",
++  "bath-body": "shopping-beauty",
++  sephora: "shopping-beauty",
++  extra: "shopping-electronics",
++  jarir: "shopping-electronics",
++  olx: "shopping-classifieds",
++  dubizzle: "shopping-classifieds",
++  opensooq: "shopping-classifieds",
++
++  // 💪 health
++  vezeeta: "health-doctor",
++  altibbi: "health-doctor",
++  cura: "health-doctor",
++  "nike-training": "health-fitness",
++  strava: "health-fitness",
++  sweat: "health-fitness",
++  myfitnesspal: "health-diet",
++  calm: "health-wellness",
++  headspace: "health-wellness",
++  flo: "health-women",
++  pharmacare: "health-pharmacy",
++  sehhaty: "health-gov",
++
++  // 🚗 transport
++  uber: "transport-ride",
++  careem: "transport-ride",
++  indriver: "transport-ride",
++  yassir: "transport-ride",
++  didi: "transport-ride",
++  swvl: "transport-transit",
++  "google-maps": "transport-maps",
++  waze: "transport-maps",
++  skyscanner: "transport-flights",
++  wego: "transport-flights",
++
++  // 🎓 education
++  duolingo: "education-language",
++  coursera: "education-courses",
++  udemy: "education-courses",
++  edraak: "education-courses",
++  rwaq: "education-courses",
++  skillshare: "education-courses",
++  "linkedin-learning": "education-courses",
++  "noon-academy": "education-school",
++  abwaab: "education-school",
++  "khan-academy": "education-school",
++  nafham: "education-school",
++  quizlet: "education-tools",
++
++  // 💰 finance
++  instapay: "finance-wallet",
++  "vodafone-cash": "finance-wallet",
++  fawry: "finance-wallet",
++  "stc-pay": "finance-wallet",
++  "apple-pay": "finance-wallet",
++  "nbe-mobile": "finance-bank",
++  "cib-mobile": "finance-bank",
++  alrajhi: "finance-bank",
++  snb: "finance-bank",
++  liv: "finance-bank",
++  "mashreq-neo": "finance-bank",
++  valu: "finance-bnpl",
++  tamara: "finance-bnpl",
++  tabby: "finance-bnpl",
++  baraka: "finance-invest",
++
++  // 🏠 real-estate
++  aqarmap: "realestate-search",
++  propertyfinder: "realestate-search",
++  bayut: "realestate-search",
++  nawy: "realestate-search",
++  "olx-property": "realestate-search",
++  "dubizzle-property": "realestate-search",
++  "opensooq-property": "realestate-search",
++  hamlat: "realestate-projects",
++
++  // ✈️ travel
++  booking: "travel-booking",
++  airbnb: "travel-booking",
++  agoda: "travel-booking",
++  almosafer: "travel-booking",
++  tajawal: "travel-booking",
++  tripadvisor: "travel-reviews",
++  flynas: "travel-airline",
++  egyptair: "travel-airline",
++  emirates: "travel-airline",
++  "careem-bike": "travel-bike",
++
++  // 🎮 gaming
++  "pubg-mobile": "gaming-battle",
++  "free-fire": "gaming-battle",
++  "clash-of-clans": "gaming-strategy",
++  "clash-royale": "gaming-strategy",
++  "fifa-mobile": "gaming-sports",
++  efootball: "gaming-sports",
++  roblox: "gaming-sandbox",
++  minecraft: "gaming-sandbox",
++  jawaker: "gaming-cards",
++  baloot: "gaming-cards",
++
++  // 👶 kids
++  "youtube-kids": "kids-video",
++  "spacetoon-go": "kids-video",
++  lamsa: "kids-learning",
++  "noon-kids": "kids-learning",
++  "abcmouse-arabic": "kids-learning",
++  taleemabad: "kids-learning",
++  kiddopia: "kids-learning",
++  "adam-mishmish": "kids-learning",
++
++  // 🛠️ tools
++  whatsapp: "tools-messaging",
++  telegram: "tools-messaging",
++  notion: "tools-productivity",
++  todoist: "tools-productivity",
++  "google-drive": "tools-storage",
++  dropbox: "tools-storage",
++  canva: "tools-design",
++  capcut: "tools-design",
++  "microsoft-365": "tools-office",
++  "1password": "tools-security",
++
++  // 🕌 religious
++  "quran-com": "religious-quran",
++  tarteel: "religious-quran",
++  sudais: "religious-quran",
++  "muslim-pro": "religious-daily",
++  adkar: "religious-daily",
++  "hisn-almoslim": "religious-daily",
++  "athan-pro": "religious-daily",
++  islamicfinder: "religious-daily",
++
++  // 💼 freelance
++  mostaql: "freelance-micro",
++  khamsat: "freelance-micro",
++  upwork: "freelance-micro",
++  fiverr: "freelance-micro",
++  freelancer: "freelance-micro",
++  bayt: "freelance-jobs",
++  wuzzuf: "freelance-jobs",
++  tanqeeb: "freelance-jobs",
++  linkedin: "freelance-jobs",
++  hsoub: "freelance-ecosystem"
++};
++
++/**
++ * الفئة الفرعية لتطبيق:
++ * 1) app.subcategory لو متعبّي (مثلاً من عمود الداتابيز الاختياري)
++ * 2) المابنج بالـ slug
++ * 3) الفئة العامة كـ fallback (أمان — سلوك قديم بدون كسر)
++ */
++export function subcategoryOf(app: {
++  slug: string;
++  category: string;
++  subcategory?: string | null;
++}): string {
++  return app.subcategory || SUBCATEGORY_BY_SLUG[app.slug] || app.category;
++}
++
++/** تعريف فئة فرعية بالمفتاح (null لو مفتاح = فئة عامة fallback) */
++export function subcategoryDef(key: string): AppSubcategory | null {
++  return SUBCATEGORIES.find((s) => s.key === key) ?? null;
++}
++
++/** الفئات الفرعية التابعة لفئة عامة (مرتبة زي التعريف) */
++export function subcategoriesOfCategory(category: string): AppSubcategory[] {
++  return SUBCATEGORIES.filter((s) => s.category === category);
++}
++
++/** اسم معروض للفئة الفرعية (مع fallback لاسم الفئة العامة) */
++export function subcategoryLabel(key: string): string {
++  const def = subcategoryDef(key);
++  if (def) return def.label;
++  return categoryLabels[key as AppCategory] ?? key;
++}
++
++/** أيقونة الفئة الفرعية (مع fallback لأيقونة الفئة العامة من تعريفها) */
++export function subcategoryIcon(key: string): string {
++  return subcategoryDef(key)?.icon ?? "📂";
++}
++
++export type AppsBySubcategory<T> = {
++  key: string;
++  label: string;
++  icon: string;
++  apps: T[];
++};
++
++/**
++ * تجميع تطبيقات حسب الفئة الفرعية مع الحفاظ على ترتيب الاكتشاف —
++ * بيستخدمه: أداة المقارنة (optgroups)، صفحات /best، دليل التطبيقات.
++ */
++export function groupAppsBySubcategory<
++  T extends { slug: string; category: string; subcategory?: string | null }
++>(list: T[]): AppsBySubcategory<T>[] {
++  const order: string[] = [];
++  const map = new Map<string, T[]>();
++  for (const app of list) {
++    const key = subcategoryOf(app);
++    if (!map.has(key)) {
++      map.set(key, []);
++      order.push(key);
++    }
++    map.get(key)!.push(app);
++  }
++  return order.map((key) => {
++    const def = subcategoryDef(key);
++    return {
++      key,
++      label: def ? def.label : subcategoryLabel(key),
++      icon: def ? def.icon : "📂",
++      apps: map.get(key)!
++    };
++  });
++}
++
++/** نفس الفئة الفرعية؟ (شرط المنافسة الحقيقية) */
++export function sameSubcategory(
++  a: { slug: string; category: string; subcategory?: string | null },
++  b: { slug: string; category: string; subcategory?: string | null }
++): boolean {
++  return subcategoryOf(a) === subcategoryOf(b);
++}
+diff --git a/src/lib/app-data.ts b/src/lib/app-data.ts
+index 24c1746..f0c03b2 100644
+--- a/src/lib/app-data.ts
++++ b/src/lib/app-data.ts
+@@ -74,6 +74,7 @@ function mapDbApp(dbApp: any): AppItem {
+     name: dbApp.name,
+     icon: dbApp.icon,
+     category: dbApp.category,
++    subcategory: dbApp.subcategory || undefined,
+     shortDescription: dbApp.short_description || "",
+     description: dbApp.description || "",
+     rating: parseFloat(dbApp.rating) || 0,
+diff --git a/src/lib/recommend.ts b/src/lib/recommend.ts
+index 23930b6..fb4f4ea 100644
+--- a/src/lib/recommend.ts
++++ b/src/lib/recommend.ts
+@@ -1,19 +1,39 @@
+ import { apps } from "@/data/apps";
++import { subcategoryOf } from "@/data/subcategories";
+ import { getMonthlyPrice } from "./helpers";
+ import { AppItem, CountryCode } from "./types";
+ type Answers = { activity: string; priority: string; country: CountryCode };
+-const activityToCategories: Record<string, string[]> = {
+-  food: ["food"], entertainment: ["streaming"], shopping: ["shopping"],
+-  learning: ["education"], health: ["health"], mobility: ["transport"],
+-  finance: ["finance"], home: ["real-estate"]
++
++/**
++ * نطاق النشاط: sub = فئات فرعية محددة (الأدق)، cats = فئات عامة.
++ * الترشيح بيفلتر من النطاق بس — «الترفيه» القديم اتقسّم لمشاهدة وموسيقى
++ * عشان السؤال «عايز تتفرج» ميرشحش أنغامي والعكس.
++ */
++type Scope = { sub?: string[]; cats?: string[] };
++const activityToScope: Record<string, Scope> = {
++  food: { cats: ["food"] },
++  watch: { sub: ["streaming-video"] },
++  music: { sub: ["streaming-music"] },
++  entertainment: { cats: ["streaming"] }, // توافقية للروابط القديمة
++  shopping: { cats: ["shopping"] },
++  learning: { cats: ["education"] },
++  health: { cats: ["health"] },
++  mobility: { cats: ["transport"] },
++  finance: { cats: ["finance"] },
++  home: { cats: ["real-estate"] }
+ };
++
+ export function recommendApps({ activity, priority, country }: Answers): AppItem[] {
+-  const categories = activityToCategories[activity] ?? [];
+-  return apps
+-    .filter(app => app.countries.includes(country))
++  const scope = activityToScope[activity] ?? {};
++  const pool = apps.filter(app => {
++    if (!app.countries.includes(country)) return false;
++    if (scope.sub) return scope.sub.includes(subcategoryOf(app));
++    if (scope.cats) return scope.cats.includes(app.category);
++    return true;
++  });
++  return pool
+     .map(app => {
+-      let score = 0;
+-      if (categories.includes(app.category)) score += 4;
++      let score = 4;
+       if (priority === "price") {
+         const price = getMonthlyPrice(app, country);
+         if (price === 0) score += 4;
+diff --git a/src/lib/spend.ts b/src/lib/spend.ts
+index 573a4d3..3e70241 100644
+--- a/src/lib/spend.ts
++++ b/src/lib/spend.ts
+@@ -1,4 +1,5 @@
+ import { apps as allApps } from "@/data/apps";
++import { subcategoryOf } from "@/data/subcategories";
+ import { AppItem, CountryCode } from "./types";
+ import { getPriceForCountry } from "./helpers";
+ 
+@@ -56,7 +57,8 @@ export function yearlyTips(selected: AppItem[], country: CountryCode) {
+ }
+ 
+ /**
+- * بدائل أوفر بنفس الفئة: ريتنج مشابه وسعر أقل.
++ * بدائل أوفر من نفس «النوع»: فئة فرعية واحدة على الأقل —
++ * العلاج لخلط زباين ترشيح سبوتيفاي (موسيقى) مكان شاهد (فيديو).
+  * بندير مقترح واحد لكل تطبيق مختار.
+  */
+ export function swapSuggestions(
+@@ -71,7 +73,7 @@ export function swapSuggestions(
+       if (myPrice <= 0) return null;
+       const cheaper = allApps
+         .filter((c) => {
+-          if (selectedIds.has(c.id) || c.category !== a.category) return false;
++          if (selectedIds.has(c.id) || subcategoryOf(c) !== subcategoryOf(a)) return false;
+           const p = monthlyOf(c, country);
+           return p > 0 && p < myPrice && c.rating >= a.rating - maxRatingDrop;
+         })
+diff --git a/src/lib/types.ts b/src/lib/types.ts
+index 6cb080a..67709aa 100644
+--- a/src/lib/types.ts
++++ b/src/lib/types.ts
+@@ -31,6 +31,8 @@ export type AppItem = {
+   name: string;
+   icon: string;
+   category: AppCategory;
++  /** فئة فرعية اختيارية (مثلاً من عمود الداتابيز) — الأولوية عن مابنج data/subcategories */
++  subcategory?: string;
+   shortDescription: string;
+   description: string;
+   rating: number;
+-- 
+2.47.3
+

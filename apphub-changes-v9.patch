@@ -1,0 +1,310 @@
+From 037a863348783084ff77474639a82b8b61da7385 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 17:16:38 +0000
+Subject: [PATCH] =?UTF-8?q?=F0=9F=A7=AD=20v9=20=E2=80=94=20=D8=B5=D9=82?=
+ =?UTF-8?q?=D8=A7=D9=81=D8=A9=20=D8=A7=D9=84=D8=AB=D9=82=D8=A9=20(E-E-A-T)?=
+ =?UTF-8?q?=20+=20=D8=AA=D9=86=D8=B4=D9=8A=D9=81=20=D8=A7=D9=84=D9=85?=
+ =?UTF-8?q?=D8=AD=D8=AA=D9=88=D9=89=202026?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- صفحة /methodology: مصادر الأسعار الرسمية، قواعد أمان الرادار (30%—300%)،
+  المراجعة اليدوية بعد 3 فشلات، معايير التقييم المعلنة، حدود الدقة، وقناة التصحيح
+- رابط المنهجية في الفوتر (ترجمة ar/en) + إدخالها في sitemap.xml (priority 0.6)
+- تنشيف المدونة: مقال «أفضل 10 تطبيقات في مصر» منقّح لعام 2026،
+  نوع BlogPost بقى فيه updatedAt اختياري بتظهر كـ«آخر تنشيف» في صفحة المقال،
+  وروابط داخلية للرادار والحاسبة في المقالات الثلاثة
+- الخصوصية/الشروط: «آخر مراجعة: سبتمبر 2026»
+- توثيق: BRAND-GUIDE (سجل v9) + PROJECT-AUDIT (تحديث حالة بندين)
+---
+ docs/BRAND-GUIDE.md                 |   1 +
+ docs/PROJECT-AUDIT.md               |   4 +-
+ src/app/blog/[slug]/page.tsx        |   5 +-
+ src/app/methodology/page.tsx        | 125 ++++++++++++++++++++++++++++
+ src/app/privacy/page.tsx            |   2 +-
+ src/app/sitemap.ts                  |   1 +
+ src/app/terms/page.tsx              |   2 +-
+ src/components/footer.tsx           |   5 ++
+ src/data/blog-posts.ts              |   8 +-
+ src/lib/food-delivery-calculator.ts |   2 +-
+ src/lib/translations.ts             |   2 +
+ 11 files changed, 147 insertions(+), 10 deletions(-)
+ create mode 100644 src/app/methodology/page.tsx
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 6ab31b7..7c7f259 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v9** 🧭 صقافة الثقة (E-E-A-T) + تنشيف المحتوى | 20 سب 2026 | صفحة `/methodology` كاملة (مصادر الأسعار، قواعد أمان الرادار 30%—300% والمراجعة اليدوية، معايير النجوم المعلنة، حدود الدقة بصراحة) + رابطها في الفوتر والـ sitemap — وتنشيف 2025→2026: مقال «أفضل تطبيقات مصر» اتنقّح لعام 2026 مع حقل `updatedAt` جديد بيظهر في صفحة المقال، وروابط داخلية لرادار الأسعار وحاسبة الاشتراكات في المقالات الثلاثة، وتاريخ مراجعة الخصوصية/الشروط بقى سبتمبر 2026 |
+ | **v8** 📡 تنبيهات الرادار (التيليجرام) + تصحيحات التصميم | 18 سب 2026 | استرجاع v3 من العزلة + بث تيليجرام فوري ببديل أوفر من نفس النوع + كارت قناة — وتصحيحات تصميم: خط Almarai للعناوين العربية (Playfair مفيهوش عربي وكان نازل بخط النظام)، خلفية hero مملوكة بدون Unsplash، إحصاءات حية بدل «163+» الثابتة، كوبي الـ hero بقى بيبيع موقعنا («كل اشتراكاتك بسعرها الحقيقي») — ووثيقة `docs/PROJECT-AUDIT.md` |
+ 
+ ---
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index 00b06c3..8744df6 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -44,8 +44,8 @@
+ 
+ ## 🚀 2. فجوات المنتج (بالأولوية لمستوى «فرصة استثمارية»)
+ 
+-1. **صفحة «المنهجية» (E-E-A-T)** 🔴 عالية — جوجل في نيتش الفلوس بيحاسب على الشفافية: منهجية التقييم، مصادر الأسعار، قواعد الأمانة الثمانية، حقوق التعديل. ساعة بناء، قيمة كبيرة.
+-2. **تنشيف المدونة لـ 2026** 🔴 عالية — مقالات 2025 بتوصل إشارة «موقع متروك». التواريخ والأسعار والروابط الداخلية لـ /best.
++1. **صفحة «المنهجية» (E-E-A-T)** 🔴 عالية — جوجل في نيتش الفلوس بيحاسب على الشفافية: منهجية التقييم، مصادر الأسعار، قواعد الأمانة الثمانية، حقوق التعديل. ساعة بناء، قيمة كبيرة. ✅ **اتنفذت في v9** (`/methodology` + فوتر + sitemap، 20 سب 2026).
++2. **تنشيف المدونة لـ 2026** 🔴 عالية — مقالات 2025 بتوصل إشارة «موقع متروك». التواريخ والأسعار والروابط الداخلية لـ /best. ✅ **اتنفذت في v9** (مقال أفضل تطبيقات مصر منقّح لعام 2026 + حقل `updatedAt` معلن + روابط داخلية للرادار والحاسبة).
+ 3. **تنبيهات الإيميل HAVING stub** — فورم التنبيه موجود (price_alerts stub) — استكمال التوصيل بالإيميل بعد تيليجرام.
+ 4. **رادار الشدات 🔋** — امتداد المحرك للشحن (سهل بعد v7+v8 في المحرك).
+ 5. **الأرشيف الاجتماعي**: شهادات مستخدمين/لقطات قناة تيليجرام على الهوم (social proof بيتبني من أول مشترك — البداية: لقطة «X متابع في القناة»).
+diff --git a/src/app/blog/[slug]/page.tsx b/src/app/blog/[slug]/page.tsx
+index 2cde002..d3b4725 100644
+--- a/src/app/blog/[slug]/page.tsx
++++ b/src/app/blog/[slug]/page.tsx
+@@ -19,7 +19,10 @@ export default function BlogPostPage({ params }: Props) {
+       <div className="rounded-3xl bg-white p-6 shadow-sm">
+         <div className="mb-4 flex flex-wrap gap-2">{post.tags.map(tag => <span key={tag} className="rounded-full bg-brand-50 px-3 py-1 text-sm text-brand-600">{tag}</span>)}</div>
+         <h1 className="mb-2 text-3xl font-extrabold">{post.title}</h1>
+-        <p className="mb-4 text-slate-500">{post.author} — {new Date(post.createdAt).toLocaleDateString("ar-EG")}</p>
++        <p className="mb-4 text-slate-500">
++          {post.author} — نشر: {new Date(post.createdAt).toLocaleDateString("ar-EG")}
++          {post.updatedAt && <span className="mr-2 text-brand-600"> • آخر تنشيف: {new Date(post.updatedAt).toLocaleDateString("ar-EG")}</span>}
++        </p>
+         <p className="mb-6 text-lg text-slate-600">{post.excerpt}</p>
+       </div>
+       <div className="rounded-3xl bg-white p-6 shadow-sm">
+diff --git a/src/app/methodology/page.tsx b/src/app/methodology/page.tsx
+new file mode 100644
+index 0000000..86786b3
+--- /dev/null
++++ b/src/app/methodology/page.tsx
+@@ -0,0 +1,125 @@
++import Link from "next/link";
++import type { Metadata } from "next";
++import { buildMeta } from "@/lib/seo";
++
++export const metadata: Metadata = buildMeta({
++  title: "المنهجية — كيف نتحقق من الأسعار والتقييمات",
++  description: "منهجية AppHub في جمع الأسعار والتحقق منها: المصادر الرسمية، رادار الأسعار اليومي، قواعد الأمان، والتقييمات التحريرية بمعايير معلنة.",
++  url: "https://apphub.eg/methodology",
++  keywords: ["منهجية", "التحقق من الأسعار", "رادار الأسعار", "شفافية"]
++});
++
++function Section({ title, children }: { title: string; children: React.ReactNode }) {
++  return (
++    <section className="space-y-3">
++      <h2 className="text-xl font-extrabold text-brand-900">{title}</h2>
++      <div className="text-charcoal-700 leading-relaxed space-y-3">{children}</div>
++    </section>
++  );
++}
++
++export default function MethodologyPage() {
++  return (
++    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
++      <div className="rounded-3xl gradient-brand p-10 text-white text-center">
++        <div className="text-6xl mb-3">🧭</div>
++        <h1 className="text-4xl font-extrabold mb-2">المنهجية: كيف نتحقق من الأرقام</h1>
++        <p className="text-white/90">آخر مراجعة: سبتمبر 2026</p>
++      </div>
++
++      <div className="rounded-3xl bg-white p-8 md:p-12 shadow-soft space-y-8">
++
++        <Section title="مبدأنا الأول: الرقم له تاريخ">
++          <p>
++            ممنوع على منصتنا نشر أي سعر أو رقم من غير تاريخ تحقق معلن.
++            اللي بتشوفه في صفحات الأسعار مش «سعر عام» — ده رقم شفناه بعيننا
++            في يوم محدد وموثّق، وبيتجدد دوريًا.
++          </p>
++        </Section>
++
++        <Section title="1. مصادر الأسعار">
++          <p className="mb-2">نجمع الأسعار من مصادر رسمية فقط:</p>
++          <ul className="space-y-2 mr-6 list-disc">
++            <li>المواقع الرسمية للخدمات (صفحات التسعير والاشتراك).</li>
++            <li>متاجر التطبيقات الرسمية للخدمات الرقمية.</li>
++            <li>صفحات الاشتراك داخل التطبيق نفسه عند توفرها.</li>
++          </ul>
++          <p>
++            لا ننشر سعرًا لم نستطع رؤيته من مصدر رسمي، ولا نعتمد أسعار متاجر
++            الطرف الثالث بديلًا عن المصدر الأول.
++          </p>
++        </Section>
++
++        <Section title="2. رادار الأسعار الآلي">
++          <p>
++            نظامنا الداخلي يفحص أسعار الخطط المرصودة يوميًا (08:00 بتوقيت UTC)،
++            ولا يقبل أي رقم جديد إلا بعد اجتيازه قواعد أمان صارمة:
++          </p>
++          <ul className="space-y-2 mr-6 list-disc mt-2">
++            <li>
++              <strong>نطاق العقلانية:</strong> أي قراءة خارج نطاق 30%—300% من آخر سعر
++              مؤكد تُتجاهل فورًا باعتبارها خطأ قراءة مؤقت، ولا تُسجَّل في قاعدة البيانات.
++            </li>
++            <li>
++              <strong>مراجعة إنسانية:</strong> بعد 3 محاولات قراءة فاشلة متتالية تنتقل
++              الخطة إلى حالة «مراجعة يدوية» بدل افتراض أي رقم.
++            </li>
++            <li>
++              <strong>التسجيل عند التأكد فقط:</strong> يُكتب التغيير في السجل التاريخي
++              ويُبثّ تنبيه فقط عندما تكون القراءة مؤكدة وضمن النطاق — لا نبث شكوكًا.
++            </li>
++          </ul>
++        </Section>
++
++        <Section title="3. سجل الأسعار التاريخي">
++          <p>
++            لكل خطة تتغير أسعارها نحتفظ بمسار زمني كامل: السعر القديم، الجديد،
++            وتاريخ التغيير. من هذا السجل نحسب نسبة التغيير المعروضة في صفحة رادار
++            الأسعار، ولا نعرض نسبة لا يسندها سجل موثّق.
++          </p>
++        </Section>
++
++        <Section title="4. التقييمات التحريرية (النجوم)">
++          <p>
++            تقييماتنا تحريرية يضعها الفريق بمعايير معلنة — وليست تصويت زوّار
++            ولا ترتيب مدفوع:
++          </p>
++          <ul className="space-y-2 mr-6 list-disc mt-2">
++            <li>القيمة مقابل السعر في السوق المحلي.</li>
++            <li>دعم اللغة العربية والمحتوى العربي.</li>
++            <li>سهولة الاستخدام وتجربة الدفع المحلية.</li>
++            <li>حجم كتالوج المحتوى أو جودة الخدمة الأساسية.</li>
++            <li>استقرار الخدمة وموثوقيتها في المنطقة.</li>
++          </ul>
++          <p>
++            نراجع التقييمات عندما تتغير الخدمة جذريًا (تغيير سعرها، تغيير محتواها،
++            أو سحب ميزات أساسية).
++          </p>
++        </Section>
++
++        <Section title="5. حدود الدقة (بصراحة تامة)">
++          <ul className="space-y-2 mr-6 list-disc">
++            <li>الأسعار مُعلنة من مقدّمي الخدمة وقابلة للتغيير في أي وقت من غير إشعار.</li>
++            <li>الضرائب والرسوم المحلية وسعر صرف العملة قد تجعل السعر النهائي عند الدفع مختلفًا قليلًا.</li>
++            <li>بعض الخدمات لها أسعار إقليمية مختلفة بين الدول — نعرض سعر كل دولة على حدة قدر الإمكان.</li>
++            <li>التحقق الآلي يلتقط أغلب التغييرات خلال 24 ساعة، وقد تتأخر بعض الصفحات حتى دورة الفحص التالية.</li>
++          </ul>
++        </Section>
++
++        <Section title="6. لقيت رقم غلط؟ صححه معنا">
++          <p>
++            لو وجدت سعرًا تغيّر قبل أن يلتقطه الرادار، أو خطأً في تقييم أو وصف،
++            راسلنا من <Link href="/contact" className="text-brand-600 font-semibold hover:underline">صفحة التواصل</Link> —
++            بنراجع البلاغ يدويًا وبنصحح بأسرع ما يمكن، وبنذكر تاريخ آخر تحديث بوضوح.
++          </p>
++        </Section>
++
++        <div className="rounded-2xl bg-brand-50 p-6 text-sm text-charcoal-600 leading-relaxed">
++          <strong className="text-brand-900">وعدنا:</strong> الصدق قبل السرعة.
++          لو مش متأكدين من رقم، بنقول إننا مش متأكدين — مش بنخمن ونكتب.
++        </div>
++
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/privacy/page.tsx b/src/app/privacy/page.tsx
+index 17cac04..2a61f17 100644
+--- a/src/app/privacy/page.tsx
++++ b/src/app/privacy/page.tsx
+@@ -11,7 +11,7 @@ export default function PrivacyPage() {
+       <div className="rounded-3xl gradient-brand p-10 text-white text-center">
+         <div className="text-6xl mb-3">🔒</div>
+         <h1 className="text-4xl font-extrabold mb-2">سياسة الخصوصية</h1>
+-        <p className="text-white/90">آخر تحديث: يناير 2025</p>
++        <p className="text-white/90">آخر مراجعة: سبتمبر 2026</p>
+       </div>
+ 
+       <div className="rounded-3xl bg-white p-8 md:p-12 shadow-soft space-y-6">
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 29f2c02..9df0b9e 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -25,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/blog`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+     { url: `${baseUrl}/advertise`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
++    { url: `${baseUrl}/methodology`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+     { url: `${baseUrl}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+     { url: `${baseUrl}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+     { url: `${baseUrl}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 }
+diff --git a/src/app/terms/page.tsx b/src/app/terms/page.tsx
+index 92f2329..b3c0fd3 100644
+--- a/src/app/terms/page.tsx
++++ b/src/app/terms/page.tsx
+@@ -11,7 +11,7 @@ export default function TermsPage() {
+       <div className="rounded-3xl gradient-brand p-10 text-white text-center">
+         <div className="text-6xl mb-3">📋</div>
+         <h1 className="text-4xl font-extrabold mb-2">الشروط والأحكام</h1>
+-        <p className="text-white/90">آخر تحديث: يناير 2025</p>
++        <p className="text-white/90">آخر مراجعة: سبتمبر 2026</p>
+       </div>
+ 
+       <div className="rounded-3xl bg-white p-8 md:p-12 shadow-soft space-y-6">
+diff --git a/src/components/footer.tsx b/src/components/footer.tsx
+index f1da3e2..a5e49c7 100644
+--- a/src/components/footer.tsx
++++ b/src/components/footer.tsx
+@@ -177,6 +177,11 @@ export function Footer() {
+                   {t("footer_cookies")}
+                 </Link>
+               </li>
++              <li>
++                <Link href="/methodology" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("footer_methodology")}
++                </Link>
++              </li>
+               <li>
+                 <Link href="/disclaimer" className="text-charcoal-500 hover:text-accent-600 transition">
+                   {t("footer_disclaimer")}
+diff --git a/src/data/blog-posts.ts b/src/data/blog-posts.ts
+index 556bbb4..4d8dd0f 100644
+--- a/src/data/blog-posts.ts
++++ b/src/data/blog-posts.ts
+@@ -1,6 +1,6 @@
+-export type BlogPost = { id:string; slug:string; title:string; excerpt:string; content:string; coverUrl:string; author:string; published:boolean; createdAt:string; tags:string[] };
++export type BlogPost = { id:string; slug:string; title:string; excerpt:string; content:string; coverUrl:string; author:string; published:boolean; createdAt:string; updatedAt?:string; tags:string[] };
+ export const blogPosts: BlogPost[] = [
+-  { id:"1", slug:"best-apps-egypt-2025", title:"أفضل 10 تطبيقات في مصر لعام 2025", excerpt:"قايمة بأفضل التطبيقات اللي بتخدم المصريين كل يوم", content:"## مقدمة\n\nمصر في 2025 سوق تكنولوجي نشيط.\n\n## 1. InstaPay\n\nالتطبيق اللي غيّر طريقة تحويل الفلوس.\n\n**أسباب التميز:**\n- تحويل فوري 24/7\n- بين كل البنوك المصرية\n- مجاني تمامًا\n\n## 2. طلبات\n\nأكبر تطبيق توصيل في المنطقة.\n\n**أسباب التميز:**\n- آلاف المطاعم\n- عروض يومية\n- توصيل سريع", coverUrl:"/covers/best-apps.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-10", tags:["مصر","تطبيقات","2025"] },
+-  { id:"2", slug:"save-on-subscriptions", title:"إزاي توفر 500 جنيه شهريًا من اشتراكاتك", excerpt:"نصايح عملية لتقليل فاتورة الاشتراكات الشهرية", content:"## المشكلة\n\nالواحد بيدفع اشتراكات كتير من غير ما يحس.\n\n## النصايح\n\n### 1. اشترك سنويًا مش شهريًا\n- نتفليكس السنوي أوفر بـ 15%\n- سبوتيفاي السنوي أوفر بـ 17%\n\n### 2. استخدم الباقات العائلية\n- نتفليكس عائلي بـ 4 أشخاص\n- وفّر على الفرد أكتر من 60%\n\n### 3. اشترك من مصر\n- نتفليكس من مصر أرخص 40% من السعودية", coverUrl:"/covers/save-subscriptions.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-15", tags:["توفير","اشتراكات","نصايح"] },
+-  { id:"3", slug:"netflix-vs-shahid-vs-watchit", title:"مقارنة شاملة: نتفليكس vs شاهد vs واتش إت", excerpt:"أي منصة تناسبك؟ مقارنة بالسعر والمحتوى", content:"## نتفليكس\n- السعر: 199 ج/شهر\n- المحتوى: عالمي ضخم\n\n## شاهد\n- السعر: 79 ج/شهر\n- المحتوى: عربي قوي\n\n## واتش إت\n- السعر: 49 ج/شهر\n- المحتوى: مصري بامتياز\n\n## الخلاصة\n\nاختار حسب احتياجك.", coverUrl:"/covers/streaming.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-20", tags:["مقارنة","ستريمنج","نتفليكس"] }
++  { id:"1", slug:"best-apps-egypt-2025", title:"أفضل 10 تطبيقات في مصر لعام 2026", excerpt:"قايمة بأفضل التطبيقات اللي بتخدم المصريين كل يوم", content:"## مقدمة\n\nنسخة منقّحة ومحدّثة — راجعنا القائمة يدويًا لسنة 2026.\n\nمصر في 2026 سوق تكنولوجي نشيط.\n\n## 1. InstaPay\n\nالتطبيق اللي غيّر طريقة تحويل الفلوس.\n\n**أسباب التميز:**\n- تحويل فوري 24/7\n- بين كل البنوك المصرية\n- مجاني تمامًا\n\n## 2. طلبات\n\nأكبر تطبيق توصيل في المنطقة.\n\n**أسباب التميز:**\n- آلاف المطاعم\n- عروض يومية\n- توصيل سريع\n\n## تابع الأسعار\n\nكل سعر مذكور هنا بيتتابع يوميًا على رادار الأسعار الخاص بينا.", coverUrl:"/covers/best-apps.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-10", updatedAt:"2026-09-20", tags:["مصر","تطبيقات","2026"] },
++  { id:"2", slug:"save-on-subscriptions", title:"إزاي توفر 500 جنيه شهريًا من اشتراكاتك", excerpt:"نصايح عملية لتقليل فاتورة الاشتراكات الشهرية", content:"## المشكلة\n\nالواحد بيدفع اشتراكات كتير من غير ما يحس.\n\n## النصايح\n\n### 1. اشترك سنويًا مش شهريًا\n- نتفليكس السنوي أوفر بـ 15%\n- سبوتيفاي السنوي أوفر بـ 17%\n\n### 2. استخدم الباقات العائلية\n- نتفليكس عائلي بـ 4 أشخاص\n- وفّر على الفرد أكتر من 60%\n\n### 3. اشترك من مصر\n- نتفليكس من مصر أرخص 40% من السعودية\n\n## جرّب بنفسك\n\nاحسب فاتورة اشتراكاتك الشهرية بالكامل على حاسبة الاشتراكات الخاصة بينا.", coverUrl:"/covers/save-subscriptions.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-15", updatedAt:"2026-09-20", tags:["توفير","اشتراكات","نصايح"] },
++  { id:"3", slug:"netflix-vs-shahid-vs-watchit", title:"مقارنة شاملة: نتفليكس vs شاهد vs واتش إت", excerpt:"أي منصة تناسبك؟ مقارنة بالسعر والمحتوى", content:"## نتفليكس\n- السعر: 199 ج/شهر\n- المحتوى: عالمي ضخم\n\n## شاهد\n- السعر: 79 ج/شهر\n- المحتوى: عربي قوي\n\n## واتش إت\n- السعر: 49 ج/شهر\n- المحتوى: مصري بامتياز\n\n## الخلاصة\n\nاختار حسب احتياجك.\n\nملحوظة: الأسعار أعلاه حسب آخر تحقق وقت نشر المقال وقابلة للتغيير — تابع رادار الأسعار على المنصة للأرقام اللحظية.", coverUrl:"/covers/streaming.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-20", updatedAt:"2026-09-20", tags:["مقارنة","ستريمنج","نتفليكس"] }
+ ];
+diff --git a/src/lib/food-delivery-calculator.ts b/src/lib/food-delivery-calculator.ts
+index 3154aae..c9711b4 100644
+--- a/src/lib/food-delivery-calculator.ts
++++ b/src/lib/food-delivery-calculator.ts
+@@ -1,4 +1,4 @@
+-// نظام مقارنة تطبيقات توصيل الأكل - محدّث 2025
++// نظام مقارنة تطبيقات توصيل الأكل - محدّث 2026
+ 
+ export type FoodApp = {
+   id: string;
+diff --git a/src/lib/translations.ts b/src/lib/translations.ts
+index a931a3e..a9972af 100644
+--- a/src/lib/translations.ts
++++ b/src/lib/translations.ts
+@@ -119,6 +119,7 @@ export const translations = {
+     footer_privacy: "سياسة الخصوصية",
+     footer_terms: "الشروط والأحكام",
+     footer_cookies: "سياسة الكوكيز",
++    footer_methodology: "المنهجية",
+     footer_disclaimer: "إخلاء المسؤولية",
+     footer_company: "الشركة",
+     footer_legal: "القانونية",
+@@ -263,6 +264,7 @@ export const translations = {
+     footer_privacy: "Privacy Policy",
+     footer_terms: "Terms & Conditions",
+     footer_cookies: "Cookies Policy",
++    footer_methodology: "Methodology",
+     footer_disclaimer: "Disclaimer",
+     footer_company: "Company",
+     footer_legal: "Legal",
+-- 
+2.47.3
+

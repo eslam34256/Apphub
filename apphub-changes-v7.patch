@@ -1,0 +1,1037 @@
+From a79a3ce249a47798b2e73e9eac246366b6d11009 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Fri, 18 Sep 2026 23:31:04 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?=E2=9A=99=EF=B8=8F=20=D8=A7=D8=B3=D8=AA?=
+ =?UTF-8?q?=D8=B1=D8=AC=D8=A7=D8=B9=20=D8=A3=D8=AA=D9=85=D8=AA=D8=A9=20?=
+ =?UTF-8?q?=D8=B1=D8=A7=D8=AF=D8=A7=D8=B1=20=D8=A7=D9=84=D8=A3=D8=B3=D8=B9?=
+ =?UTF-8?q?=D8=A7=D8=B1=20(v3)=20=D8=B9=D9=84=D9=89=20=D8=A7=D9=84=D8=B3?=
+ =?UTF-8?q?=D9=84=D8=B3=D9=84=D8=A9=20=D8=A7=D9=84=D8=AD=D8=A7=D9=84=D9=8A?=
+ =?UTF-8?q?=D8=A9=20=E2=80=94=20=D9=83=D8=A7=D9=86=D8=AA=20=D9=83=D9=88?=
+ =?UTF-8?q?=D9=85=D9=8A=D8=AA=20=D9=85=D8=B9=D8=B2=D9=88=D9=84?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- migration: price_watch + price_history مع RLS وبذرة البيانات
+- /api/cron/price-check: كرون يومي محمي CRON_SECRET (فحص منطقية 0.3x-3x، needs_review بعد 3 فشلات)
+- صفحة الرادار بتقرا من القاعدة مع fallback ثابت + revalidate 3600
+- vercel.json cron 08:00 UTC + price-extract + docs تشغيل كاملة
+---
+ docs/price-radar-automation.md          |  85 +++++++++++++
+ src/app/api/cron/price-check/route.ts   | 158 ++++++++++++++++++++++++
+ src/app/price-radar/page.tsx            |  19 ++-
+ src/lib/price-extract.ts                |  32 +++++
+ src/lib/price-radar-db.ts               | 117 ++++++++++++++++++
+ supabase/migrations/001_price_radar.sql |  92 ++++++++++++++
+ vercel.json                             |   4 +
+ 7 files changed, 501 insertions(+), 6 deletions(-)
+ create mode 100644 docs/price-radar-automation.md
+ create mode 100644 src/app/api/cron/price-check/route.ts
+ create mode 100644 src/lib/price-extract.ts
+ create mode 100644 src/lib/price-radar-db.ts
+ create mode 100644 supabase/migrations/001_price_radar.sql
+
+diff --git a/docs/price-radar-automation.md b/docs/price-radar-automation.md
+new file mode 100644
+index 0000000..a1087bd
+--- /dev/null
++++ b/docs/price-radar-automation.md
+@@ -0,0 +1,85 @@
++# 🚨 أتمتة رادار الأسعار — دليل التشغيل
++
++بنية النظام: **Cron يومي → يفحص الأسعار → يسجّل التاريخ → الصفحة تقرا من القاعدة تلقائيًا.**
++بدون أي تدخل منك، الرادار يتحدّث مع الوقت ويجمع تاريخ أسعار ملكي 100%.
++
++---
++
++## 🧩 المكوّنات
++
++| القطعة | المكان | الوظيفة |
++|---|---|---|
++| جدول `price_watch` | Supabase | الباقات المرصودة + السعر الحالي + إعدادات الفحص |
++| جدول `price_history` | Supabase | سجل التغيّرات (صف جديد فقط عند تغيّر السعر) |
++| Cron يومي 8:00 UTC | `/api/cron/price-check` + `vercel.json` | الفحص والتطبيق والتسجيل |
++| صفحة الرادار | `/price-radar` | تقرا من القاعدة (fallback للثابتة لو القاعدة مش متاحة) |
++
++## ⚙️ خطوة التفعيل (مرة واحدة — 3 دقائق)
++
++1. **Supabase** → مشروعك → **SQL Editor** → الصق محتوى `supabase/migrations/001_price_radar.sql` → **Run**
++2. تأكد إن `CRON_SECRET` متعرف في Vercel → Settings → Environment Variables (هو موجود فعلًا عندك لباقي كروناتك)
++3. بعد الـ Deploy: Vercel → Project → **Cron Jobs** — هتشوف `/api/cron/price-check` بيقفل كل يوم 11:00 بتوقيت مصر
++4. **اختبار يدوي فوري** (من المتنح):
++   ```bash
++   curl -H "Authorization: Bearer $CRON_SECRET" https://apphub-eight.vercel.app/api/cron/price-check
++   ```
++   النتيجة: `{"success":true,"checked":0,...}` — طبيعي! لأن كل العناصر دلوقتي وضعها `manual`.
++
++## 🔍 إزاي تفعّل الرصد الآلي لأي باقة؟
++
++في Supabase Table Editor (أو SQL):
++
++```sql
++update price_watch
++set check_mode  = 'auto',
++    source_url  = 'https://official-page.example/pricing',
++    price_regex = 'Standard[^\d]*(\d+[\d.,]*)'
++where app_slug='netflix' and plan_name='القياسية' and country='EG';
++```
++
++**قواعد الريجيكس:** أول `()` capture group لازم يلقط رقم السعر (خلّي باقي النص ثابت قوويم الموقع).
++جرب الريجيكس محليًا الأول على HTML الصفحة قبل ما تفعل `auto`.
++
++## 🛡️ إزاي المحرك بيحمي مصداقيتك؟
++
++المحرك **لن ينشر سعرًا غلط** أبدًا — لو فيه أي شك بيتصرف حذريًا:
++
++| الموقف | التصرف |
++|---|---|
++| الريجيكس ملقطش رقمًا | `fail_count+1` — 3 مرات ورا بعض → `needs_review=true` والمحرك يسيبه لحد ما تتدخل |
++| السعر الملقط خارج نطاق `0.3x – 3x` من القديم | **مش بيتطبق** — العنصر للمراجعة فورًا |
++| فرق أقل من 0.01 | بيتجاهل (ضجيج كسور/عملات) |
++| تغيّر حقيقي وسانه | يتطبّق فورًا + سطر جديد في `price_history` وتظهر في الصفحة العامة |
++
++## ✍️ تغيّر يدوي (وضع manual)
++
++لما تلاحظ سعر جديد بنفسك:
++```sql
++update price_watch set current_price=190, updated_at=now()
++where app_slug='netflix' and plan_name='القياسية' and country='EG';
++
++insert into price_history (watch_id, price, source)
++  select id, 190, 'manual' from price_watch
++  where app_slug='netflix' and plan_name='القياسية' and country='EG';
++```
++
++> 💡 لاحقًا هنعمل صفحة في `/admin` تنفذ نفس الخطوتين بضغطة واحدة (نفس نمط `PricesEditor` الموجود عندك).
++
++## ➕ إضافة اشتراك جديد تحت الرصد
++
++```sql
++insert into price_watch (app_slug, plan_name, plan_note, country, currency, current_price)
++values ('apple-tv', 'الشهرية', '4K', 'EG', 'EGP', 89.99);
++```
++الصفحة هتلاه تلقائيًا (الأيقونة والاسم بيجوا من داتا التطبيقات لو `app_slug` موجود فيها).
++
++## 📈 الأفكار الجاية (الترقيات الطبيعية)
++
++1. **تنبيهات فعلية**: لما `price_history` بيزيد سطر → إيميل/تيليجرام للمشتركين في `price_alerts` (الجدول والفورم جاهزين في تعليق `alert-form.tsx`)
++2. **صفحة أدمن للمراجعة**: عناصر `needs_review` تظهر في لوحة التحكم بزرار «اطبق» / «تجاهل»
++3. **OG card أسبوعي**: «حركة أسعار الأسبوع» للمشاركة على السوشيال
++4. **Widget للصحفيين**: «متوسط زيادة الاشتراكات في مصر 2026» — داتا ملكية ترفع سلطة العلامة
++
++---
++
++**واحدة من أهم الأصول في المشروع بدأت تتبنى من النهاردة.** كل يوم شغال = تاريخ أكبر لا يمكن تقليده.
+diff --git a/src/app/api/cron/price-check/route.ts b/src/app/api/cron/price-check/route.ts
+new file mode 100644
+index 0000000..a1e28e9
+--- /dev/null
++++ b/src/app/api/cron/price-check/route.ts
+@@ -0,0 +1,158 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient } from "@supabase/supabase-js";
++import { extractPrice, isSanePrice, hasRealChange } from "@/lib/price-extract";
++
++/**
++ * 🚨 محرك رادار الأسعار — فحص يومي عبر Vercel Cron.
++ *
++ * مبادئ الحذر (المصداقية قبل الأتمتة):
++ * 1. المحرك لا يغيّر «أي» سعر إلا لو الريجيكس لقط رقم واحد بثقة.
++ * 2. فحص المنطقية: السعر الجديد لازم يكون في نطاق 0.3x – 3x من القديم.
++ *    أي حاجة مريبة → العنصر بيتحط `needs_review` بدل ما ينشر سعر غلط.
++ * 3. التاريخ يتسجّل «فقط عند التغيّر» — الجدول يفضل نظيف ودقيق.
++ * 4. 3 فشلات متتالية في الاستخراج → العنصر يتحول لمراجعة يدوية تلقائيًا.
++ */
++
++export const dynamic = "force-dynamic";
++export const maxDuration = 60;
++
++const FETCH_TIMEOUT_MS = 15000;
++const MAX_FAILS_BEFORE_REVIEW = 3;
++
++type WatchRow = {
++  id: string;
++  app_slug: string;
++  plan_name: string;
++  country: string;
++  currency: string;
++  current_price: number;
++  source_url: string | null;
++  price_regex: string | null;
++  check_mode: "auto" | "manual";
++  needs_review: boolean;
++  fail_count: number;
++};
++
++export async function GET(request: NextRequest) {
++  if (request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
++    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  }
++
++  const supabaseAdmin = createClient(
++    process.env.NEXT_PUBLIC_SUPABASE_URL!,
++    process.env.SUPABASE_SERVICE_ROLE_KEY!
++  );
++
++  const { data: watches, error: loadError } = await supabaseAdmin
++    .from("price_watch")
++    .select("*")
++    .eq("is_active", true)
++    .eq("check_mode", "auto")
++    .eq("needs_review", false);
++
++  if (loadError) {
++    return NextResponse.json({ error: loadError.message }, { status: 500 });
++  }
++
++  const summary = {
++    checked: 0,
++    changed: [] as string[],
++    flagged: [] as string[],
++    failed: [] as string[]
++  };
++
++  for (const w of (watches ?? []) as WatchRow[]) {
++    const label = `${w.app_slug}/${w.plan_name} (${w.country})`;
++    try {
++      if (!w.source_url || !w.price_regex) {
++        await markFailure(supabaseAdmin, w, label, summary);
++        continue;
++      }
++
++      // جلب الصفحة الرسمية بمهلة محددة
++      const controller = new AbortController();
++      const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
++      const res = await fetch(w.source_url, {
++        signal: controller.signal,
++        headers: {
++          "user-agent":
++            "Mozilla/5.0 (compatible; AppHubRadar/1.0; +https://apphub-eight.vercel.app/price-radar)",
++          accept: "text/html,application/xhtml+xml"
++        },
++        cache: "no-store"
++      });
++      clearTimeout(timer);
++
++      if (!res.ok) throw new Error(`HTTP ${res.status}`);
++      const html = await res.text();
++      const extracted = extractPrice(html, w.price_regex);
++
++      if (extracted === null) throw new Error("price not found in page");
++
++      summary.checked++;
++
++      if (!hasRealChange(w.current_price, extracted)) {
++        // مفيش تغيّر — حدّث وقت الفحص بس
++        await supabaseAdmin
++          .from("price_watch")
++          .update({
++            last_checked_at: new Date().toISOString(),
++            fail_count: 0
++          })
++          .eq("id", w.id);
++        continue;
++      }
++
++      if (!isSanePrice(w.current_price, extracted)) {
++        // تغيّر مش منطقي — مش هننشره، للمراجعة
++        await supabaseAdmin
++          .from("price_watch")
++          .update({ needs_review: true, fail_count: w.fail_count + 1 })
++          .eq("id", w.id);
++        summary.flagged.push(`${label}: ${w.current_price} ← ${extracted} (مش منطقي)`);
++        continue;
++      }
++
++      // ✅ تغيّر حقيقي ومنطقي — طبّق وسجّل في التاريخ
++      await supabaseAdmin
++        .from("price_watch")
++        .update({
++          current_price: extracted,
++          last_checked_at: new Date().toISOString(),
++          updated_at: new Date().toISOString(),
++          fail_count: 0
++        })
++        .eq("id", w.id);
++
++      await supabaseAdmin.from("price_history").insert({
++        watch_id: w.id,
++        price: extracted,
++        source: "cron"
++      });
++
++      summary.changed.push(`${label}: ${w.current_price} ← ${extracted}`);
++    } catch (err: any) {
++      await markFailure(supabaseAdmin, w, `${label} — ${err.message}`, summary);
++    }
++  }
++
++  return NextResponse.json({ success: true, ...summary });
++}
++
++async function markFailure(
++  supabase: any, // SupabaseAdmin client — نفس نمط باقي مسارات الـ API في المشروع
++  w: WatchRow,
++  label: string,
++  summary: { failed: string[] }
++) {
++  const fails = w.fail_count + 1;
++  await supabase
++    .from("price_watch")
++    .update({
++      fail_count: fails,
++      last_checked_at: new Date().toISOString(),
++      needs_review: fails >= MAX_FAILS_BEFORE_REVIEW
++    })
++    .eq("id", w.id);
++  summary.failed.push(label);
++}
+diff --git a/src/app/price-radar/page.tsx b/src/app/price-radar/page.tsx
+index 69c29cf..b15ac0e 100644
+--- a/src/app/price-radar/page.tsx
++++ b/src/app/price-radar/page.tsx
+@@ -1,6 +1,6 @@
+ import type { Metadata } from "next";
+ import Link from "next/link";
+-import { priceRadar } from "@/data/price-history";
++import { getRadarEntries } from "@/lib/price-radar-db";
+ import {
+   entryChange,
+   formatPrice,
+@@ -16,8 +16,14 @@ import { CountryCode } from "@/lib/types";
+  * 🚨 رادار الأسعار — الميزة الأقوى تنافسيًا:
+  * متتبع تاريخ أسعار الاشتراكات في المنطقة العربية.
+  * بيانات تراكمية لا يمكن نسخها رجعيًا = Moat حقيقي.
++ *
++ * بتقرا من قاعدة البيانات (price_watch) اللي بيحدّثها الـ Cron يوميًا،
++ * مع رجوع تلقائي للبيانات الثابتة لو القاعدة مش متاحة.
+  */
+ 
++// الصفحة بتتجدد كل ساعة من الكاش (البيانات بتتغير يوميًا بحد أقصى)
++export const revalidate = 3600;
++
+ export const metadata: Metadata = {
+   title: "رادار الأسعار — تاريخ أسعار اشتراكاتك المفضلة",
+   description:
+@@ -42,7 +48,7 @@ const dirStyles: Record<string, { badge: string; label: (pct: number) => string
+   new: { badge: "bg-accent-100 text-accent-700", label: () => "تحت الرصد 🔍" }
+ };
+ 
+-export default function PriceRadarPage({
++export default async function PriceRadarPage({
+   searchParams
+ }: {
+   searchParams: { country?: string };
+@@ -53,9 +59,10 @@ export default function PriceRadarPage({
+     ? (searchParams.country as CountryCode)
+     : undefined;
+ 
+-  const entries = country ? priceRadar.filter((e) => e.country === country) : priceRadar;
+-  const trackedPlans = priceRadar.reduce((n, e) => n + e.plans.length, 0);
+-  const changedRecently = priceRadar
++  const allEntries = await getRadarEntries();
++  const entries = country ? allEntries.filter((e) => e.country === country) : allEntries;
++  const trackedPlans = allEntries.reduce((n, e) => n + e.plans.length, 0);
++  const changedRecently = allEntries
+     .flatMap((e) => e.plans.map(priceChange))
+     .filter((c) => c.dir === "up" || c.dir === "down").length;
+ 
+@@ -91,7 +98,7 @@ export default function PriceRadarPage({
+ 
+           <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
+             <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
+-              🔍 {priceRadar.length} اشتراك تحت الرصد
++              🔍 {allEntries.length} اشتراك تحت الرصد
+             </span>
+             <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
+               📊 {trackedPlans} باقة متتبعة
+diff --git a/src/lib/price-extract.ts b/src/lib/price-extract.ts
+new file mode 100644
+index 0000000..def91fa
+--- /dev/null
++++ b/src/lib/price-extract.ts
+@@ -0,0 +1,32 @@
++/**
++ * محرك استخراج والتحقق من الأسعار — منطق نقي قابل للاختبار.
++ * مبادئ الحذر: أي شك = لا نشر. (المصداقية قبل الأتمتة)
++ */
++
++/** استخراج السعر: أول capture group = الرقم. بيرجّع null لو مفيش لقطة واثقة. */
++export function extractPrice(html: string, pattern: string): number | null {
++  let matches: RegExpExecArray | null;
++  try {
++    const re = new RegExp(pattern, "i");
++    matches = re.exec(html);
++  } catch {
++    return null; // ريجيكس مكتوب غلط في إعدادات المراقبة
++  }
++  if (!matches || !matches[1]) return null;
++
++  const cleaned = matches[1].replace(/[,\s]/g, "");
++  const value = parseFloat(cleaned);
++  if (!isFinite(value) || value <= 0 || value > 100000) return null;
++  return value;
++}
++
++/** فحص المنطقية: التغيّر جوه نطاق مقبول (0.3x – 3x) من القديم؟ */
++export function isSanePrice(oldPrice: number, newPrice: number): boolean {
++  const ratio = newPrice / oldPrice;
++  return ratio >= 0.3 && ratio <= 3 && newPrice !== oldPrice;
++}
++
++/** التغيّر فعلي؟ (نتجاهل فروق الكسور الطفيفة/ضجيج الأرقام) */
++export function hasRealChange(oldPrice: number, newPrice: number): boolean {
++  return Math.abs(newPrice - oldPrice) >= 0.01;
++}
+diff --git a/src/lib/price-radar-db.ts b/src/lib/price-radar-db.ts
+new file mode 100644
+index 0000000..19af32d
+--- /dev/null
++++ b/src/lib/price-radar-db.ts
+@@ -0,0 +1,117 @@
++import { createClient } from "@/lib/supabase/server";
++import {
++  priceRadar as staticRadar,
++  RadarEntry,
++  PricePoint
++} from "@/data/price-history";
++import { AppCategory, CountryCode } from "@/lib/types";
++
++/**
++ * تحميل بيانات الرادار: من قاعدة البيانات (price_watch + price_history)
++ * مع رجوع تلقائي للبيانات الثابتة لو القاعدة مش متاحة (تطوير محلي/تعطل).
++ *
++ * نفس نمط app-data.ts: الموقع العام لا يتعطل أبدًا بسبب قاعدة البيانات.
++ */
++
++type WatchRow = {
++  id: string;
++  app_slug: string;
++  plan_name: string;
++  plan_note: string | null;
++  country: CountryCode;
++  currency: "EGP" | "SAR" | "AED";
++  current_price: number;
++  updated_at: string;
++};
++
++type HistoryRow = {
++  watch_id: string;
++  price: number;
++  checked_at: string;
++};
++
++const staticMeta = new Map(
++  staticRadar.map((e) => [`${e.appSlug}|${e.country}`, { icon: e.icon, name: e.name, category: e.category }])
++);
++
++function rowIconName(row: WatchRow) {
++  const meta = staticMeta.get(`${row.app_slug}|${row.country}`);
++  const staticByApp = staticRadar.find((e) => e.appSlug === row.app_slug);
++  return {
++    icon: meta?.icon ?? staticByApp?.icon ?? "💳",
++    name: meta?.name ?? staticByApp?.name ?? row.app_slug,
++    category: (meta?.category ?? staticByApp?.category ?? "streaming") as AppCategory
++  };
++}
++
++export async function getRadarEntries(): Promise<RadarEntry[]> {
++  try {
++    const supabase = createClient();
++    const { data: watches, error } = await supabase
++      .from("price_watch")
++      .select("id, app_slug, plan_name, plan_note, country, currency, current_price, updated_at")
++      .eq("is_active", true)
++      .order("app_slug");
++
++    if (error || !watches?.length) throw new Error(error?.message ?? "no data");
++
++    const ids = watches.map((w: WatchRow) => w.id);
++    const { data: history } = await supabase
++      .from("price_history")
++      .select("watch_id, price, checked_at")
++      .in("watch_id", ids)
++      .order("checked_at", { ascending: true });
++
++    const historyByWatch = new Map<string, PricePoint[]>();
++    (history as HistoryRow[] | null)?.forEach((h) => {
++      const list = historyByWatch.get(h.watch_id) ?? [];
++      list.push({
++        date: h.checked_at.slice(0, 10),
++        price: Number(h.price)
++      });
++      historyByWatch.set(h.watch_id, list);
++    });
++
++    // تجميع: watch مرفوعة → RadarEntry لكل (app + country)
++    const grouped = new Map<string, RadarEntry>();
++    for (const w of watches as WatchRow[]) {
++      const key = `${w.app_slug}|${w.country}`;
++      const meta = rowIconName(w);
++      const points = historyByWatch.get(w.id) ?? [];
++      // لو مفيش تاريخ لسه: نقطة واحدة بالسعر الحالي
++      const planPoints =
++        points.length > 0
++          ? points
++          : [{ date: w.updated_at.slice(0, 10), price: Number(w.current_price) }];
++
++      const entry =
++        grouped.get(key) ??
++        ({
++          appSlug: w.app_slug,
++          name: meta.name,
++          icon: meta.icon,
++          category: meta.category,
++          country: w.country,
++          currency: w.currency,
++          plans: [],
++          updatedAt: w.updated_at.slice(0, 10)
++        } satisfies RadarEntry);
++
++      entry.plans.push({
++        name: w.plan_name,
++        note: w.plan_note ?? undefined,
++        points: planPoints
++      });
++      // أحدث مراجعة للكارت = أقصى updated_at
++      if (w.updated_at.slice(0, 10) > entry.updatedAt) {
++        entry.updatedAt = w.updated_at.slice(0, 10);
++      }
++      grouped.set(key, entry);
++    }
++
++    return [...grouped.values()];
++  } catch {
++    // القاعدة مش متاحة → البيانات الثابتة (الموقع يفضل شغال)
++    return staticRadar;
++  }
++}
+diff --git a/supabase/migrations/001_price_radar.sql b/supabase/migrations/001_price_radar.sql
+new file mode 100644
+index 0000000..1191bdf
+--- /dev/null
++++ b/supabase/migrations/001_price_radar.sql
+@@ -0,0 +1,92 @@
++-- ═══════════════════════════════════════════════════════════
++-- 🚨 Price Radar Automation — قاعدة بيانات رادار الأسعار
++-- شغّل الملف ده كله في Supabase → SQL Editor → Run مرة واحدة
++-- ═══════════════════════════════════════════════════════════
++
++-- 1) جدول «عناصر المراقبة» — كل صف = باقة اشتراك في دولة معينة
++create table if not exists price_watch (
++  id           uuid primary key default gen_random_uuid(),
++  app_slug     text not null,
++  plan_name    text not null,
++  plan_note    text,
++  country      text not null check (country in ('EG','SA','AE')),
++  currency     text not null check (currency in ('EGP','SAR','AED')),
++  current_price numeric not null,
++
++  -- محرك الرصد الآلي
++  source_url   text,                 -- الصفحة الرسمية اللي هيتفحص منها (فاضي = يدوي فقط)
++  price_regex  text,                 -- أول () capture group في الريجيكس = رقم السعر
++  check_mode   text not null default 'manual' check (check_mode in ('auto','manual')),
++
++  -- حالة التشغيل
++  is_active    boolean not null default true,
++  needs_review boolean not null default false,  -- الأوتوماتيك فشل — عايز عين بشرية
++  fail_count   int not null default 0,
++  last_checked_at timestamptz,
++  updated_at   timestamptz not null default now(),
++
++  unique (app_slug, plan_name, country)
++);
++
++-- 2) جدول التاريخ — append-only، صف جديد «فقط عند تغيّر السعر»
++create table if not exists price_history (
++  id         bigint generated always as identity primary key,
++  watch_id   uuid not null references price_watch(id) on delete cascade,
++  price      numeric not null,
++  checked_at timestamptz not null default now(),
++  source     text not null default 'cron' check (source in ('cron','admin','manual'))
++);
++
++create index if not exists idx_price_history_watch on price_history (watch_id, checked_at desc);
++create index if not exists idx_price_watch_active on price_watch (is_active, check_mode);
++
++-- 3) حماية RLS: القراءة عامة (صفحة الرادار)، الكتابة للسيرفر بس (service role)
++alter table price_watch   enable row level security;
++alter table price_history enable row level security;
++
++drop policy if exists "public read price_watch" on price_watch;
++create policy "public read price_watch"
++  on price_watch for select using (is_active = true);
++
++drop policy if exists "public read price_history" on price_history;
++create policy "public read price_history"
++  on price_history for select using (true);
++
++-- 4) بذرة البيانات: نفس اشتراكات الرادار الحالية (وضع يدوي أولًا — الأوتوماتيك بيتفعل بعد ما تضيف source_url + regex وتجرب)
++insert into price_watch (app_slug, plan_name, plan_note, country, currency, current_price, check_mode) values
++  ('netflix',        'الأساسية',        'شاشة واحدة — HD',  'EG','EGP', 100,   'manual'),
++  ('netflix',        'القياسية',        'شاشتين — Full HD', 'EG','EGP', 170,   'manual'),
++  ('netflix',        'المميزة',         '4 شاشات — 4K',     'EG','EGP', 240,   'manual'),
++  ('shahid',         'VIP الشهرية',      null,               'EG','EGP', 49,    'manual'),
++  ('shahid',         'الرياضية الشهرية', null,               'EG','EGP', 99,    'manual'),
++  ('shahid',         'VIP الشهرية',      null,               'SA','SAR', 29.62, 'manual'),
++  ('shahid',         'الرياضية الشهرية', null,               'SA','SAR', 57.99, 'manual'),
++  ('watchit',        'الشهرية',          null,               'EG','EGP', 49,    'manual'),
++  ('spotify',        'Individual',       null,               'EG','EGP', 79.99, 'manual'),
++  ('spotify',        'Family',           '6 حسابات',         'EG','EGP', 129.99,'manual'),
++  ('anghami',        'Plus الشهرية',     null,               'EG','EGP', 39.99, 'manual'),
++  ('youtube-premium','Individual',       null,               'EG','EGP', 84.99, 'manual'),
++  ('youtube-premium','Family',           null,               'EG','EGP', 169.99,'manual'),
++  ('osn-plus',       'الشهرية',          null,               'SA','SAR', 31.5,  'manual'),
++  ('tod',            'الشهرية',          null,               'SA','SAR', 69,    'manual'),
++  ('disney-plus',    'الشهرية',          null,               'AE','AED', 33.99, 'manual')
++on conflict (app_slug, plan_name, country) do nothing;
++
++-- ═══════════════════════════════════════════════════════════
++-- 📌 أمثلة تشغيل (انسخها وقت الحاجة):
++--
++-- ← تفعيل الرصد الآلي لعنصر (بعد ما تتأكد إن الريجيكس بيلقط السعر صح):
++-- update price_watch
++-- set check_mode='auto',
++--     source_url='https://www.example.com/plans',
++--     price_regex='باقة القياسية[^\d]*(\d+[\d.,]*)'
++-- where app_slug='netflix' and plan_name='القياسية' and country='EG';
++--
++-- ← تسجيل تغيّر يدوي (التاريخ بيتكتب أوتوماتيك من الواجهة العامة؟ لا —
++-- ده من SQL Editor أو من cron; التاريخ بيتسجل عند أي تغيير):
++-- update price_watch set current_price=190, updated_at=now()
++-- where app_slug='netflix' and plan_name='القياسية' and country='EG';
++-- insert into price_history (watch_id, price, source)
++--   select id, 190, 'manual' from price_watch
++--   where app_slug='netflix' and plan_name='القياسية' and country='EG';
++-- ═══════════════════════════════════════════════════════════
+diff --git a/vercel.json b/vercel.json
+index 872580c..59d86d7 100644
+--- a/vercel.json
++++ b/vercel.json
+@@ -1,5 +1,9 @@
+ {
+   "crons": [
++    {
++      "path": "/api/cron/price-check",
++      "schedule": "0 8 * * *"
++    },
+     {
+       "path": "/api/scraper",
+       "schedule": "0 9 * * *"
+-- 
+2.47.3
+
+
+From a31ea2a99f6f2cd6ceab3e296483b20daa3f9e3f Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Fri, 18 Sep 2026 23:37:37 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?=F0=9F=93=A1=20=D8=AA=D9=86=D8=A8=D9=8A?=
+ =?UTF-8?q?=D9=87=D8=A7=D8=AA=20=D8=A7=D9=84=D8=B1=D8=A7=D8=AF=D8=A7=D8=B1?=
+ =?UTF-8?q?=20=D8=B9=D8=A8=D8=B1=20=D8=AA=D9=8A=D9=84=D9=8A=D8=AC=D8=B1?=
+ =?UTF-8?q?=D8=A7=D9=85=20=E2=80=94=20=D9=86=D8=A8=D8=B6=20=D8=A7=D9=84?=
+ =?UTF-8?q?=D9=80=20Moat?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- src/lib/telegram.ts: إرسال قناة HTML مع timeout + skipped عند غياب env (مبدأ عدم الإسقاط)
+  + composer عربي RTL-آمن: «ارتفع/نزل من X لـ Y (±N%)»
+- cron price-check: بث تلقائي عند كل تغيّر حقيقي ومنطقي فقط (نفس شرط price_history)
+  + 💡 أوفر بديل من نفس الفئة الفرعية ونفس الدولة (قاعدة v5) في الرسالة
+  + ملخص الرد بقى فيه telegramSent/Skipped/Errors — فشل القناة مبحثش الكرون
+- TelegramCard على /price-radar: شرح القيمة + زر المتابعة (أو شارة «قريبًا 🚧» بدون env)
+- .env.example: TELEGRAM_BOT_TOKEN/TELEGRAM_CHANNEL_ID/NEXT_PUBLIC_TELEGRAM_CHANNEL
+- docs/price-radar-automation.md: خطوات التشغيل لمرة واحدة بالتفصيل
+- BRAND-GUIDE: سجل v8 (بما فيه اكتشاف v3 المعزولة واسترجاعها)
+---
+ .env.example                                 |   4 +
+ docs/BRAND-GUIDE.md                          |   3 +-
+ docs/price-radar-automation.md               |  24 ++++
+ src/app/api/cron/price-check/route.ts        |  78 +++++++++++-
+ src/app/price-radar/page.tsx                 |   4 +
+ src/components/price-radar/telegram-card.tsx |  46 +++++++
+ src/lib/telegram.ts                          | 125 +++++++++++++++++++
+ 7 files changed, 282 insertions(+), 2 deletions(-)
+ create mode 100644 src/components/price-radar/telegram-card.tsx
+ create mode 100644 src/lib/telegram.ts
+
+diff --git a/.env.example b/.env.example
+index b6d1f71..735bd2a 100644
+--- a/.env.example
++++ b/.env.example
+@@ -8,3 +8,7 @@ STRIPE_STARTER_PRICE_ID=price_...
+ STRIPE_BUSINESS_PRICE_ID=price_...
+ STRIPE_PARTNER_PRICE_ID=price_...
+ CRON_SECRET=your-random-secret-32-chars
++# 📡 تنبيهات تيليجرام (رادار الأسعار) — سيرفر فقط + متغير عام لزر المتابعة
++TELEGRAM_BOT_TOKEN=123456:ABC-your-bot-token-from-botfather
++TELEGRAM_CHANNEL_ID=@YourChannel
++NEXT_PUBLIC_TELEGRAM_CHANNEL=YourChannel
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 1a6446a..06cc048 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -74,7 +74,7 @@
+ | صفحات «الأفضل» (45 = 15 فئة × 3 دول) | ✅ | مقسّمة بالفئات الفرعية + ItemList/FAQ/Breadcrumb |
+ | مقارنات تفصيلية (6) | ✅ | + أداة «قارن أي تطبيقين» مجمعة بالنوع |
+ | 🧮 حاسبة المصروف الرقمي | ✅ | بدائل أوفر **من نفس النوع** (اتصلحت سبرنت 5) |
+-| 🚨 رادار الأسعار + كرون يومي | ✅ | سجل تغيّرات + قواعد أمان (لا نشر تلقائي للمشكوك فيه) |
++| 🚨 رادار الأسعار + كرون يومي | ✅ | سجل تغيّرات + قواعد أمان + **📡 بث تيليجرام فوري** (سبرنت 8) |
+ | الترشيح الذكي /ai | ✅ | سؤال «تفرّج» يجيب فيديو، «سمّاع» يجيب موسيقى |
+ | العروض والديلز | ✅ | + تنبيهات |
+ | المدونة | 🔧 | محتوى 2025 محتاج تحديث لـ 2026 |
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v8** 📡 تنبيهات الرادار (التيليجرام) | 18 سب 2026 | **استرجاع v3 أولًا** (الأتمتة كانت كوميت معزول بره main — اكتشف وهترجع) + بث تلقائي للقناة عند كل تغيّر منطقي فقط: «ارتفع/نزل من X لـ Y» + 💡 أوفر بديل من نفس الفئة الفرعية + كارت متابعة على /price-radar + docs تشغيل + env vars |
+ 
+ ---
+ 
+diff --git a/docs/price-radar-automation.md b/docs/price-radar-automation.md
+index a1087bd..632d5a5 100644
+--- a/docs/price-radar-automation.md
++++ b/docs/price-radar-automation.md
+@@ -83,3 +83,27 @@ values ('apple-tv', 'الشهرية', '4K', 'EG', 'EGP', 89.99);
+ ---
+ 
+ **واحدة من أهم الأصول في المشروع بدأت تتبنى من النهاردة.** كل يوم شغال = تاريخ أكبر لا يمكن تقليده.
++
++---
++
++## 📡 تنبيهات تيليجرام (V8 — بث التغيّرات)
++
++المحرك بيبعت تلقائيًا رسالة لقناة «رادار AppHub» عند كل تغيّر سعر **حقيقي ومنطقي** فقط —
++نفس شرط تسجيل `price_history` بالظبط (مفيش تنبيه لسعر مشكوك فيه).
++الرسالة فيها: التطبيق والباقة والدولة + «ارتفع/نزل من X لـ Y» بالنسبة + 💡 أوفر بديل
++**من نفس الفئة الفرعية** (قاعدة v5: Spotify مش بيترشح مكان شاهد) + رابط صفحة التطبيق.
++
++### التشغيل لمرة واحدة:
++1. من تيليجرام كلّم **@BotFather** ← `/newbot` ← اختار اسم ويوزر ← خد الـ TOKEN
++2. اعمل **قناة عامة** (مثلاً `@AppHubRadar`) ← ضيف البوت فيها كـ **مسؤول نشر**
++3. على Vercel → Settings → Environment Variables:
++   - `TELEGRAM_BOT_TOKEN` = التوكن (سيرفر)
++   - `TELEGRAM_CHANNEL_ID` = `@AppHubRadar`
++   - `NEXT_PUBLIC_TELEGRAM_CHANNEL` = `AppHubRadar` (زر متابعة الصفحة)
++4. Redeploy — وخلاص: أول تغيّر سعر كروني هيطلع بث فوري في القناة.
++
++### ملاحظات تشغيل:
++- لو المتغيرات ناقصة → الكرون بيسجّل `telegramSkipped: true` في الـ summary ويكمّل عادي.
++- فشل القناة (شبكة/توكن غلط) **مبحثش الكرون** — الأخطاء بتظهر في `telegramErrors` بالرد.
++- زر المتابعة على `/price-radar` بيظهر «قريبًا 🚧» لحد ما `NEXT_PUBLIC_TELEGRAM_CHANNEL` يتظبط.
++- اختبار يدوي للقناة: `curl -X POST https://api.telegram.org/bot<TOKEN>/sendMessage -d chat_id=@قناتك -d text=تجربه ✅`
+diff --git a/src/app/api/cron/price-check/route.ts b/src/app/api/cron/price-check/route.ts
+index a1e28e9..c1f052d 100644
+--- a/src/app/api/cron/price-check/route.ts
++++ b/src/app/api/cron/price-check/route.ts
+@@ -1,6 +1,10 @@
+ import { NextRequest, NextResponse } from "next/server";
+ import { createClient } from "@supabase/supabase-js";
+ import { extractPrice, isSanePrice, hasRealChange } from "@/lib/price-extract";
++import { sendTelegramMessage, formatPriceAlert } from "@/lib/telegram";
++import { apps } from "@/data/apps";
++import { subcategoryOf } from "@/data/subcategories";
++import { AppItem } from "@/lib/types";
+ 
+ /**
+  * 🚨 محرك رادار الأسعار — فحص يومي عبر Vercel Cron.
+@@ -58,7 +62,10 @@ export async function GET(request: NextRequest) {
+     checked: 0,
+     changed: [] as string[],
+     flagged: [] as string[],
+-    failed: [] as string[]
++    failed: [] as string[],
++    telegramSent: 0,
++    telegramSkipped: false,
++    telegramErrors: [] as string[]
+   };
+ 
+   for (const w of (watches ?? []) as WatchRow[]) {
+@@ -131,6 +138,37 @@ export async function GET(request: NextRequest) {
+       });
+ 
+       summary.changed.push(`${label}: ${w.current_price} ← ${extracted}`);
++
++      // 📡 بث تيليجرام: لو القناة مش متفعلة أو فشلت — الكرون يكمّل عادي
++      try {
++        const alt = cheaperAlternative(w.app_slug, w.country, extracted);
++        const hit = apps.find((a) => a.slug === w.app_slug);
++        const sent = await sendTelegramMessage(
++          formatPriceAlert({
++            appSlug: w.app_slug,
++            planName: w.plan_name,
++            country: w.country,
++            currency: w.currency,
++            oldPrice: w.current_price,
++            newPrice: extracted,
++            appName: hit?.name ?? null,
++            appIcon: hit?.icon ?? null,
++            alternative: alt
++              ? {
++                  name: alt.app.name,
++                  icon: alt.app.icon,
++                  monthly: alt.monthly,
++                  currency: alt.currency
++                }
++              : null
++          })
++        );
++        if (sent.ok) summary.telegramSent++;
++        else if (sent.skipped) summary.telegramSkipped = true;
++        else summary.telegramErrors.push(`${label}: ${sent.error}`);
++      } catch {
++        // ممنوع يوقف الكرون بسبب القناة
++      }
+     } catch (err: any) {
+       await markFailure(supabaseAdmin, w, `${label} — ${err.message}`, summary);
+     }
+@@ -156,3 +194,41 @@ async function markFailure(
+     .eq("id", w.id);
+   summary.failed.push(label);
+ }
++
++/**
++ * بديل أوفر «من نفس النوع» لرسالة التنبيه (القاعدة الذهبية من v5):
++ * تطبيق بنفس الفئة الفرعية ونفس الدولة وسعره الشهري أقل من الجديد،
++ * الأعلى تقييمًا أولًا — وبيرجع null لو مفيش (ممنوع اقتراح تخميني).
++ */
++function cheaperAlternative(
++  appSlug: string,
++  country: string,
++  newPrice: number
++): { app: AppItem; monthly: number; currency: string } | null {
++  const target = apps.find((a) => a.slug === appSlug);
++  if (!target) return null;
++  const targetSub = subcategoryOf(target);
++
++  const candidates = apps
++    .map((app) => {
++      const p = app.pricing.find(
++        (x) => x.country === country && x.monthly !== undefined && (x.monthly as number) > 0
++      );
++      return p && p.monthly !== undefined
++        ? { app, monthly: p.monthly, currency: p.currency }
++        : null;
++    })
++    .filter(Boolean) as { app: AppItem; monthly: number; currency: string }[];
++
++  return (
++    candidates
++      .filter(
++        (c) =>
++          c.app.slug !== appSlug &&
++          subcategoryOf(c.app) === targetSub &&
++          c.monthly < newPrice
++      )
++      .sort((x, y) => y.app.rating - x.app.rating || x.monthly - y.monthly)[0] ??
++    null
++  );
++}
+diff --git a/src/app/price-radar/page.tsx b/src/app/price-radar/page.tsx
+index b15ac0e..36f1a70 100644
+--- a/src/app/price-radar/page.tsx
++++ b/src/app/price-radar/page.tsx
+@@ -10,6 +10,7 @@ import {
+ } from "@/lib/price-radar";
+ import { PriceSparkline } from "@/components/price-radar/sparkline";
+ import { PriceAlertForm } from "@/components/price-radar/alert-form";
++import { TelegramCard } from "@/components/price-radar/telegram-card";
+ import { CountryCode } from "@/lib/types";
+ 
+ /**
+@@ -109,6 +110,9 @@ export default async function PriceRadarPage({
+           </div>
+         </header>
+ 
++        {/* قناة التنبيهات الفورية */}
++        <TelegramCard />
++
+         {/* فورم التنبيهات */}
+         <PriceAlertForm />
+ 
+diff --git a/src/components/price-radar/telegram-card.tsx b/src/components/price-radar/telegram-card.tsx
+new file mode 100644
+index 0000000..ec2141e
+--- /dev/null
++++ b/src/components/price-radar/telegram-card.tsx
+@@ -0,0 +1,46 @@
++import Link from "next/link";
++
++/**
++ * 📡 كارت قناة «رادار AppHub» على تيليجرام.
++ * سيرفر كومبوننت خفيف بيقرا NEXT_PUBLIC_TELEGRAM_CHANNEL —
++ * لو القناة لسه مش متفعلة بيبقى شارة «قريبًا» بدل ما يخفي الكارت،
++ * عشان الصفحة متتكسرش قبل ما يتعمل الـ setup اليدوي.
++ */
++export function TelegramCard() {
++  const channel = process.env.NEXT_PUBLIC_TELEGRAM_CHANNEL?.trim() ?? "";
++  const url = channel ? `https://t.me/${channel.replace(/^@/, "")}` : null;
++
++  return (
++    <section className="card-elegant overflow-hidden border-r-4 border-r-[#229ED9] p-6">
++      <div className="flex flex-col sm:flex-row sm:items-center gap-5">
++        <span className="w-14 h-14 shrink-0 rounded-2xl bg-[#229ED9]/10 flex items-center justify-center text-4xl">
++          📡
++        </span>
++        <div className="flex-1">
++          <h2 className="heading-elegant text-xl text-brand-900">
++            عايز يوصلك أي تغيّر سعر أول بأول؟
++          </h2>
++          <p className="mt-1 text-sm leading-6 text-charcoal-500">
++            قناة «رادار AppHub» على تيليجرام: كل حركة سعر موثّقة بتتبعت رسالة
++            فورية — وفيها 🥇 <b>أوفر بديل من نفس النوع</b> تلقائيًا.
++            من غير تسجيل ولا إيميلات ولا حاجة تشغل بالك.
++          </p>
++        </div>
++        {url ? (
++          <Link
++            href={url}
++            target="_blank"
++            rel="noopener noreferrer"
++            className="shrink-0 rounded-full bg-[#229ED9] px-6 py-3 text-sm font-black text-white transition hover:opacity-90"
++          >
++            ✈️ تابع القناة ←
++          </Link>
++        ) : (
++          <span className="shrink-0 rounded-full bg-cream-100 border border-cream-200 px-6 py-3 text-sm font-bold text-charcoal-500">
++            القناة بتتمّ تجهيزها 🚧
++          </span>
++        )}
++      </div>
++    </section>
++  );
++}
+diff --git a/src/lib/telegram.ts b/src/lib/telegram.ts
+new file mode 100644
+index 0000000..43608e0
+--- /dev/null
++++ b/src/lib/telegram.ts
+@@ -0,0 +1,125 @@
++/**
++ * 📡 إرسال تنبيهات تيليجرام لقناة «رادار AppHub»
++ *
++ * التفعيل (خطوات يدوية لمرة واحدة — موثقة في docs/price-radar-automation.md):
++ * 1. اعمل بوت من @BotFather → خد الـ TOKEN
++ * 2. اعمل قناة عامة (مثلاً @AppHubRadar) وضيف البوت كـ مسؤول نشر
++ * 3. متغيرات البيئة على Vercel:
++ *    TELEGRAM_BOT_TOKEN=xxxxx            (سيرفر فقط)
++ *    TELEGRAM_CHANNEL_ID=@AppHubRadar    (أو ID رقمي مثل -100xxxx)
++ *    NEXT_PUBLIC_TELEGRAM_CHANNEL=AppHubRadar   (لعرض زر المتابعة)
++ * لو المتغيرات مش موجودة → skipped بدون أي كسر (أساس مبدأ عدم الإسقاط).
++ */
++
++const SITE_URL = (
++  process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app"
++).replace(/\/$/, "");
++
++const TELEGRAM_TIMEOUT_MS = 10000;
++
++export type TelegramSendResult = {
++  ok: boolean;
++  skipped?: boolean;
++  error?: string;
++};
++
++export async function sendTelegramMessage(
++  text: string
++): Promise<TelegramSendResult> {
++  const token = process.env.TELEGRAM_BOT_TOKEN;
++  const chatId = process.env.TELEGRAM_CHANNEL_ID;
++  if (!token || !chatId) return { ok: false, skipped: true };
++
++  try {
++    const controller = new AbortController();
++    const timer = setTimeout(() => controller.abort(), TELEGRAM_TIMEOUT_MS);
++    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
++      method: "POST",
++      signal: controller.signal,
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({
++        chat_id: chatId,
++        text,
++        parse_mode: "HTML",
++        disable_web_page_preview: true
++      }),
++      cache: "no-store"
++    });
++    clearTimeout(timer);
++    const data: any = await res.json().catch(() => ({}));
++    return {
++      ok: res.ok && data?.ok === true,
++      error: data?.description ?? `HTTP ${res.status}`
++    };
++  } catch (err: any) {
++    return { ok: false, error: err.message ?? "telegram fetch failed" };
++  }
++}
++
++/* ─────────── Composer ─────────── */
++
++const COUNTRY_NAMES: Record<string, string> = {
++  EG: "مصر 🇪🇬",
++  SA: "السعودية 🇸🇦",
++  AE: "الإمارات 🇦🇪"
++};
++
++export type PriceAlertInput = {
++  appSlug: string;
++  planName: string;
++  country: string;
++  currency: string;
++  oldPrice: number;
++  newPrice: number;
++  appName?: string | null;
++  appIcon?: string | null;
++  alternative?: {
++    name: string;
++    icon: string;
++    monthly: number;
++    currency: string;
++  } | null;
++};
++
++/**
++ * رسالة تغيّر سعر بتنسيق HTML آمن للـ RTL —
++ * بنكتب الاتجاه بالكلمات («ارتفع من … لـ …») بدل الأسهم عشان الـ bidi.
++ */
++export function formatPriceAlert(m: PriceAlertInput): string {
++  const up = m.newPrice > m.oldPrice;
++  const pct =
++    m.oldPrice > 0
++      ? Math.abs(Math.round(((m.newPrice - m.oldPrice) / m.oldPrice) * 100))
++      : 0;
++  const country = COUNTRY_NAMES[m.country] ?? m.country;
++  const name = m.appName ?? m.appSlug;
++  const icon = m.appIcon ?? "📦";
++  const plan = m.planName && m.planName !== "الأساسية" ? ` • ${m.planName}` : "";
++
++  const lines = [
++    `📡 <b>رادار AppHub — ${up ? "سعر زاد 📈" : "سعر نزل 📉"}</b>`,
++    ``,
++    `${icon} <b>${name}</b>${plan} • ${country}`,
++    `${up ? "ارتفع" : "نزل"} من <s>${m.oldPrice} ${m.currency}</s> لـ <b>${m.newPrice} ${m.currency}</b> شهريًا${
++      pct > 0 ? ` (${up ? "+" : "-"}${pct}%)` : ""
++    }`
++  ];
++
++  if (alternativeIsCheaper(m.alternative, m.newPrice)) {
++    const alt = m.alternative!;
++    lines.push(
++      ``,
++      `💡 بديل أوفر من نفس النوع: ${alt.icon} ${alt.name} (${alt.monthly} ${alt.currency}/ش)`
++    );
++  }
++
++  lines.push(``, `🔎 التفاصيل وتاريخ السعر: ${SITE_URL}/apps/${m.appSlug}`);
++  return lines.join("\n");
++}
++
++function alternativeIsCheaper(
++  alt: PriceAlertInput["alternative"],
++  newPrice: number
++): alt is NonNullable<PriceAlertInput["alternative"]> {
++  return Boolean(alt && alt.monthly > 0 && alt.monthly < newPrice);
++}
+-- 
+2.47.3
+

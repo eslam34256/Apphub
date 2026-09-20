@@ -1,0 +1,1333 @@
+From 35dd4e962e81808c2bf328037915a69a6f3e45b2 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Fri, 18 Sep 2026 17:17:12 +0000
+Subject: [PATCH] =?UTF-8?q?=F0=9F=9A=A8=20=D8=B1=D8=A7=D8=AF=D8=A7=D8=B1?=
+ =?UTF-8?q?=20=D8=A7=D9=84=D8=A3=D8=B3=D8=B9=D8=A7=D8=B1=20+=20?=
+ =?UTF-8?q?=F0=9F=A7=AE=20=D8=AD=D8=A7=D8=B3=D8=A8=D8=A9=20=D8=A7=D9=84?=
+ =?UTF-8?q?=D9=85=D8=B5=D8=B1=D9=88=D9=81=20=D8=A7=D9=84=D8=B1=D9=82=D9=85?=
+ =?UTF-8?q?=D9=8A=20=E2=80=94=20=D9=85=D9=8A=D8=B2=D8=AA=D8=A7=20=D8=A7?=
+ =?UTF-8?q?=D9=84=D9=80=20Moat=20=D9=88=D8=A7=D9=84=D8=A7=D9=86=D8=AA?=
+ =?UTF-8?q?=D8=B4=D8=A7=D8=B1?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- /price-radar: متتبع تاريخ أسعار الاشتراكات (بيانات تراكمية لا تُنسخ رجعيًا) — بطاقات + sparklines SVG بدون مكتبات + شارات تغيّر (▲▼مستقر/تحت الرصد) + فلتر دول قابل للمشاركة + نموذج تنبيهات + توضيح المنهجية + Breadcrumb schema
+- /calculator: حاسبة مصروف رقمي تفاعلية — إجمالي شهري/سنوي + توزيع بالفئة + مقترحات تبديل ببدائل أوفر قابلة للتنفيذ بضغطة + نصائح الدفع السنوي + مشاركة برابط يحمل الاختيارات
+- مشاركة الحاسبة بتولّد عنوان/وصف ديناميكي بالإجمالي (لينك واتساب يعرض الرقم قبل الفتح)
+- ربط: نافبار (ترجمات ar/en) + sitemap + سكشن «أدوات جديدة» في الرئيسية
+- داتا الرادار مبدئية بنقاط موثقة المصادر؛ كل Plan جاهزة تستقبل نقاط تاريخية جديدة
+---
+ src/app/calculator/page.tsx                   |  86 ++++++
+ src/app/page.tsx                              |  57 ++++
+ src/app/price-radar/page.tsx                  | 231 +++++++++++++++
+ src/app/sitemap.ts                            |   2 +
+ .../calculator/calculator-client.tsx          | 266 ++++++++++++++++++
+ src/components/navbar.tsx                     |   2 +
+ src/components/price-radar/alert-form.tsx     | 102 +++++++
+ src/components/price-radar/sparkline.tsx      |  59 ++++
+ src/data/price-history.ts                     | 241 ++++++++++++++++
+ src/lib/price-radar.ts                        |  45 +++
+ src/lib/spend.ts                              |  94 +++++++
+ src/lib/translations.ts                       |   4 +
+ 12 files changed, 1189 insertions(+)
+ create mode 100644 src/app/calculator/page.tsx
+ create mode 100644 src/app/price-radar/page.tsx
+ create mode 100644 src/components/calculator/calculator-client.tsx
+ create mode 100644 src/components/price-radar/alert-form.tsx
+ create mode 100644 src/components/price-radar/sparkline.tsx
+ create mode 100644 src/data/price-history.ts
+ create mode 100644 src/lib/price-radar.ts
+ create mode 100644 src/lib/spend.ts
+
+diff --git a/src/app/calculator/page.tsx b/src/app/calculator/page.tsx
+new file mode 100644
+index 0000000..7c3acec
+--- /dev/null
++++ b/src/app/calculator/page.tsx
+@@ -0,0 +1,86 @@
++import type { Metadata } from "next";
++import { CalculatorClient } from "@/components/calculator/calculator-client";
++import { apps as allApps } from "@/data/apps";
++import { monthlyOf, currencyOf, calcTotals } from "@/lib/spend";
++import { formatMoney } from "@/lib/helpers";
++import { CountryCode } from "@/lib/types";
++
++/**
++ * /calculator — حاسبة المصروف الرقمي.
++ * عند المشاركة (?apps=...&country=...) الوصف نفسه بيولّد ديناميكيًا
++ * من الاختيارات — يعني لينك واتساب يقول «مشترك في كذا بكذا جنيه»
++ * قبل ما حد يفتح الرابط.
++ */
++
++const SITE_URL = (
++  process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app"
++).replace(/\/$/, "");
++
++function parseCountry(raw?: string): CountryCode {
++  return raw === "SA" || raw === "AE" ? raw : "EG";
++}
++
++export function generateMetadata({
++  searchParams
++}: {
++  searchParams: { apps?: string; country?: string };
++}): Metadata {
++  const country = parseCountry(searchParams.country);
++  const base = {
++    title: "حاسبة المصروف الرقمي — كام بتدفع في اشتراكاتك؟",
++    description:
++      "احسب إجمالي اشتراكاتك الشهرية والسنوية في ثواني، واكتشف بدائل أوفر بنفس الجودة — بتشتغل في مصر والسعودية والإمارات.",
++    alternates: { canonical: `${SITE_URL}/calculator` }
++  };
++
++  if (!searchParams.apps) return base;
++
++  const slugs = searchParams.apps.split(",").filter(Boolean);
++  const chosen = allApps.filter(
++    (a) => slugs.includes(a.slug) && monthlyOf(a, country) > 0
++  );
++  if (!chosen.length) return base;
++
++  const { monthly } = calcTotals(chosen, country);
++  const names = chosen.slice(0, 4).map((a) => a.name).join(" + ");
++  const currency = currencyOf(country);
++
++  return {
++    title: `اشتراكاتي: ${formatMoney(monthly, currency)} شهريًا`,
++    description: `${names}${chosen.length > 4 ? " وأكثر" : ""} — بيكلفوني ${formatMoney(
++      monthly,
++      currency
++    )} في الشهر و${formatMoney(monthly * 12, currency)} في السنة 😳 احسب مصروفك إنت كمان على AppHub.`,
++    alternates: { canonical: `${SITE_URL}/calculator` }
++  };
++}
++
++export default function CalculatorPage({
++  searchParams
++}: {
++  searchParams: { apps?: string; country?: string };
++}) {
++  const country = parseCountry(searchParams.country);
++  const initialApps = searchParams.apps?.split(",").filter(Boolean) ?? [];
++
++  return (
++    <div className="bg-cream-50 min-h-screen">
++      <div className="max-w-5xl mx-auto px-4 py-12 space-y-8">
++        <header className="text-center">
++          <span className="rounded-full bg-accent-100 text-accent-700 px-4 py-1.5 text-sm font-bold">
++            🧮 أداة جديدة
++          </span>
++          <h1 className="heading-display mt-4 text-4xl md:text-5xl text-brand-900">
++            حاسبة المصروف الرقمي
++          </h1>
++          <p className="mt-3 max-w-2xl mx-auto text-charcoal-500 leading-relaxed">
++            اشتراكاتك بتدفع من جيبك كل شهر من غير ما تحس. جمعها هنا في رقم واحد —
++            واكتشف نفس الجودة بسعر أقل في ثواني.
++          </p>
++        </header>
++
++        <CalculatorClient initialApps={initialApps} initialCountry={country} />
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 5a63007..c0a1256 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -207,6 +207,63 @@ export default function HomePage() {
+         </div>
+       </section>
+ 
++      {/* ═══════════════════════════════════════ */}
++      {/* NEW TOOLS: Price Radar + Calculator     */}
++      {/* ═══════════════════════════════════════ */}
++      <section className="bg-white section-padding border-y border-cream-200">
++        <div className="max-w-7xl mx-auto px-6">
++          <div className="text-center mb-12">
++            <p className="text-red-600 text-sm uppercase tracking-[0.3em] mb-3">
++              {lang === "ar" ? "🚨 أدوات جديدة" : "🚨 New Tools"}
++            </p>
++            <h2 className="heading-display text-4xl md:text-5xl text-brand-900 mb-4">
++              {lang === "ar" ? "وفّر في اشتراكاتك" : "Save on your subscriptions"}
++            </h2>
++            <div className="divider-gold"></div>
++          </div>
++
++          <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
++            {/* رادار الأسعار */}
++            <Link
++              href="/price-radar"
++              className="card-elegant group p-8 transition hover:-translate-y-1 hover:shadow-soft border-r-4 border-r-red-400"
++            >
++              <span className="text-4xl" aria-hidden>🚨</span>
++              <h3 className="heading-elegant text-2xl text-brand-900 mt-4">
++                {lang === "ar" ? "رادار الأسعار" : "Price Radar"}
++              </h3>
++              <p className="mt-2 text-charcoal-500 leading-relaxed">
++                {lang === "ar"
++                  ? "بنرصد سعر كل اشتراك بالتاريخ. اعرف مين زوّد سعره وامتى — وخلّيك أول من يعرف أي تغيير."
++                  : "We track every subscription's price over time. Know who raised prices and when — and get alerted first."}
++              </p>
++              <span className="mt-4 inline-block font-bold text-red-600 group-hover:translate-x-1 transition">
++                {lang === "ar" ? "شوف الرصد ←" : "See the radar ←"}
++              </span>
++            </Link>
++
++            {/* الحاسبة */}
++            <Link
++              href="/calculator"
++              className="card-elegant group p-8 transition hover:-translate-y-1 hover:shadow-soft border-r-4 border-r-accent-400"
++            >
++              <span className="text-4xl" aria-hidden>🧮</span>
++              <h3 className="heading-elegant text-2xl text-brand-900 mt-4">
++                {lang === "ar" ? "حاسبة المصروف الرقمي" : "Digital Spend Calculator"}
++              </h3>
++              <p className="mt-2 text-charcoal-500 leading-relaxed">
++                {lang === "ar"
++                  ? "اشتراكاتك كلها بتكلفك كام في الشهر وفي السنة؟ اعرف الرقم المخيف 😅 واكتشف نفس الجودة بسعر أقل."
++                  : "How much do all your subscriptions cost monthly and yearly? See the scary number 😅 and find cheaper equivalents."}
++              </p>
++              <span className="mt-4 inline-block font-bold text-accent-600 group-hover:translate-x-1 transition">
++                {lang === "ar" ? "احسب دلوقتي ←" : "Calculate now ←"}
++              </span>
++            </Link>
++          </div>
++        </div>
++      </section>
++
+       {/* ═══════════════════════════════════════ */}
+       {/* DEALS SECTION                           */}
+       {/* ═══════════════════════════════════════ */}
+diff --git a/src/app/price-radar/page.tsx b/src/app/price-radar/page.tsx
+new file mode 100644
+index 0000000..69c29cf
+--- /dev/null
++++ b/src/app/price-radar/page.tsx
+@@ -0,0 +1,231 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { priceRadar } from "@/data/price-history";
++import {
++  entryChange,
++  formatPrice,
++  currencySymbols,
++  priceChange,
++  latestPrice
++} from "@/lib/price-radar";
++import { PriceSparkline } from "@/components/price-radar/sparkline";
++import { PriceAlertForm } from "@/components/price-radar/alert-form";
++import { CountryCode } from "@/lib/types";
++
++/**
++ * 🚨 رادار الأسعار — الميزة الأقوى تنافسيًا:
++ * متتبع تاريخ أسعار الاشتراكات في المنطقة العربية.
++ * بيانات تراكمية لا يمكن نسخها رجعيًا = Moat حقيقي.
++ */
++
++export const metadata: Metadata = {
++  title: "رادار الأسعار — تاريخ أسعار اشتراكاتك المفضلة",
++  description:
++    "تابع تاريخ أسعار الاشتراكات (نتفليكس، شاهد، سبوتيفاي وأكثر) في مصر والسعودية والإمارات — اعرف السعر زاد امتى وبيعكس متوقع، وفعّل التنبيهات أول ما أي سعر يتحرك.",
++  alternates: { canonical: "https://apphub-eight.vercel.app/price-radar" }
++};
++
++const SITE_URL = (
++  process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app"
++).replace(/\/$/, "");
++
++const countryNames: Record<CountryCode, string> = {
++  EG: "🇪🇬 مصر",
++  SA: "🇸🇦 السعودية",
++  AE: "🇦🇪 الإمارات"
++};
++
++const dirStyles: Record<string, { badge: string; label: (pct: number) => string }> = {
++  up: { badge: "bg-red-100 text-red-700", label: (p) => `▲ +${p}%` },
++  down: { badge: "bg-emerald-100 text-emerald-700", label: (p) => `▼ -${p}%` },
++  same: { badge: "bg-slate-100 text-slate-500", label: () => "مستقر" },
++  new: { badge: "bg-accent-100 text-accent-700", label: () => "تحت الرصد 🔍" }
++};
++
++export default function PriceRadarPage({
++  searchParams
++}: {
++  searchParams: { country?: string };
++}) {
++  const country = (["EG", "SA", "AE"] as CountryCode[]).includes(
++    searchParams.country as CountryCode
++  )
++    ? (searchParams.country as CountryCode)
++    : undefined;
++
++  const entries = country ? priceRadar.filter((e) => e.country === country) : priceRadar;
++  const trackedPlans = priceRadar.reduce((n, e) => n + e.plans.length, 0);
++  const changedRecently = priceRadar
++    .flatMap((e) => e.plans.map(priceChange))
++    .filter((c) => c.dir === "up" || c.dir === "down").length;
++
++  const breadcrumb = {
++    "@context": "https://schema.org",
++    "@type": "BreadcrumbList",
++    itemListElement: [
++      { "@type": "ListItem", position: 1, name: "الرئيسية", item: SITE_URL },
++      { "@type": "ListItem", position: 2, name: "رادار الأسعار", item: `${SITE_URL}/price-radar` }
++    ]
++  };
++
++  return (
++    <div className="bg-cream-50 min-h-screen">
++      <script
++        type="application/ld+json"
++        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
++      />
++
++      <div className="max-w-6xl mx-auto px-4 py-12 space-y-10">
++        {/* الهيدر */}
++        <header className="text-center">
++          <span className="rounded-full bg-red-100 text-red-700 px-4 py-1.5 text-sm font-bold">
++            🚨 ميزة جديدة
++          </span>
++          <h1 className="heading-display mt-4 text-4xl md:text-5xl text-brand-900">
++            رادار الأسعار
++          </h1>
++          <p className="mt-3 max-w-2xl mx-auto text-charcoal-500 leading-relaxed">
++            الاشتراكات بتزيد أسعارها من غير ما تقول لحد. إحنا بنرصد سعر كل باقة
++            بالتاريخ — نقطة بنقطة — عشان تعرف بالظبط مين زوّد وامتى، وتقرر على أساس بيانات.
++          </p>
++
++          <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
++            <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++              🔍 {priceRadar.length} اشتراك تحت الرصد
++            </span>
++            <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++              📊 {trackedPlans} باقة متتبعة
++            </span>
++            <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++              📈 {changedRecently} تغيّر مرصود
++            </span>
++          </div>
++        </header>
++
++        {/* فورم التنبيهات */}
++        <PriceAlertForm />
++
++        {/* فلتر الدول */}
++        <div className="flex flex-wrap justify-center gap-2">
++          <Link
++            href="/price-radar"
++            className={`rounded-full px-4 py-2 text-sm font-bold transition ${
++              !country
++                ? "bg-brand-900 text-white"
++                : "bg-white border border-cream-200 text-charcoal-500 hover:border-accent-300"
++            }`}
++          >
++            🌍 كل الدول
++          </Link>
++          {(Object.keys(countryNames) as CountryCode[]).map((c) => (
++            <Link
++              key={c}
++              href={`/price-radar?country=${c}`}
++              className={`rounded-full px-4 py-2 text-sm font-bold transition ${
++                country === c
++                  ? "bg-brand-900 text-white"
++                  : "bg-white border border-cream-200 text-charcoal-500 hover:border-accent-300"
++              }`}
++            >
++              {countryNames[c]}
++            </Link>
++          ))}
++        </div>
++
++        {/* كروت الاشتراكات */}
++        <div className="grid gap-5 md:grid-cols-2">
++          {entries.map((entry, ei) => {
++            const change = entryChange(entry);
++            const style = dirStyles[change.dir];
++            return (
++              <article key={`${entry.appSlug}-${entry.country}-${ei}`} className="card-elegant p-6">
++                <div className="flex items-start justify-between gap-3">
++                  <div className="flex items-center gap-3">
++                    <span className="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-3xl shadow-soft">
++                      {entry.icon}
++                    </span>
++                    <div>
++                      <h2 className="font-bold text-lg text-brand-900">
++                        <Link href={`/apps/${entry.appSlug}`} className="hover:text-accent-600 transition">
++                          {entry.name}
++                        </Link>
++                      </h2>
++                      <p className="text-xs font-bold text-charcoal-500">
++                        {countryNames[entry.country]}
++                      </p>
++                    </div>
++                  </div>
++                  <span className={`rounded-full px-3 py-1 text-xs font-black ${style.badge}`}>
++                    {style.label(change.pct)}
++                  </span>
++                </div>
++
++                <ul className="mt-5 space-y-3">
++                  {entry.plans.map((plan, pi) => {
++                    const latest = latestPrice(plan);
++                    const ch = priceChange(plan);
++                    if (!latest) return null;
++                    return (
++                      <li
++                        key={pi}
++                        className="flex items-center justify-between gap-3 rounded-xl bg-cream-50 border border-cream-200 px-4 py-3"
++                      >
++                        <div className="min-w-0">
++                          <p className="font-bold text-sm text-charcoal-800 truncate">
++                            {plan.name}
++                            {plan.note && (
++                              <span className="mr-2 font-normal text-xs text-charcoal-500">
++                                {plan.note}
++                              </span>
++                            )}
++                          </p>
++                          <p className="text-lg font-black text-brand-900" dir="ltr">
++                            {formatPrice(latest.price, entry.currency)}{" "}
++                            <span className="text-xs font-bold text-charcoal-500">
++                              {currencySymbols[entry.currency]} / ش
++                            </span>
++                          </p>
++                          {ch.dir === "same" && ch.oldDate && (
++                            <p className="text-xs text-slate-400">
++                              ثابت منذ {ch.oldDate}
++                            </p>
++                          )}
++                          {(ch.dir === "up" || ch.dir === "down") && (
++                            <p className={`text-xs font-bold ${ch.dir === "up" ? "text-red-600" : "text-emerald-600"}`}>
++                              {ch.dir === "up" ? "▲" : "▼"} {ch.pct}% منذ {ch.oldDate}
++                            </p>
++                          )}
++                        </div>
++                        <PriceSparkline points={plan.points} trend={ch.dir} />
++                      </li>
++                    );
++                  })}
++                </ul>
++
++                <p className="mt-4 text-xs text-charcoal-500 flex items-center justify-between">
++                  <span>🔄 آخر مراجعة: {entry.updatedAt}</span>
++                  <Link
++                    href={`/apps/${entry.appSlug}`}
++                    className="font-bold text-accent-600 hover:text-accent-700"
++                  >
++                    صفحة التطبيق ←
++                  </Link>
++                </p>
++              </article>
++            );
++          })}
++        </div>
++
++        {/* المنهجية — الثقة */}
++        <section className="card-elegant p-6 border-r-4 border-r-accent-400">
++          <h2 className="heading-elegant text-xl text-brand-900">📜 إزاي بنرصد الأسعار؟</h2>
++          <ul className="mt-3 space-y-2 text-sm leading-7 text-charcoal-800">
++            <li className="flex gap-2"><span aria-hidden>•</span> مراجعة دورية للأسعار الرسمية المنشورة من كل منصة، وتوثيق كل تغيّر بتاريخه.</li>
++            <li className="flex gap-2"><span aria-hidden>•</span> الأسعار لا تشمل ضريبة القيمة المضافة وقد تختلف حسب وسيلة الدفع (تطبيق/ويب/فاتورة محمول).</li>
++            <li className="flex gap-2"><span aria-hidden>•</span> أول ما سعر يتحرك، التنبيه بيوصل للمشتركين في رادار الأسعار فورًا.</li>
++          </ul>
++        </section>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index b12ee0a..aec7a0d 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -15,6 +15,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/apps`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+     { url: `${baseUrl}/compare-hub`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
++    { url: `${baseUrl}/price-radar`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
++    { url: `${baseUrl}/calculator`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+     { url: `${baseUrl}/ai`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/business`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+diff --git a/src/components/calculator/calculator-client.tsx b/src/components/calculator/calculator-client.tsx
+new file mode 100644
+index 0000000..7fba606
+--- /dev/null
++++ b/src/components/calculator/calculator-client.tsx
+@@ -0,0 +1,266 @@
++"use client";
++
++/**
++ * 🧮 حاسبة المصروف الرقمي — الأداة التفاعلية:
++ * اختار اشتراكاتك ← شوف الإجمالي الشهري/السنوي ← اكتشف فين توفر.
++ * المشاركة عبر رابط فيه الاختيارات (?apps=netflix,shahid) — النتيجة ظاهرة
++ * في عنوان الصفحة المشارَك قبل ما الرابط يتفتح أصلًا.
++ */
++
++import { useMemo, useState } from "react";
++import { apps as allApps } from "@/data/apps";
++import { categoryLabels } from "@/lib/constants";
++import { formatMoney } from "@/lib/helpers";
++import {
++  paidAppsForCountry,
++  calcTotals,
++  categoryBreakdown,
++  swapSuggestions,
++  yearlyTips,
++  currencyOf,
++  monthlyOf
++} from "@/lib/spend";
++import { AppItem, CountryCode } from "@/lib/types";
++
++const countryNames: Record<CountryCode, string> = {
++  EG: "🇪🇬 مصر",
++  SA: "🇸🇦 السعودية",
++  AE: "🇦🇪 الإمارات"
++};
++
++export function CalculatorClient({
++  initialApps,
++  initialCountry
++}: {
++  initialApps: string[];
++  initialCountry: CountryCode;
++}) {
++  const [country, setCountry] = useState<CountryCode>(initialCountry);
++  const [selected, setSelected] = useState<Set<string>>(new Set(initialApps));
++  const [copied, setCopied] = useState(false);
++
++  const paidApps = useMemo(() => paidAppsForCountry(country), [country]);
++
++  const selectedApps = useMemo(
++    () =>
++      allApps.filter(
++        (a) => selected.has(a.slug) && monthlyOf(a, country) > 0
++      ),
++    [selected, country]
++  );
++
++  const totals = useMemo(() => calcTotals(selectedApps, country), [selectedApps, country]);
++  const breakdown = useMemo(() => categoryBreakdown(selectedApps, country), [selectedApps, country]);
++  const swaps = useMemo(() => swapSuggestions(selectedApps, country), [selectedApps, country]);
++  const annualTips = useMemo(() => yearlyTips(selectedApps, country), [selectedApps, country]);
++  const totalSwapSaving = swaps.reduce((s, x) => s + x.savingPerMonth, 0);
++  const currency = currencyOf(country);
++
++  // اختيارات مش متاحة في الدولة الحالية (فقدت عند التبديل)
++  const unavailable = useMemo(
++    () =>
++      allApps.filter(
++        (a) => selected.has(a.slug) && monthlyOf(a, country) === 0
++      ),
++    [selected, country]
++  );
++
++  function toggle(slug: string) {
++    setSelected((prev) => {
++      const next = new Set(prev);
++      next.has(slug) ? next.delete(slug) : next.add(slug);
++      return next;
++    });
++  }
++
++  function applySwap(swapSlug: string, fromSlug: string) {
++    setSelected((prev) => {
++      const next = new Set(prev);
++      next.delete(fromSlug);
++      next.add(swapSlug);
++      return next;
++    });
++  }
++
++  function shareUrl() {
++    const url = new URL(window.location.href.split("?")[0]);
++    url.searchParams.set("country", country);
++    if (selected.size) url.searchParams.set("apps", [...selected].join(","));
++    return url.toString();
++  }
++
++  async function copyShare() {
++    try {
++      await navigator.clipboard.writeText(shareUrl());
++      setCopied(true);
++      setTimeout(() => setCopied(false), 2000);
++    } catch {}
++  }
++
++  return (
++    <div className="space-y-8">
++      {/* اختيار الدولة */}
++      <div className="flex flex-wrap justify-center gap-2">
++        {(Object.keys(countryNames) as CountryCode[]).map((c) => (
++          <button
++            key={c}
++            onClick={() => setCountry(c)}
++            className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${
++              country === c
++                ? "bg-brand-900 text-white shadow-soft"
++                : "bg-white border border-cream-200 text-charcoal-500 hover:border-accent-300"
++            }`}
++          >
++            {countryNames[c]}
++          </button>
++        ))}
++      </div>
++
++      {/* اختيار الاشتراكات */}
++      <section className="card-elegant p-6">
++        <h2 className="heading-elegant text-xl text-brand-900 mb-4">
++          1️⃣ اختار اشتراكاتك الحالية
++        </h2>
++        <div className="flex flex-wrap gap-2.5">
++          {paidApps.map((app) => {
++            const isOn = selected.has(app.slug);
++            return (
++              <button
++                key={app.id}
++                onClick={() => toggle(app.slug)}
++                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition border-2 ${
++                  isOn
++                    ? "bg-brand-900 text-white border-brand-900 shadow-soft"
++                    : "bg-white text-charcoal-800 border-cream-200 hover:border-accent-300"
++                }`}
++                aria-pressed={isOn}
++              >
++                <span aria-hidden>{app.icon}</span>
++                <span>{app.name}</span>
++                <span className={`text-xs ${isOn ? "text-white/70" : "text-charcoal-500"}`} dir="ltr">
++                  {formatMoney(monthlyOf(app, country), currency)}
++                </span>
++                {isOn && <span aria-hidden>✓</span>}
++              </button>
++            );
++          })}
++        </div>
++      </section>
++
++      {/* النتيجة */}
++      {selectedApps.length > 0 ? (
++        <section className="rounded-3xl bg-brand-900 text-white p-8 text-center shadow-soft">
++          <p className="text-white/70 text-sm font-bold">إجمالي مصروفك الرقمي</p>
++          <p className="heading-display text-5xl md:text-6xl mt-2" dir="ltr">
++            {formatMoney(totals.monthly, currency)}
++          </p>
++          <p className="text-white/70 font-bold">شهريًا</p>
++          <p className="mt-4 text-2xl font-bold text-accent-400" dir="ltr">
++            {formatMoney(totals.yearly, currency)}
++            <span className="text-sm text-white/70 font-normal"> / سنويًا 😳</span>
++          </p>
++          <p className="mt-2 text-sm text-white/60">
++            {totals.count} اشتراك في {countryNames[country]}
++          </p>
++        </section>
++      ) : (
++        <section className="rounded-3xl border-2 border-dashed border-cream-300 bg-white/50 p-10 text-center">
++          <p className="text-4xl" aria-hidden>👆</p>
++          <p className="mt-3 font-bold text-charcoal-800">اختار اشتراكاتك من فوق عشان تحسب</p>
++        </section>
++      )}
++
++      {/* التفصيل بالفئة */}
++      {breakdown.length > 0 && (
++        <section className="card-elegant p-6">
++          <h2 className="heading-elegant text-xl text-brand-900 mb-4">
++            2️⃣ فلوسك رايحة فين؟
++          </h2>
++          <div className="space-y-3">
++            {breakdown.map((b) => {
++              const pct = Math.round((b.total / totals.monthly) * 100);
++              return (
++                <div key={b.category}>
++                  <div className="flex justify-between text-sm font-bold text-charcoal-800">
++                    <span>{categoryLabels[b.category as keyof typeof categoryLabels] || b.category}</span>
++                    <span dir="ltr">
++                      {formatMoney(b.total, currency)} ({pct}%)
++                    </span>
++                  </div>
++                  <div className="mt-1.5 h-3 rounded-full bg-cream-100 overflow-hidden">
++                    <div
++                      className="h-full rounded-full bg-gradient-to-l from-accent-400 to-accent-600 transition-all duration-500"
++                      style={{ width: `${pct}%` }}
++                    />
++                  </div>
++                </div>
++              );
++            })}
++          </div>
++        </section>
++      )}
++
++      {/* اقتراحات التوفير */}
++      {(swaps.length > 0 || annualTips.length > 0) && (
++        <section className="card-elegant p-6 border-r-4 border-r-sage-400">
++          <h2 className="heading-elegant text-xl text-brand-900 mb-1">
++            3️⃣ طلّع توفرنا ليك
++          </h2>
++          {totalSwapSaving > 0 && (
++            <p className="text-sm font-bold text-sage-600 mb-4">
++              💚 لو نفّذت كل المقترحات دي: توفر {formatMoney(totalSwapSaving, currency)} شهريًا ≈{" "}
++              {formatMoney(totalSwapSaving * 12, currency)} في السنة!
++            </p>
++          )}
++          <ul className="space-y-3">
++            {swaps.map((s, i) => (
++              <li key={`swap-${i}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-sage-50 border border-sage-200 p-4">
++                <p className="text-sm text-charcoal-800">
++                  <b>{s.from.icon} {s.from.name}</b> بتكلفك {formatMoney(monthlyOf(s.from, country), currency)} —{" "}
++                  <b>{s.to.icon} {s.to.name}</b> (⭐{s.to.rating}) نفس الفئة بـ{" "}
++                  {formatMoney(monthlyOf(s.to, country), currency)} بس!
++                </p>
++                <button
++                  onClick={() => applySwap(s.to.slug, s.from.slug)}
++                  className="rounded-full bg-sage-600 px-4 py-2 text-xs font-black text-white hover:bg-sage-700 transition whitespace-nowrap"
++                >
++                  بدّل ووفّر {formatMoney(s.savingPerMonth, currency)} ←
++                </button>
++              </li>
++            ))}
++            {annualTips.map((t, i) => (
++              <li key={`annual-${i}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-accent-50 border border-accent-200 p-4">
++                <p className="text-sm text-charcoal-800">
++                  باقة <b>{t.app.icon} {t.app.name}</b> السنوية ({formatMoney(t.yearly, currency)})
++                  توفرلك <b>{formatMoney(t.savingPerMonth, currency)}/شهر</b> مقارنة بالدفع الشهري.
++                </p>
++                <span className="rounded-full bg-accent-100 px-4 py-2 text-xs font-black text-accent-700 whitespace-nowrap">
++                  💡 ادفع سنوي
++                </span>
++              </li>
++            ))}
++          </ul>
++        </section>
++      )}
++
++      {/* تنبيه الغير متوفرين + مشاركة */}
++      {unavailable.length > 0 && (
++        <p className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
++          ⚠️ التطبيقات دي مش موجودة في {countryNames[country]} فاتشالت من الحساب:{" "}
++          {unavailable.map((a) => a.name).join("، ")}
++        </p>
++      )}
++
++      {selectedApps.length > 0 && (
++        <div className="flex flex-wrap justify-center gap-3">
++          <button onClick={copyShare} className="btn-primary">
++            {copied ? "✅ اتنسخ!" : "🔗 شارك حسابتك"}
++          </button>
++          <p className="text-xs text-charcoal-500 self-center">
++            الرابط بيحمل نفس اختياراتك — شاركه مع العيلة وقارنوا مصروفكم
++          </p>
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/src/components/navbar.tsx b/src/components/navbar.tsx
+index b0da2c4..1dbe654 100644
+--- a/src/components/navbar.tsx
++++ b/src/components/navbar.tsx
+@@ -48,6 +48,8 @@ export function Navbar() {
+   const links = [
+     { href: "/", label: t("nav_home") },
+     { href: "/apps", label: t("nav_apps") },
++    { href: "/price-radar", label: t("nav_radar") },
++    { href: "/calculator", label: t("nav_calculator") },
+     { href: "/compare-hub", label: t("nav_compare") },
+     { href: "/deals", label: t("nav_deals") },
+     { href: "/blog", label: t("nav_blog") }
+diff --git a/src/components/price-radar/alert-form.tsx b/src/components/price-radar/alert-form.tsx
+new file mode 100644
+index 0000000..4b4034a
+--- /dev/null
++++ b/src/components/price-radar/alert-form.tsx
+@@ -0,0 +1,102 @@
++"use client";
++
++/**
++ * نموذج تنبيهات الأسعار — حاليًا بيسجّل في جدول الـ newsletter الموجود
++ * (صفر migrations). لما نبني نظام التنبيهات الكامل، نفس الفورم يتوجه
++ * لجدول price_alerts — شوف التعليق أسفل.
++ */
++
++import { useState } from "react";
++import { createClient } from "@/lib/supabase/client";
++import { useLanguage } from "@/contexts/language-context";
++
++export function PriceAlertForm() {
++  const { lang } = useLanguage();
++  const [email, setEmail] = useState("");
++  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error" | "duplicate">("idle");
++
++  async function handleSubmit(e: React.FormEvent) {
++    e.preventDefault();
++    if (!email) return;
++    setStatus("loading");
++    try {
++      const supabase = createClient();
++      const { error } = await supabase.from("newsletter").insert({ email });
++      if (error) {
++        setStatus(error.code === "23505" ? "duplicate" : "error");
++      } else {
++        setStatus("done");
++        setEmail("");
++      }
++    } catch {
++      setStatus("error");
++    }
++  }
++
++  /*
++    TODO لما نظام التنبيهات يتطور:
++    نفّذ الـ SQL ده وأبدل الجدول:
++    create table price_alerts (
++      id uuid default gen_random_uuid() primary key,
++      email text not null,
++      app_slug text,           -- null = كل التطبيقات
++      country text,
++      created_at timestamptz default now(),
++      unique(email, app_slug, country)
++    );
++  */
++
++  const t = {
++    title: lang === "ar" ? "🔔 خلّيك أول من يعرف" : "🔔 Be the first to know",
++    desc:
++      lang === "ar"
++        ? "سجّل إيميلك وهنوصلك أول ما سعر أي اشتراك من اللي بنرصدهم يتغير — الزيادة والنقصان على السواء."
++        : "Get notified the moment any tracked subscription price changes — up or down.",
++    placeholder: lang === "ar" ? "إيميلك" : "Your email",
++    button: lang === "ar" ? "فعّل التنبيهات" : "Enable alerts",
++    done: lang === "ar" ? "✅ تمام! هنوصلك أول ما سعر يتغير" : "✅ Done! We'll alert you",
++    duplicate: lang === "ar" ? "أنت مسجّل بالفعل 👌" : "Already subscribed 👌",
++    error: lang === "ar" ? "حصل خطأ — جرب تاني" : "Something went wrong"
++  };
++
++  if (status === "done") {
++    return (
++      <div className="card-elegant p-6 text-center">
++        <p className="text-lg font-bold text-sage-600">{t.done}</p>
++      </div>
++    );
++  }
++
++  return (
++    <div className="card-elegant p-6">
++      <div className="flex flex-col md:flex-row md:items-center gap-4">
++        <div className="flex-1">
++          <h2 className="heading-elegant text-xl text-brand-900">{t.title}</h2>
++          <p className="mt-1 text-sm leading-6 text-charcoal-500">{t.desc}</p>
++        </div>
++        <form onSubmit={handleSubmit} className="flex w-full md:w-auto gap-2">
++          <input
++            type="email"
++            required
++            value={email}
++            onChange={(e) => setEmail(e.target.value)}
++            placeholder={t.placeholder}
++            className="flex-1 md:w-64 rounded-2xl border border-cream-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++          />
++          <button
++            type="submit"
++            disabled={status === "loading"}
++            className="btn-primary whitespace-nowrap disabled:opacity-60"
++          >
++            {status === "loading" ? "..." : t.button}
++          </button>
++        </form>
++      </div>
++      {(status === "duplicate" || status === "error") && (
++        <p className={`mt-2 text-sm font-bold ${status === "duplicate" ? "text-accent-600" : "text-red-600"}`}>
++          {status === "duplicate" ? t.duplicate : t.error}
++        </p>
++      )}
++    </div>
++  );
++}
+diff --git a/src/components/price-radar/sparkline.tsx b/src/components/price-radar/sparkline.tsx
+new file mode 100644
+index 0000000..7bd62d2
+--- /dev/null
++++ b/src/components/price-radar/sparkline.tsx
+@@ -0,0 +1,59 @@
++import { PricePoint } from "@/data/price-history";
++
++/**
++ * رسم مصغّر لتاريخ السعر — SVG خالص بدون أي مكتبة
++ * (Server Component: بيطلع كامل في الـ HTML، جوجل والمستخدم يشوفوه فورًا)
++ */
++export function PriceSparkline({
++  points,
++  trend,
++  width = 96,
++  height = 28
++}: {
++  points: PricePoint[];
++  trend: "up" | "down" | "same" | "new";
++  width?: number;
++  height?: number;
++}) {
++  if (!points.length) return null;
++
++  const stroke =
++    trend === "up" ? "#ef4444" : trend === "down" ? "#10b981" : "#94a3b8";
++
++  if (points.length === 1) {
++    return (
++      <svg width={width} height={height} aria-hidden="true">
++        <circle cx={width / 2} cy={height / 2} r="3" fill={stroke} />
++      </svg>
++    );
++  }
++
++  const prices = points.map((p) => p.price);
++  const min = Math.min(...prices);
++  const max = Math.max(...prices);
++  const range = max - min || 1;
++  const pad = 4;
++
++  const coords = points.map((p, i) => {
++    const x = pad + (i / (points.length - 1)) * (width - pad * 2);
++    // السعر الأعلى = نقطة أعلى في الرسم (y أصغر)
++    const y = pad + (1 - (p.price - min) / range) * (height - pad * 2);
++    return `${x.toFixed(1)},${y.toFixed(1)}`;
++  });
++
++  const last = coords[coords.length - 1].split(",");
++
++  return (
++    <svg width={width} height={height} aria-hidden="true" className="overflow-visible">
++      <polyline
++        points={coords.join(" ")}
++        fill="none"
++        stroke={stroke}
++        strokeWidth="2"
++        strokeLinecap="round"
++        strokeLinejoin="round"
++      />
++      <circle cx={last[0]} cy={last[1]} r="3" fill={stroke} />
++    </svg>
++  );
++}
+diff --git a/src/data/price-history.ts b/src/data/price-history.ts
+new file mode 100644
+index 0000000..3d4f4ca
+--- /dev/null
++++ b/src/data/price-history.ts
+@@ -0,0 +1,241 @@
++import { AppCategory, CountryCode } from "@/lib/types";
++
++/**
++ * 🚨 رادار أسعار الاشتراكات — بذرة البيانات
++ *
++ * الفلسفة: كل مرة سعر اشتراك بيتغير، ضيف PricePoint جديد في نهاية history.
++ * القيمة الحقيقية للميزة دي بتتراكم مع الوقت — بعد 6 شهور هيبقى عندك أرشيف
++ * أسعار مفيش عنده حد تاني في الوطن العربي.
++ *
++ * روتين التشغيل (لحد ما الأتمتة تتربط بـ /api/scraper):
++ * مراجعة أسبوعية للتطبيقات دي ← سعر جديد؟ ضيف نقطة + حدّث updatedAt.
++ *
++ * المصادر: الأسعار الرسمية المنشورة من المنصات/المتاجر وقت كل نقطة.
++ */
++
++export type PricePoint = {
++  /** YYYY-MM-DD */
++  date: string;
++  price: number;
++};
++
++export type RadarPlan = {
++  name: string;
++  note?: string;
++  /** مرتبة من الأقدم للأحدث */
++  points: PricePoint[];
++};
++
++export type RadarEntry = {
++  appSlug: string;
++  name: string;
++  icon: string;
++  category: AppCategory;
++  country: CountryCode;
++  currency: "EGP" | "SAR" | "AED";
++  plans: RadarPlan[];
++  /** تاريخ آخر مراجعة يدوية */
++  updatedAt: string;
++};
++
++export const priceRadar: RadarEntry[] = [
++  {
++    appSlug: "netflix",
++    name: "Netflix",
++    icon: "🎬",
++    category: "streaming",
++    country: "EG",
++    currency: "EGP",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "الأساسية",
++        note: "شاشة واحدة — HD",
++        points: [
++          { date: "2025-05-12", price: 100 },
++          { date: "2026-09-18", price: 100 }
++        ]
++      },
++      {
++        name: "القياسية",
++        note: "شاشتين — Full HD",
++        points: [
++          { date: "2025-05-12", price: 170 },
++          { date: "2026-09-18", price: 170 }
++        ]
++      },
++      {
++        name: "المميزة",
++        note: "4 شاشات — 4K",
++        points: [
++          { date: "2025-05-12", price: 240 },
++          { date: "2026-09-18", price: 240 }
++        ]
++      }
++    ]
++  },
++  {
++    appSlug: "shahid",
++    name: "شاهد VIP",
++    icon: "📺",
++    category: "streaming",
++    country: "EG",
++    currency: "EGP",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "VIP الشهرية",
++        points: [
++          { date: "2025-05-13", price: 49 },
++          { date: "2026-09-18", price: 49 }
++        ]
++      },
++      {
++        name: "الرياضية الشهرية",
++        points: [
++          { date: "2025-05-13", price: 99 },
++          { date: "2026-09-18", price: 99 }
++        ]
++      }
++    ]
++  },
++  {
++    appSlug: "shahid",
++    name: "شاهد VIP",
++    icon: "📺",
++    category: "streaming",
++    country: "SA",
++    currency: "SAR",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "VIP الشهرية",
++        points: [
++          { date: "2025-06-20", price: 29.62 },
++          { date: "2026-09-18", price: 29.62 }
++        ]
++      },
++      {
++        name: "الرياضية الشهرية",
++        points: [
++          { date: "2025-06-20", price: 57.99 },
++          { date: "2026-09-18", price: 57.99 }
++        ]
++      }
++    ]
++  },
++  {
++    appSlug: "watchit",
++    name: "واتش إت",
++    icon: "🎥",
++    category: "streaming",
++    country: "EG",
++    currency: "EGP",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "الشهرية",
++        points: [{ date: "2026-09-18", price: 49 }]
++      }
++    ]
++  },
++  {
++    appSlug: "spotify",
++    name: "Spotify",
++    icon: "🎵",
++    category: "streaming",
++    country: "EG",
++    currency: "EGP",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "Individual",
++        points: [{ date: "2026-09-18", price: 79.99 }]
++      },
++      {
++        name: "Family",
++        note: "6 حسابات",
++        points: [{ date: "2026-09-18", price: 129.99 }]
++      }
++    ]
++  },
++  {
++    appSlug: "anghami",
++    name: "أنغامي",
++    icon: "🎶",
++    category: "streaming",
++    country: "EG",
++    currency: "EGP",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "Plus الشهرية",
++        points: [{ date: "2026-09-18", price: 39.99 }]
++      }
++    ]
++  },
++  {
++    appSlug: "youtube-premium",
++    name: "YouTube Premium",
++    icon: "▶️",
++    category: "streaming",
++    country: "EG",
++    currency: "EGP",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "Individual",
++        points: [{ date: "2026-09-18", price: 84.99 }]
++      },
++      {
++        name: "Family",
++        points: [{ date: "2026-09-18", price: 169.99 }]
++      }
++    ]
++  },
++  {
++    appSlug: "osn-plus",
++    name: "OSN+",
++    icon: "📡",
++    category: "streaming",
++    country: "SA",
++    currency: "SAR",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "الشهرية",
++        points: [{ date: "2026-09-18", price: 31.5 }]
++      }
++    ]
++  },
++  {
++    appSlug: "tod",
++    name: "TOD",
++    icon: "⚽",
++    category: "streaming",
++    country: "SA",
++    currency: "SAR",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "الشهرية",
++        points: [{ date: "2026-09-18", price: 69 }]
++      }
++    ]
++  },
++  {
++    appSlug: "disney-plus",
++    name: "Disney+",
++    icon: "🏰",
++    category: "streaming",
++    country: "AE",
++    currency: "AED",
++    updatedAt: "2026-09-18",
++    plans: [
++      {
++        name: "الشهرية",
++        points: [{ date: "2026-09-18", price: 33.99 }]
++      }
++    ]
++  }
++];
+diff --git a/src/lib/price-radar.ts b/src/lib/price-radar.ts
+new file mode 100644
+index 0000000..027b8d1
+--- /dev/null
++++ b/src/lib/price-radar.ts
+@@ -0,0 +1,45 @@
++import { PricePoint, RadarEntry, RadarPlan } from "@/data/price-history";
++
++/** أحدث سعر في الباقة */
++export function latestPrice(plan: RadarPlan): PricePoint | null {
++  return plan.points.length ? plan.points[plan.points.length - 1] : null;
++}
++
++/** التغيّر بين آخر نقطتين: القيمة والنسبة والاتجاه */
++export function priceChange(plan: RadarPlan): {
++  diff: number;
++  pct: number;
++  dir: "up" | "down" | "same" | "new";
++  oldDate?: string;
++} {
++  if (plan.points.length < 2) return { diff: 0, pct: 0, dir: "new" };
++  const prev = plan.points[plan.points.length - 2];
++  const curr = plan.points[plan.points.length - 1];
++  const diff = +(curr.price - prev.price).toFixed(2);
++  if (diff === 0) return { diff: 0, pct: 0, dir: "same", oldDate: prev.date };
++  const pct = +(((curr.price - prev.price) / prev.price) * 100).toFixed(1);
++  return { diff, pct: Math.abs(pct), dir: diff > 0 ? "up" : "down", oldDate: prev.date };
++}
++
++/** أكبر تغيّر في خطط الاشتراك — يلخّص حالة الكارت */
++export function entryChange(entry: RadarEntry) {
++  const changes = entry.plans.map(priceChange);
++  const up = changes.filter((c) => c.dir === "up").sort((a, b) => b.pct - a.pct)[0];
++  const down = changes.filter((c) => c.dir === "down").sort((a, b) => b.pct - a.pct)[0];
++  if (up) return { dir: "up" as const, pct: up.pct };
++  if (down) return { dir: "down" as const, pct: down.pct };
++  const hasHistory = entry.plans.some((p) => p.points.length > 1);
++  return { dir: hasHistory ? ("same" as const) : ("new" as const), pct: 0 };
++}
++
++/** تنسيق الأرقام بالعربي */
++export function formatPrice(value: number, currency: string): string {
++  const locale = currency === "EGP" ? "ar-EG" : currency === "SAR" ? "ar-SA" : "ar-AE";
++  return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
++}
++
++export const currencySymbols: Record<string, string> = {
++  EGP: "ج.م",
++  SAR: "ر.س",
++  AED: "د.إ"
++};
+diff --git a/src/lib/spend.ts b/src/lib/spend.ts
+new file mode 100644
+index 0000000..573a4d3
+--- /dev/null
++++ b/src/lib/spend.ts
+@@ -0,0 +1,94 @@
++import { apps as allApps } from "@/data/apps";
++import { AppItem, CountryCode } from "./types";
++import { getPriceForCountry } from "./helpers";
++
++/**
++ * منطق حاسبة المصروف الرقمي — دوال نقية قابلة للاختبار.
++ */
++
++/** التطبيقات مدفوعة الاشتراك في دولة معينة */
++export function paidAppsForCountry(country: CountryCode): AppItem[] {
++  return allApps
++    .filter((a) => {
++      const p = getPriceForCountry(a, country);
++      return p && (p.monthly ?? 0) > 0;
++    })
++    .sort((a, b) => b.rating - a.rating);
++}
++
++export function monthlyOf(app: AppItem, country: CountryCode): number {
++  return getPriceForCountry(app, country)?.monthly ?? 0;
++}
++
++export function currencyOf(country: CountryCode): "EGP" | "SAR" | "AED" {
++  return country === "EG" ? "EGP" : country === "SA" ? "SAR" : "AED";
++}
++
++/** إجمالي شهري + سنوي (لو دفعت شهري طول السنة) */
++export function calcTotals(selected: AppItem[], country: CountryCode) {
++  const monthly = selected.reduce((sum, a) => sum + monthlyOf(a, country), 0);
++  return { monthly, yearly: monthly * 12, count: selected.length };
++}
++
++/** التفصيل حسب الفئة */
++export function categoryBreakdown(selected: AppItem[], country: CountryCode) {
++  const map = new Map<string, number>();
++  selected.forEach((a) => {
++    map.set(a.category, (map.get(a.category) ?? 0) + monthlyOf(a, country));
++  });
++  return [...map.entries()]
++    .map(([category, total]) => ({ category, total }))
++    .sort((a, b) => b.total - a.total);
++}
++
++/** توفير الدفع السنوي: لما يكون للتطبيق سعر سنوي أرخص من 12 شهر */
++export function yearlyTips(selected: AppItem[], country: CountryCode) {
++  return selected
++    .map((a) => {
++      const p = getPriceForCountry(a, country);
++      if (!p?.yearly || !p.monthly) return null;
++      const yearlyAsMonthly = p.yearly / 12;
++      const savingPerMonth = p.monthly - yearlyAsMonthly;
++      if (savingPerMonth <= 0) return null;
++      return { app: a, savingPerMonth, yearly: p.yearly };
++    })
++    .filter(Boolean) as { app: AppItem; savingPerMonth: number; yearly: number }[];
++}
++
++/**
++ * بدائل أوفر بنفس الفئة: ريتنج مشابه وسعر أقل.
++ * بندير مقترح واحد لكل تطبيق مختار.
++ */
++export function swapSuggestions(
++  selected: AppItem[],
++  country: CountryCode,
++  maxRatingDrop = 0.5
++) {
++  const selectedIds = new Set(selected.map((a) => a.id));
++  return selected
++    .map((a) => {
++      const myPrice = monthlyOf(a, country);
++      if (myPrice <= 0) return null;
++      const cheaper = allApps
++        .filter((c) => {
++          if (selectedIds.has(c.id) || c.category !== a.category) return false;
++          const p = monthlyOf(c, country);
++          return p > 0 && p < myPrice && c.rating >= a.rating - maxRatingDrop;
++        })
++        .sort(
++          (x, y) =>
++            y.rating - x.rating || monthlyOf(x, country) - monthlyOf(y, country)
++        )[0];
++      if (!cheaper) return null;
++      return {
++        from: a,
++        to: cheaper,
++        savingPerMonth: myPrice - monthlyOf(cheaper, country)
++      };
++    })
++    .filter(Boolean) as {
++    from: AppItem;
++    to: AppItem;
++    savingPerMonth: number;
++  }[];
++}
+diff --git a/src/lib/translations.ts b/src/lib/translations.ts
+index 7b91312..c802b66 100644
+--- a/src/lib/translations.ts
++++ b/src/lib/translations.ts
+@@ -3,6 +3,8 @@ export const translations = {
+     // Navbar
+     nav_home: "الرئيسية",
+     nav_apps: "التطبيقات",
++    nav_radar: "رادار الأسعار",
++    nav_calculator: "الحاسبة",
+     nav_compare: "المقارنات",
+     nav_deals: "العروض",
+     nav_ai: "الترشيحات الذكية",
+@@ -145,6 +147,8 @@ export const translations = {
+     // Navbar
+     nav_home: "Home",
+     nav_apps: "Apps",
++    nav_radar: "Price Radar",
++    nav_calculator: "Calculator",
+     nav_compare: "Compare",
+     nav_deals: "Deals",
+     nav_ai: "AI Recommendations",
+-- 
+2.47.3
+

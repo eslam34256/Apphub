@@ -1,0 +1,1006 @@
+From 034d29754b16ff4817b012ee2eefdca2f064736c Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Fri, 18 Sep 2026 18:17:26 +0000
+Subject: [PATCH] =?UTF-8?q?=F0=9F=8F=86=20=D9=86=D8=B8=D8=A7=D9=85=20?=
+ =?UTF-8?q?=D8=B5=D9=81=D8=AD=D8=A7=D8=AA=20=C2=AB=D8=A7=D9=84=D8=A3=D9=81?=
+ =?UTF-8?q?=D8=B6=D9=84=C2=BB=20=D8=A7=D9=84=D8=A8=D8=B1=D9=85=D8=AC=D9=8A?=
+ =?UTF-8?q?=D8=A9=20(45=20=D8=B5=D9=81=D8=AD=D8=A9=20SEO)=20+=20=D8=AA?=
+ =?UTF-8?q?=D9=83=D9=85=D9=84=D8=A9=20=D8=AD=D9=84=D9=82=D8=A9=20=D8=A7?=
+ =?UTF-8?q?=D9=84=D9=85=D9=82=D8=A7=D8=B1=D9=86=D8=A7=D8=AA?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- /best/[category]/[country]: 15 فئة × 3 دول = 45 صفحة SSG متولّدة من الداتا — ترتيب بالتقييم + أسعار محلية بالعملة + ملخصات ذكية (الأعلى تقييمًا/الأوفر/المجاني) + ميداليات 🥇🥈🥉 + روابط شقيقة بين الدول + FAQ متولّدة من البيانات
+- Schema لكل صفحة: ItemList مرتبة + FAQPage + BreadcrumbList + canonical وOG فريد
+- /best: فهرس بوابة للـ 45 صفحة موزعة بالفئات والدول
+- getAllAppsMerged: دمج قاعدة+ثابتة في lib/app-data (بتحترم إضافات الأدمن فورًا)
+- 4 مقارنات جديدة بمحتوى حقيقي: netflix-vs-watchit, shahid-vs-watchit, uber-vs-indriver, talabat-vs-elmenus — بتقفل كل روابط «ذات صلة» اللي كانت معلّقة
+- sitemap: +46 رابط (/best + 45 صفحة)
+- revalidate 3600: الترشيحات تتحدث تلقائيًا مع تحديث البيانات
+---
+ src/app/best/[category]/[country]/page.tsx | 297 +++++++++++++++++
+ src/app/best/page.tsx                      |  76 +++++
+ src/app/sitemap.ts                         |  12 +-
+ src/data/comparisons.ts                    | 364 +++++++++++++++++++++
+ src/lib/app-data.ts                        |  46 +++
+ src/lib/best.ts                            | 115 +++++++
+ 6 files changed, 909 insertions(+), 1 deletion(-)
+ create mode 100644 src/app/best/[category]/[country]/page.tsx
+ create mode 100644 src/app/best/page.tsx
+ create mode 100644 src/lib/best.ts
+
+diff --git a/src/app/best/[category]/[country]/page.tsx b/src/app/best/[category]/[country]/page.tsx
+new file mode 100644
+index 0000000..35f63e5
+--- /dev/null
++++ b/src/app/best/[category]/[country]/page.tsx
+@@ -0,0 +1,297 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { notFound } from "next/navigation";
++
++import { getAllAppsMerged } from "@/lib/app-data";
++import {
++  bestCombos,
++  countryFromSlug,
++  filterBest,
++  localPriceLabel,
++  bestVerdicts,
++  categoryEmoji,
++  categoryName,
++  BEST_COUNTRIES
++} from "@/lib/best";
++import { comparisons } from "@/data/comparisons";
++
++/**
++ * 🏆 صفحات «الأفضل في البلد» البرمجية — آلة الترافيك:
++ * أي (فئة × دولة) بتولّد صفحة SEO كاملة بالترتيب والأسعار المحلية
++ * والمقارنات المتصلة والسكيما. كتابة الكود مرة واحدة = 45 صفحة.
++ */
++
++export const revalidate = 3600;
++export const dynamicParams = false;
++
++const SITE_URL = (
++  process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app"
++).replace(/\/$/, "");
++
++const YEAR = new Date().getFullYear();
++
++export function generateStaticParams() {
++  return bestCombos();
++}
++
++type PageProps = { params: { category: string; country: string } };
++
++function validCombo(category: string, countrySlug: string) {
++  return bestCombos().some((c) => c.category === category && c.country === countrySlug);
++}
++
++export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
++  const country = countryFromSlug(params.country);
++  if (!country || !validCombo(params.category, params.country)) return {};
++
++  const cat = categoryName(params.category);
++  const url = `${SITE_URL}/best/${params.category}/${params.country}`;
++  const title = `أفضل تطبيقات ${cat} في ${country.name} ${YEAR} — ترشيحات بالأسعار والتقييم`;
++  const description = `ترشيحات AppHub لأفضل تطبيقات ${cat} المتاحة في ${country.name}: مرتّبة بالتقييم الحقيقي مع الأسعار المحلية والمميزات والبدائل الأوفر — محدثة دوريًا.`;
++
++  return {
++    title,
++    description,
++    alternates: { canonical: url },
++    openGraph: { title, description, url, type: "website", locale: "ar_EG", siteName: "AppHub" }
++  };
++}
++
++function faq(catName: string, countryName: string, list: { name: string; rating: number }[], cheapestName?: string, freeCount = 0) {
++  const top = list[0];
++  return [
++    {
++      q: `إيه أفضل تطبيق ${catName} في ${countryName}؟`,
++      a: `حسب ترتيب AppHub الحالي، ${top?.name} هو الترشيح الأول في فئة ${catName} في ${countryName} بتقييم ${top?.rating} من 5، متبوعًا بـ ${list.slice(1, 3).map((a) => a.name).join(" و") || "—"}.`
++    },
++    {
++      q: `فيه تطبيقات ${catName} مجانية في ${countryName}؟`,
++      a: freeCount > 0
++        ? `أيوه، فيه ${freeCount} من أصل ${list.length} تطبيق في القائمة بيقدم خدمته مجانًا أو بموديول مجاني. باقي القائمة ما بين اشتراكات رمزية وباقات مدفوعة بالكامل.`
++        : `معظم تطبيقات ${catName} في ${countryName} بتشتغل بموديول اشتراك أو خدمة مدفوعة — شوف الأسعار المحلية مكتوبة جنب كل تطبيق في القائمة.`
++    },
++    {
++      q: `إيه أرخص اختيار مدفوع في ${catName} بـ ${countryName}؟`,
++      a: cheapestName
++        ? `${cheapestName} هو الأقل سعرًا شهريًا بين المدفوعات في الترتيب الحالي — بس خد بالك: الأرخص مش دايمنًا الأنسب، وازن السعر جنب التقييم والمميزات الأساسية اللي محتاجها.`
++        : `القائمة الحالية كلها مجانية أو بأسعار متغيّرة حسب الاستخدام — قارن المميزات بدل الاشتراك الثابت.`
++    }
++  ];
++}
++
++export default async function BestCategoryPage({ params }: PageProps) {
++  const country = countryFromSlug(params.country);
++  if (!country || !validCombo(params.category, params.country)) notFound();
++
++  const cat = categoryName(params.category);
++  const emoji = categoryEmoji[params.category] ?? "📱";
++  const allApps = await getAllAppsMerged();
++  const list = filterBest(allApps, params.category, country.code);
++  if (!list.length) notFound();
++
++  const verdicts = bestVerdicts(list, country);
++  const faqItems = faq(cat, country.name, list, verdicts.cheapest?.name, verdicts.freeCount);
++  const relatedComparisons = comparisons.filter((c) => c.category === cat);
++  const otherCountries = BEST_COUNTRIES.filter((c) => c.code !== country.code);
++  const updatedAt = new Date().toISOString().slice(0, 10);
++
++  const schemas = [
++    {
++      "@context": "https://schema.org",
++      "@type": "ItemList",
++      name: `أفضل تطبيقات ${cat} في ${country.name}`,
++      itemListOrder: "https://schema.org/ItemListOrderDescending",
++      numberOfItems: list.length,
++      itemListElement: list.slice(0, 20).map((a, i) => ({
++        "@type": "ListItem",
++        position: i + 1,
++        name: a.name,
++        url: `${SITE_URL}/apps/${a.slug}`
++      }))
++    },
++    {
++      "@context": "https://schema.org",
++      "@type": "FAQPage",
++      mainEntity: faqItems.map((f) => ({
++        "@type": "Question",
++        name: f.q,
++        acceptedAnswer: { "@type": "Answer", text: f.a }
++      }))
++    },
++    {
++      "@context": "https://schema.org",
++      "@type": "BreadcrumbList",
++      itemListElement: [
++        { "@type": "ListItem", position: 1, name: "الرئيسية", item: SITE_URL },
++        { "@type": "ListItem", position: 2, name: "الأفضل", item: `${SITE_URL}/best` },
++        { "@type": "ListItem", position: 3, name: cat, item: `${SITE_URL}/best/${params.category}/${params.country}` }
++      ]
++    }
++  ];
++
++  const rankStyle = (i: number) =>
++    i === 0 ? "border-accent-400 ring-1 ring-accent-300" : "border-cream-200";
++
++  const rankBadge = (i: number) =>
++    ["🥇", "🥈", "🥉"][i] ?? `#${i + 1}`;
++
++  return (
++    <div className="bg-cream-50 min-h-screen">
++      {schemas.map((s, i) => (
++        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
++      ))}
++
++      <div className="max-w-5xl mx-auto px-4 py-12 space-y-10">
++        {/* مسار التنقل */}
++        <nav aria-label="مسار التنقل" className="flex flex-wrap items-center gap-2 text-sm text-charcoal-500">
++          <Link href="/" className="hover:text-accent-600 transition">الرئيسية</Link>
++          <span aria-hidden>‹</span>
++          <Link href="/best" className="hover:text-accent-600 transition">الأفضل</Link>
++          <span aria-hidden>‹</span>
++          <span className="font-bold text-brand-900">{cat} في {country.name}</span>
++        </nav>
++
++        {/* الهيدر */}
++        <header>
++          <div className="flex flex-wrap items-center gap-2 text-sm font-bold">
++            <span className="rounded-full bg-accent-100 text-accent-700 px-3 py-1">{emoji} {cat}</span>
++            <span className="rounded-full bg-sage-50 border border-sage-200 text-sage-700 px-3 py-1">{country.flag} {country.name}</span>
++          </div>
++          <h1 className="heading-display mt-4 text-3xl md:text-4xl text-brand-900">
++            أفضل تطبيقات {cat} في {country.name} — {YEAR}
++          </h1>
++          <p className="mt-3 max-w-2xl text-charcoal-500 leading-relaxed">
++            رتّبنا لك {list.length} {list.length > 2 ? "تطبيقًا" : "تطبيق"} في فئة {cat} بالتقييم
++            الحقيقي مع الأسعار المحلية بالعملة، عشان تختار في دقيقة بدل ساعات بحث.
++          </p>
++          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-sage-50 border border-sage-200 px-3 py-1 text-xs font-bold text-sage-700">
++            🔄 آخر تحديث: {updatedAt}
++          </p>
++
++          <div className="mt-5 flex flex-wrap gap-3 text-sm">
++            {verdicts.top && (
++              <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++                🏆 الأعلى تقييمًا: {verdicts.top.name} ⭐{verdicts.top.rating}
++              </span>
++            )}
++            {verdicts.cheapest && (
++              <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++                💰 الأوفر: {verdicts.cheapest.name} ({localPriceLabel(verdicts.cheapest, country)})
++              </span>
++            )}
++            {verdicts.freeCount > 0 && (
++              <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++                🆓 {verdicts.freeCount} مجاني
++              </span>
++            )}
++          </div>
++        </header>
++
++        {/* القائمة المرتبة */}
++        <ol className="space-y-4">
++          {list.map((app, i) => (
++            <li key={app.slug}>
++              <div className={`card-elegant flex flex-col sm:flex-row sm:items-center gap-4 p-5 border-r-4 ${rankStyle(i)}`}>
++                <div className="flex items-center gap-4 flex-1 min-w-0">
++                  <span className="w-12 shrink-0 text-center font-black text-lg text-charcoal-500">
++                    {rankBadge(i)}
++                  </span>
++                  <span className="w-14 h-14 rounded-2xl bg-cream-100 flex items-center justify-center text-4xl shadow-soft shrink-0">
++                    {app.icon}
++                  </span>
++                  <div className="min-w-0">
++                    <h2 className="font-bold text-lg text-brand-900 truncate">
++                      <Link href={`/apps/${app.slug}`} className="hover:text-accent-600 transition">
++                        {app.name}
++                      </Link>
++                    </h2>
++                    <p className="text-sm text-charcoal-500 truncate">{app.shortDescription}</p>
++                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-bold">
++                      <span className="text-amber-600">⭐ {app.rating}</span>
++                      <span className="rounded-full bg-sage-50 border border-sage-200 text-sage-700 px-2 py-0.5">
++                        {localPriceLabel(app, country)}
++                      </span>
++                      {app.pricing.find((p) => p.country === country.code)?.note && (
++                        <span className="text-charcoal-500 font-normal">
++                          💡 {app.pricing.find((p) => p.country === country.code)?.note}
++                        </span>
++                      )}
++                    </div>
++                  </div>
++                </div>
++                <div className="flex sm:flex-col gap-2 shrink-0">
++                  <Link
++                    href={`/apps/${app.slug}`}
++                    className="btn-primary text-center text-sm whitespace-nowrap"
++                  >
++                    التفاصيل ←
++                  </Link>
++                </div>
++              </div>
++            </li>
++          ))}
++        </ol>
++
++        {/* مقارنات متصلة */}
++        {relatedComparisons.length > 0 && (
++          <section aria-labelledby="rel" className="card-elegant p-6">
++            <h2 id="rel" className="heading-elegant text-xl text-brand-900 mb-4">
++              ⚖️ محتار بينهم؟ قارنهم وجهًا لوجه
++            </h2>
++            <div className="flex flex-wrap gap-3">
++              {relatedComparisons.map((c) => (
++                <Link
++                  key={c.slug}
++                  href={`/compare/${c.slug}`}
++                  className="rounded-full bg-cream-100 px-4 py-2 text-sm font-bold text-brand-900 hover:bg-accent-100 hover:text-accent-700 transition"
++                >
++                  {c.h1} ←
++                </Link>
++              ))}
++            </div>
++          </section>
++        )}
++
++        {/* FAQ */}
++        <section aria-labelledby="faq">
++          <h2 id="faq" className="heading-elegant text-2xl text-brand-900 mb-4">🤔 أسئلة شائعة</h2>
++          <div className="space-y-3">
++            {faqItems.map((f, i) => (
++              <details key={i} className="card-elegant group p-5 open:ring-1 open:ring-accent-300">
++                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-brand-900 marker:hidden">
++                  {f.q}
++                  <span aria-hidden className="shrink-0 text-charcoal-500 transition-transform group-open:rotate-180">⌄</span>
++                </summary>
++                <p className="mt-3 leading-8 text-charcoal-500">{f.a}</p>
++              </details>
++            ))}
++          </div>
++        </section>
++
++        {/* روابط شقيقة: نفس الفئة في دول تانية */}
++        <section className="rounded-3xl bg-brand-900 p-6 text-white">
++          <p className="font-bold text-white/90">
++            {country.flag} بتتفرج من غير {country.name}؟ شوف نفس القائمة هنا:
++          </p>
++          <div className="mt-3 flex flex-wrap gap-2">
++            {otherCountries.map((c) => (
++              <Link
++                key={c.code}
++                href={`/best/${params.category}/${c.slug}`}
++                className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold hover:bg-white/20 transition"
++              >
++                {c.flag} أفضل {cat} في {c.name}
++              </Link>
++            ))}
++            <Link
++              href="/best"
++              className="rounded-full bg-accent-400 px-4 py-2 text-sm font-black text-brand-900 hover:bg-accent-300 transition"
++            >
++              كل الترشيحات ←
++            </Link>
++          </div>
++        </section>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/best/page.tsx b/src/app/best/page.tsx
+new file mode 100644
+index 0000000..a0a2fcd
+--- /dev/null
++++ b/src/app/best/page.tsx
+@@ -0,0 +1,76 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import {
++  BEST_CATEGORIES,
++  BEST_COUNTRIES,
++  categoryEmoji,
++  categoryName,
++  comboAppCount
++} from "@/lib/best";
++
++/**
++ * /best — فهرس صفحات الترشيحات البرمجية (45 صفحة).
++ * نقطة دخول جوجل والمستخدمين لكل فئة × دولة.
++ */
++
++export const metadata: Metadata = {
++  title: "الأفضل في بلدك — ترشيحات التطبيقات حسب الفئة والدولة",
++  description:
++    "ترشيحات AppHub المرتبة لأفضل التطبيقات في كل فئة (ستريمنج، أكل، مشاوير، تقسيط...) مخصوصة لكل دولة: مصر والسعودية والإمارات — بالأسعار المحلية والتقييم الحقيقي.",
++  alternates: { canonical: "https://apphub-eight.vercel.app/best" }
++};
++
++export default function BestIndexPage() {
++  return (
++    <div className="bg-cream-50 min-h-screen">
++      <div className="max-w-6xl mx-auto px-4 py-12 space-y-12">
++        <header className="text-center">
++          <span className="rounded-full bg-accent-100 text-accent-700 px-4 py-1.5 text-sm font-bold">
++            🏆 ترشيحات مرتبة
++          </span>
++          <h1 className="heading-display mt-4 text-4xl md:text-5xl text-brand-900">
++            الأفضل في بلدك
++          </h1>
++          <p className="mt-3 max-w-2xl mx-auto text-charcoal-500 leading-relaxed">
++            اختار فئتك ودولتك — وهتلاقي القائمة مرتبة بالتقييم مع الأسعار
++            المحلية بالعملة والمقارنات المتصلة. مش قايمة عشوائية — ترتيب على بيانات.
++          </p>
++        </header>
++
++        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
++          {BEST_CATEGORIES.map((cat) => {
++            const availableCountries = BEST_COUNTRIES.filter(
++              (c) => comboAppCount(cat, c.code) >= 1
++            );
++            return (
++              <div key={cat} className="card-elegant p-5">
++                <div className="flex items-center gap-3">
++                  <span className="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-3xl shadow-soft">
++                    {categoryEmoji[cat] ?? "📱"}
++                  </span>
++                  <div>
++                    <h2 className="font-bold text-brand-900">{categoryName(cat)}</h2>
++                    <p className="text-xs text-charcoal-500">
++                      {comboAppCount(cat, "EG") + comboAppCount(cat, "SA") + comboAppCount(cat, "AE")} ترشيح إجمالي
++                    </p>
++                  </div>
++                </div>
++                <div className="mt-4 flex flex-wrap gap-2">
++                  {availableCountries.map((c) => (
++                    <Link
++                      key={c.code}
++                      href={`/best/${cat}/${c.slug}`}
++                      className="rounded-full border-2 border-cream-200 bg-white px-4 py-2 text-sm font-bold text-charcoal-800 transition hover:border-accent-300 hover:text-accent-700"
++                    >
++                      {c.flag} {c.name}
++                    </Link>
++                  ))}
++                </div>
++              </div>
++            );
++          })}
++        </div>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index aec7a0d..29f2c02 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -1,6 +1,7 @@
+ import { MetadataRoute } from "next";
+ import { apps as staticApps } from "@/data/apps";
+ import { comparisons } from "@/data/comparisons";
++import { bestCombos } from "@/lib/best";
+ import { createClient } from "@/lib/supabase/server";
+ 
+ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+@@ -17,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/price-radar`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+     { url: `${baseUrl}/calculator`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
++    { url: `${baseUrl}/best`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+     { url: `${baseUrl}/ai`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/business`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+@@ -64,5 +66,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     priority: 0.8
+   }));
+ 
+-  return [...staticPages, ...comparisonPages, ...appPages, ...staticAppPages];
++  // صفحات «الأفضل في البلد» — 45 صفحة SEO برمجية
++  const bestPages: MetadataRoute.Sitemap = bestCombos().map((combo) => ({
++    url: `${baseUrl}/best/${combo.category}/${combo.country}`,
++    lastModified: now,
++    changeFrequency: "weekly" as const,
++    priority: 0.8
++  }));
++
++  return [...staticPages, ...comparisonPages, ...bestPages, ...appPages, ...staticAppPages];
+ }
+\ No newline at end of file
+diff --git a/src/data/comparisons.ts b/src/data/comparisons.ts
+index a86ea2d..7449970 100644
+--- a/src/data/comparisons.ts
++++ b/src/data/comparisons.ts
+@@ -327,6 +327,370 @@ export const comparisons: Comparison[] = [
+     related: ['uber-vs-indriver', 'talabat-vs-elmenus'],
+     updatedAt: '2026-09-18',
+   },
++  {
++    slug: 'netflix-vs-watchit',
++    category: 'ستريمنج',
++    apps: [
++      { appSlug: 'netflix', name: 'نتفليكس', icon: '🎬', rating: 4.7 },
++      { appSlug: 'watchit', name: 'واتش إت', icon: '🎥', rating: 4.3 },
++    ],
++    metaTitle: 'نتفليكس vs واتش إت: مقارنة بالأسعار والمحتوى 2026',
++    metaDescription:
++      'مقارنة صريحة بين نتفليكس وواتش إت: السعر في مصر، المحتوى المصري والعالمي، جودة العرض، والقنوات المباشرة — أنهي منصة تستاهل فلوسك فعلاً؟',
++    h1: 'نتفليكس vs واتش إت',
++    intro:
++      'سؤال المصري الأسبوعي: أفعّل Netflix ولا WatchiT؟ العالمية بمكتبتها الضخمة في وش، والمصرية الأصلية بنص السعر تقريبًا في وش تاني. قارنّاهم بند ببند بالأرقام الحالية.',
++    verdict:
++      'لو بيتك بيتفرج أساسًا على الدراما المصرية وأعمال ON الأصلية، WatchiT تكفيك وبنص السعر (٤٩ مقابل ١٠٠ ج.م). لو عايز مكتبة عالمية وترجمة ودبلجة وإنتاج أصلي، نتفليكس هي الإجابة. الوصفة الشائعة الموفرة: WatchiT ثابتة للمحتوى المحلي + نتفليكس شهرين على شهرين بدل اشتراك دائم.',
++    bestFor: [
++      { appIndex: 1, label: 'عائلة مصرية بتتابع المسلسلات المصرية أول بأول' },
++      { appIndex: 0, label: 'محبي الأفلام والمسلسلات الأجنبية والوثائقيات' },
++      { appIndex: 1, label: 'محدود الميزانية عايز يسد احتياج الدراما اليومية' },
++      { appIndex: 0, label: 'بيتفرّج بجودة 4K على تلفزيون كبير' },
++    ],
++    criteria: [
++      { label: 'يبدأ من (شهريًا في مصر)', values: ['١٠٠ ج.م', '٤٩ ج.م'], winner: 1 },
++      { label: 'المحتوى المصري', values: ['محدود نسبيًا', 'الأقوى: أعمال ON وأصليات مصرية'], winner: 1 },
++      { label: 'المحتوى العالمي', values: ['الأضخم عالميًا', 'محدود جدًا'], winner: 0 },
++      { label: 'بث مباشر وقنوات', values: ['غير متاح', 'قنوات مصرية مباشرة'], winner: 1 },
++      { label: 'جودة العرض', values: ['حتى 4K HDR', 'HD غالبًا'], winner: 0 },
++      { label: 'التوفر الجغرافي', values: ['مصر والخليج وكل العالم تقريبًا', 'مصر أساسًا'], winner: 0 },
++      { label: 'الاشتراك السنوي', values: ['غير متاح رسميًا', '٥٨٨ ج.م (~حدود شهري توفير)'] },
++      { label: 'تحميل أوفلاين', values: ['متاح', 'متاح'] },
++      { label: 'الترجمة والدبلجة', values: ['ممتازة ومتنوعة', 'أساسية على المحتوى الأجنبي'], winner: 0 },
++    ],
++    pros: [
++      [
++        'مكتبة عالمية بتتحدث أسبوعيًا',
++        'جودة صورة وصوت متفوقة (4K + Spatial)',
++        'ترجمة ودبلجة عربية احترافية',
++        'يعمل في كل الدول تقريبًا',
++      ],
++      [
++        'سعر منافس جدًا: ٤٩ ج.م شهريًا',
++        'حصريات الدراما المصرية أول بأول',
++        'بث مباشر لقنوات مصرية',
++        'اشتراك سنوي موفر (٥٨٨ ج.م)',
++      ],
++    ],
++    cons: [
++      [
++        'أضعف محتوى عربي بين المنصات الكبيرة',
++        'أغلى من البدائل المحلية',
++        'لا يوجد بث مباشر',
++      ],
++      [
++        'خارج مصر محدود جدًا',
++        'مكتبة عالمية شبه معدومة',
++        'الواجهة أبطأ من المنافسين أحيانًا',
++      ],
++    ],
++    pricing: [
++      {
++        country: '🇪🇬 مصر',
++        plans: [
++          { appIndex: 0, name: 'الأساسية', price: '١٠٠ ج.م / شهريًا', note: 'شاشة واحدة — HD' },
++          { appIndex: 0, name: 'القياسية', price: '١٧٠ ج.م / شهريًا' },
++          { appIndex: 1, name: 'الشهرية', price: '٤٩ ج.م / شهريًا' },
++          { appIndex: 1, name: 'السنوية', price: '٥٨٨ ج.م / سنويًا', note: 'تعادل ~٤٩ ج.م شهريًا' },
++        ],
++        footnote: 'الأسعار قد لا تشمل الضريبة وتتغير حسب وسيلة الدفع.',
++      },
++    ],
++    faq: [
++      {
++        q: 'واتش إت بتعوض عن نتفليكس؟',
++        a: 'لو استهلاكك دراما مصرية ومحتوى محلي — أيوه بنسبة كبيرة وبنص السعر. لو بتتفرج على مسلسلات وأفلام أجنبية باستمرار — لأ، مكتبة WatchiT الأجنبية محدودة جدًا.',
++      },
++      {
++        q: 'واتش إت شغالة برّا مصر؟',
++        a: 'الخدمة تركّز أساسًا على مصر. لو مسافر أو مقيم في الخليج، شاهد أو نتفليكس اختيارات أضمن للتغطية.',
++      },
++      {
++        q: 'أرخص توليفة تجمع محلي وعالمي؟',
++        a: 'الوصفة المنتشرة: WatchiT شهرية (٤٩ ج) + نتفليكس الأساسية (١٠٠ ج) = ١٤٩ ج في الشهر — تغطية كاملة محلي وعالمي بأقل من سعر باقة نتفليكس القياسية وحدها.',
++      },
++      {
++        q: 'فيه تجربة مجانية؟',
++        a: 'واتش إت بتقدم فترات تجربة ضمن عروض متغيرة، بينما نتفليكس أوقفت التجربة المجانية في المنطقة.',
++      },
++    ],
++    related: ['netflix-vs-shahid', 'shahid-vs-watchit'],
++    updatedAt: '2026-09-18',
++  },
++
++  {
++    slug: 'shahid-vs-watchit',
++    category: 'ستريمنج',
++    apps: [
++      { appSlug: 'shahid', name: 'شاهد VIP', icon: '📺', rating: 4.5 },
++      { appSlug: 'watchit', name: 'واتش إت', icon: '🎥', rating: 4.3 },
++    ],
++    metaTitle: 'شاهد vs واتش إت: أنهي منصة عربية تختار في 2026؟',
++    metaDescription:
++      'قمة المحتوى العربي: شاهد VIP ولا واتش إت؟ مقارنة تفصيلية بالسعر والحصريات والبث المباشر والرياضة في مصر والسعودية — والخطة الموفرة للتبديل بينهم.',
++    h1: 'شاهد vs واتش إت',
++    intro:
++      'الاتنين بـ ٤٩ ج.م في مصر، والاتنين مدرسة عربية — بس بمحتوى مختلف جوهريًا. MBC والخليج ورمضان ضد ON والدراما المصرية الأصلية. إزاي تختار صح لموسمك؟',
++    verdict:
++      'لو قلبك مع دراما رمضان وMBC الخليجية والبث المباشر والرياضة — شاهد بلا تفكير. لو تخصصك مسلسلات ON والأعمال المصرية الأصلية والمحتوى الحماسي اليومي — واتش إت. وبمّا إنهم نفس السعر، الذكي بيعمل تبديل موسمي: شاهد في رمضان، واتش إت باقي السنة عند الأعمال المصرية الكبيرة.',
++    bestFor: [
++      { appIndex: 0, label: 'متابع دراما رمضان وMBC والمحتوى الخليجي' },
++      { appIndex: 1, label: 'متابع أعمال ON والمسلسلات المصرية الأصلية' },
++      { appIndex: 0, label: 'مشجع كورة (باقة شاهد الرياضية)' },
++      { appIndex: 1, label: 'مستخدم مصري بحت عايز أعمق مكتبة محلية' },
++    ],
++    criteria: [
++      { label: 'السعر الشهري في مصر', values: ['٤٩ ج.م', '٤٩ ج.م'] },
++      { label: 'محتوى MBC والخليجي', values: ['حصري وكامل', 'غير متاح'], winner: 0 },
++      { label: 'الأعمال المصرية الأصلية', values: ['جيدة', 'أعمق — ON والمنتجون المحليون'], winner: 1 },
++      { label: 'بث مباشر وقنوات', values: ['قنوات MBC + رياضية', 'قنوات مصرية'], },
++      { label: 'محتوى رياضي', values: ['باقة رياضية كاملة', 'محدود'], winner: 0 },
++      { label: 'التوفر الجغرافي', values: ['مصر والسعودية والإمارات وأكثر', 'مصر أساسًا'], winner: 0 },
++      { label: 'أعمال أول بأول', values: ['حصريات رمضان والمواسم', 'أول بأول الأعمال المصرية'] },
++      { label: 'الاشتراك السنوي', values: ['٣٤٠ ج.م (~٢٨/شهر)', '٥٨٨ ج.م (~٤٩/شهر)'], winner: 0 },
++    ],
++    pros: [
++      [
++        'أضخم مكتبة عربية (MBC + حصريات)',
++        'بث مباشر وباقة رياضية',
++        'تغطية خليجية كاملة — تشتغل في السعودية والإمارات',
++        'سنوي أرخص فعليًا (٣٤٠ ج)',
++      ],
++      [
++        'الأصليات المصرية الأعمق',
++        'أعمال ON أول بأول',
++        'سعر منافس وثابت',
++        'واجهة عربية بسيطة على المستخدم المصري',
++      ],
++    ],
++    cons: [
++      [
++        'بعض محتوى المصري الأصلي غير موجود',
++        'العروض تختلف حسب البلد',
++        'الأصلي المصري في رمضان أساسًا',
++      ],
++      [
++        'مصر أساسًا — خارجها محدود',
++        'لا يوجد محتوى خليجي',
++        'السنوي بيوفر أقل بكثير من شاهد',
++      ],
++    ],
++    pricing: [
++      {
++        country: '🇪🇬 مصر',
++        plans: [
++          { appIndex: 0, name: 'VIP الشهرية', price: '٤٩ ج.م / شهريًا' },
++          { appIndex: 0, name: 'VIP السنوية', price: '٣٤٠ ج.م / سنويًا', note: 'تعادل ~٢٨ ج.م شهريًا' },
++          { appIndex: 1, name: 'الشهرية', price: '٤٩ ج.م / شهريًا' },
++          { appIndex: 1, name: 'السنوية', price: '٥٨٨ ج.م / سنويًا' },
++        ],
++        footnote: 'الأسعار قد لا تشمل الضريبة وتتغير حسب وسيلة الدفع.',
++      },
++      {
++        country: '🇸🇦 السعودية',
++        plans: [
++          { appIndex: 0, name: 'VIP الشهرية', price: '٢٩.٦٢ ر.س / شهريًا' },
++          { appIndex: 0, name: 'VIP السنوية', price: '٢٧٠ ر.س / سنويًا' },
++        ],
++        footnote: 'واتش إت غير متاحة فعليًا في السعودية — شاهد هو الاختيار العربي الطبيعي هناك.',
++      },
++    ],
++    faq: [
++      {
++        q: 'شاهد ولا واتش إت — أنهي فيه مسلسلات أكثر؟',
++        a: 'كميًا شاهد أوسع (MBC بالكامل + حصريات عربية وخليجية). لكن في الأعمال المصرية الأصلية ونجوم ON تحديدًا، واتش إت أعمق. الاختيار على ذوقك في المحتوى مش الرقم.',
++      },
++      {
++        q: 'أدفع سنوي ولا شهري؟',
++        a: 'لو هتشترك طول السنة: سنوي شاهد (٣٤٠ ج ≈ ٢٨/شهر) أوفر بوضوح. لو بتتفرج موسميًا — التبديل الشهري بين المنصتين أذكى: شاهد في رمضان، واتش إت في مواسم الأعمال المصرية.',
++      },
++      {
++        q: 'مين فيه رياضة وبث مباشر؟',
++        a: 'شاهد عندها باقة رياضية وبث قنوات MBC مباشر. واتش إت عندها بث قنوات مصرية بس بدون منظومة رياضية مدفوعة بنفس القوة.',
++      },
++      {
++        q: 'ساكن في السعودية — واتش إت تنفع؟',
++        a: 'الخدمة مصممة للسوق المصري أساسًا. في السعودية والخليج عمومًا، شاهد هو البديل العربي الطبيعي بنفس الشريحة السعرية تقريبًا.',
++      },
++    ],
++    related: ['netflix-vs-shahid', 'netflix-vs-watchit'],
++    updatedAt: '2026-09-18',
++  },
++
++  {
++    slug: 'uber-vs-indriver',
++    category: 'مشاوير',
++    apps: [
++      { appSlug: 'uber', name: 'أوبر', icon: '🚘', rating: 4.5 },
++      { appSlug: 'indriver', name: 'InDrive', icon: '🚗', rating: 4.4 },
++    ],
++    metaTitle: 'أوبر vs إن درايف: أنهي أوفر لمشاويرك 2026؟',
++    metaDescription:
++      'مقارنة أوبر وInDrive في مصر: نموذج التفاوض على السعر ضد التسعير الثابت، التغطية، طرق الدفع، الأمان، وامتى واحد منهم يطلع أرخص فعلاً.',
++    h1: 'أوبر vs إن درايف',
++    intro:
++      'مدرستان مختلفتان تمامًا في المشاوير: أوبر بسعر ثابت واضح قبل ما تركب، وInDrive بيخليك تفاوض على السعر بنفسك زي السوق الحقيقي. مين يوفرلك أكتر؟ الإجابة بالتفصيل.',
++    verdict:
++      'لو السعر أولويتك الأولى، InDrive غالبًا بيطلع أرخص — خاصة في المشاوير الطويلة وخارج أوقات الذروة — لإنك بتعرض سعرك والسواق بياخد أو يرفع. لو راحة البال والثبات ودفع البطاقة وخدمة متوقعة في السفر، أوبر أضمن. المعادلة الذهبية: جروع على InDrive، لو مفيش قبول سريع اطلب أوبر.',
++    bestFor: [
++      { appIndex: 1, label: 'ميزانية مضبوطة وعايز تفاوض على كل مشوار' },
++      { appIndex: 0, label: 'بيدفع ببطاقة وبيسافر برّه مصر' },
++      { appIndex: 1, label: 'مشاوير طويلة بين الأحياء والمدن' },
++      { appIndex: 0, label: 'عايز تجربة ثابتة وتطبيق أقل تفاوضًا' },
++    ],
++    criteria: [
++      { label: 'نموذج التسعير', values: ['سعر ثابت محسوب قبل الطلب', 'أنت اللي بتعرض سعرك والسواق يوافق أو يرفع'] },
++      { label: 'السعر العملي', values: ['متوسط إلى أعلى وقت الذروة', 'غالبًا أرخص بالتفاوض'], winner: 1 },
++      { label: 'دفع البطاقة', values: ['كاش + بطاقات', 'كاش أساسًا (حسب الدولة)'], winner: 0 },
++      { label: 'التغطية في مصر', values: ['المدن الكبرى بكثافة', 'انتشار قوي حتى في مدن ثانوية'], },
++      { label: 'التغطية العالمية', values: ['+70 دولة', 'انتشار دولي محدود'], winner: 0 },
++      { label: 'الشفافية', values: ['تعرف السعر قبل التأكيد', 'تعرف السعر بعد قبول العرض'] },
++      { label: 'وقت الذروة (+40%)', values: ['أسعار اندفاعية واضحة', 'ممكن تعرض أكتر وتتحرك أسرع'] },
++      { label: 'سرعة الاستجابة', values: ['عالية في المناطق المغطاة', 'تعتمد على جاذبية عرضك'] },
++    ],
++    pros: [
++      [
++        'سعر نهائي واضح قبل الطلب',
++        'دفع بطاقة ومحافظ وكاش',
++        'موثوقية عالمية ودعم قوي',
++        'تتبع رحلة ومشاركتها مع الأهل',
++      ],
++      [
++        'تفاوض يديك سعر أرخص غالبًا',
++        'مرونة كاملة: حدد سعرك وسقفك',
++        'انتشار قوي في مدن كتير في مصر',
++        'واجهة بسيطة بدون تعقيد',
++      ],
++    ],
++    cons: [
++      [
++        'أسعار الذروة ممكن تكون مؤلمة',
++        'رسوم إلغاء أحيانًا',
++        'لا تفاوض — اللي بيظهر هو اللي تدفعه',
++      ],
++      [
++        'كاش غالبًا — مفيش دفع إلكتروني متكامل',
++        'عرضك ممكن يترفض لو أقل من السوق',
++        'جودة السواقين متفاوتة حسب المنطقة',
++      ],
++    ],
++    pricing: [
++      {
++        country: 'ℹ️ ملحوظة تسعير',
++        plans: [],
++        footnote:
++          'أسعار المشاوير ديناميكية (مسافة + وقت + طلب) — مفيش سعر ثابت نقارنه. تجربة عملية: نفس الرحلة على التطبيقين في نفس الدقيقة بتكشف الفرق فورًا، وبتختلف من منطقة لأخرى.',
++      },
++    ],
++    faq: [
++      {
++        q: 'InDrive أرخص فعلاً من أوبر؟',
++        a: 'في تجارب المستخدمين المتكررة بمصر: غالبًا أيوه، خصوصًا المشاوير الطويلة وخارج الذروة — بفارق ممكن يوصل 20-30%. بس لو عرضك أقل من سعر السوق مش هتلاقي سواق يقبل، وقتها أوبر أسرع.',
++      },
++      {
++        q: 'إزاي أحط سعر مناسب في InDrive؟',
++        a: 'ابدأ بالسعر المقترح من التطبيق وقلل 10-15% — لو مفيش قبول خلال دقيقتين ارفع تدريجيًا. وقت الزحمة أضف 10-20% عن المقترح عشان يتحرك سواق بسرعة.',
++      },
++      {
++        q: 'أنهي أأمن؟',
++        a: 'الاتنين عندهم تتبع رحلة ومشاركة لحظية وزر طوارئ. أوبر ناضجة أكتر في أنظمة الدعم والاسترجاع، وInDrive بيتحسن بسرعة في المنطقة.',
++      },
++      {
++        q: 'InDrive فيه دفع ببطاقة؟',
++        a: 'الموديل الأساسي كاش (أو محافظ محلية حسب الدولة). لو معتمد على البطاقة في كل حاجة، أوبر أنسب ليك.',
++      },
++    ],
++    related: ['uber-vs-careem', 'talabat-vs-elmenus'],
++    updatedAt: '2026-09-18',
++  },
++
++  {
++    slug: 'talabat-vs-elmenus',
++    category: 'أكل وتوصيل',
++    apps: [
++      { appSlug: 'talabat', name: 'طلبات', icon: '🍔', rating: 4.4 },
++      { appSlug: 'elmenus', name: 'إلمنيوز', icon: '📋', rating: 4.0 },
++    ],
++    metaTitle: 'طلبات vs إلمنيوز: أنهي أحسن لطلب الأكل في مصر 2026؟',
++    metaDescription:
++      'مقارنة طلبات وإلمنيوز في مصر: عدد المطاعم، رسوم التوصيل، العروض، اكتشاف المطاعم بالصور والتقييمات، واشتراك Pro — أنهي تطبيق يكون أول زر عندك؟',
++    h1: 'طلبات vs إلمنيوز',
++    intro:
++      'طلب أكل ولا استكشاف مطعم؟ طلبات عملاق التوصيل في المنطقة بأكبر شبكة، وإلمنيوز أسطورة الاكتشاف المصرية بصور ومنيوهات حقيقية. الاتنين بيوصلوك للأكل — بس من طريقين مختلفين.',
++    verdict:
++      'لو عايز توصيل سريع وتغطية واسعة وعروض يومية، طلبات هي زرّك الأول — واشتراك Pro (٤٩ ج/شهر) بيغير الحسابات لو بتطلب أكتر من 3 مرات شهريًا. لو بتحب تستكشف مطاعم جديدة بصور حقيقية وتقييمات مجتمعية قبل ما تطلب، إلمنيوز تجربة أعمق في مصر. الحقيقة: القمة بيستخدم الاتنين — يكتشف على إلمنيوز ويطلب على طلبات.',
++    bestFor: [
++      { appIndex: 0, label: 'بيطلب أكل متكرر وعايز سرعة وتغطية وبرومو' },
++      { appIndex: 1, label: 'بيستكشف مطاعم جديدة ويثق في صور وتقييمات الناس' },
++      { appIndex: 0, label: 'مستخدم خليجي (طلبات تعمل في السعودية والإمارات)' },
++      { appIndex: 1, label: 'عايز يشوف المنيو الحقيقي بالأسعار قبل ما يقرر' },
++    ],
++    criteria: [
++      { label: 'حجم شبكة المطاعم', values: ['الأكبر في المنطقة', 'كبيرة في مصر ومركزة'] , winner: 0 },
++      { label: 'التغطية الجغرافية', values: ['مصر والسعودية والإمارات وأكثر', 'مصر أساسًا'], winner: 0 },
++      { label: 'اكتشاف المطاعم بالصور', values: ['قوائم أساسية', 'منيوهات وصور حقيقية وتقييمات بصرية'], winner: 1 },
++      { label: 'تقييمات المجتمع', values: ['تقييم طلبات مباشر', 'منظومة مراجعات وصور المستخدمين'], winner: 1 },
++      { label: 'اشتراك توفير', values: ['Talabat Pro: توصيل مجاني وعروض', 'عروض موسمية حسب المطاعم'], winner: 0 },
++      { label: 'خدمات إضافية', values: ['بقالة، فلور، صيدلية في أسواق محددة', 'تركيز كامل على المطاعم'], winner: 0 },
++      { label: 'دقة المنيو والأسعار', values: ['متفاوتة حسب المطعم', 'منيوهات محدثة من المجتمع'], winner: 1 },
++      { label: 'رسوم التوصيل', values: ['متغيرة + رسوم خدمة', 'متغيرة حسب المطعم والمنطقة'] },
++    ],
++    pros: [
++      [
++        'شبكة مطاعم الأوسع في المنطقة',
++        'عروض وبرومو يومية',
++        'Pro يلغي رسوم التوصيل على آلاف المطاعم',
++        'تغطية خليجية كاملة',
++      ],
++      [
++        'أعمق تجربة اكتشاف مطاعم في مصر',
++        'صور ومنيوهات حقيقية من المستخدمين',
++        'تقييمات مجتمعية مفصلة بالأطباق',
++        'حجوزات وقوائم مناسبات في أجزاء من التطبيق',
++      ],
++    ],
++    cons: [
++      [
++        'رسوم توصيل+خدمة بتراكم على الطلبات الصغيرة',
++        'تجربة الاستكشاف أقل ثراء',
++        'السرعة تتفاوت حسب المنطقة',
++      ],
++      [
++        'مصر فقط فعليًا',
++        'التوصيل مش دايمنًا بنفس سرعة الكبار',
++        'مكتبة أصغر إجمالاً',
++      ],
++    ],
++    pricing: [
++      {
++        country: 'ℹ️ ملحوظة تكلفة الاستخدام',
++        plans: [],
++        footnote:
++          'التطبيقات نفسها مجانية — التكلفة الحقيقية في رسوم التوصيل والخدمة لكل طلب. طلبات Pro (~٤٩ ج/شهر) بيلغي رسوم التوصيل على مطاعم محددة: لو بتطلب 3+ مرات شهريًا اشتراكه غالبًا موفر.',
++      },
++    ],
++    faq: [
++      {
++        q: 'اشتراك Talabat Pro يستحق؟',
++        a: 'احسبها: لو رسوم التوصيل بتدفعها 3 مرات شهريًا أو أكتر (~15-20 ج للطلب)، الـ Pro بـ ٤٩ ج مرجّح يوفرلك فلوس. بتطلب مرة أو اتنين؟ الكاش أنسب.',
++      },
++      {
++        q: 'إلمنيوز فيه توصيل فعلاً ولا مجرد دليل؟',
++        a: 'الاتنين: إلمنيوز بدأ كدليل مطاعم وبقى فيه طلب أونلاين في مناطق كتير في مصر، بس قوته الحقيقية لسه في الاكتشاف والتقييمات أكتر من سرعة التوصيل.',
++      },
++      {
++        q: 'إيه أحسن طريقة توفر بيها في طلبات الأكل؟',
++        a: 'قارن نفس المطعم على التطبيقين (الرسوم بتختلف)، وتابع صفحة عروض AppHub لأكواد التوصيل المتجددة، وخلي طلباتك متجمعة من مطعم واحد بدل طلبات صغيرة متفرقة.',
++      },
++      {
++        q: 'ليه إلمنيوز لسه موجودة رغم قوة طلبات؟',
++        a: 'لأنها مش مجرد توصيل — هي «إنستجرام المطاعم المصرية»: قرار «فين ناكل النهاردة؟» بيتحل هناك بالصور والتقييمات الحقيقية قبل ما يتنفذ الأوردر في أي مكان.',
++      },
++    ],
++    related: ['uber-vs-careem', 'uber-vs-indriver'],
++    updatedAt: '2026-09-18',
++  },
+ ];
+ 
+ export function getComparisonBySlug(slug: string): Comparison | undefined {
+diff --git a/src/lib/app-data.ts b/src/lib/app-data.ts
+index e443590..24c1746 100644
+--- a/src/lib/app-data.ts
++++ b/src/lib/app-data.ts
+@@ -65,3 +65,49 @@ export async function getAllAppSlugs(): Promise<string[]> {
+   } catch {}
+   return [...slugs];
+ }
++
++/** تحويل صف managed_apps من القاعدة لشكل AppItem */
++function mapDbApp(dbApp: any): AppItem {
++  return {
++    id: `db-${dbApp.id}`,
++    slug: dbApp.slug,
++    name: dbApp.name,
++    icon: dbApp.icon,
++    category: dbApp.category,
++    shortDescription: dbApp.short_description || "",
++    description: dbApp.description || "",
++    rating: parseFloat(dbApp.rating) || 0,
++    pros: Array.isArray(dbApp.pros) ? dbApp.pros : [],
++    cons: Array.isArray(dbApp.cons) ? dbApp.cons : [],
++    countries: Array.isArray(dbApp.countries) ? dbApp.countries : [],
++    pricing: Array.isArray(dbApp.pricing) ? dbApp.pricing : [],
++    tags: Array.isArray(dbApp.tags) ? dbApp.tags : [],
++    businessUse: Array.isArray(dbApp.business_use) ? dbApp.business_use : [],
++    googlePlay: dbApp.google_play || undefined,
++    appStore: dbApp.app_store || undefined,
++    website: dbApp.website || undefined
++  };
++}
++
++/**
++ * كل التطبيقات مدمجة (قاعدة + ثابتة بدون تكرار بالـ slug).
++ * بتستخدمها صفحات التجميع: /best/[category]/[country] والـ sitemap.
++ * محمية الرجوع: لو القاعدة وقعت ترجّع الثابتة كاملة والموقع لا يتعطل.
++ */
++export const getAllAppsMerged = cache(async (): Promise<AppItem[]> => {
++  try {
++    const supabase = createClient();
++    const { data } = await supabase
++      .from("managed_apps")
++      .select("*")
++      .eq("is_active", true);
++    if (!data?.length) return staticApps;
++    const dbSlugs = new Set(data.map((a: any) => a.slug as string));
++    return [
++      ...data.map(mapDbApp),
++      ...staticApps.filter((a) => !dbSlugs.has(a.slug))
++    ];
++  } catch {
++    return staticApps;
++  }
++});
+diff --git a/src/lib/best.ts b/src/lib/best.ts
+new file mode 100644
+index 0000000..766be04
+--- /dev/null
++++ b/src/lib/best.ts
+@@ -0,0 +1,115 @@
++import { apps as staticApps } from "@/data/apps";
++import { categoryLabels } from "./constants";
++import { AppItem, AppCategory, CountryCode } from "./types";
++
++/**
++ * منطق صفحات «الأفضل في...» البرمجية.
++ * 15 فئة × 3 دول = 45 صفحة SEO تتولّد من نفس الداتا الموجودة.
++ */
++
++export type CountryInfo = {
++  code: CountryCode;
++  slug: string; // في الرابط lowercase
++  name: string;
++  flag: string;
++  currency: "EGP" | "SAR" | "AED";
++};
++
++export const BEST_COUNTRIES: CountryInfo[] = [
++  { code: "EG", slug: "eg", name: "مصر", flag: "🇪🇬", currency: "EGP" },
++  { code: "SA", slug: "sa", name: "السعودية", flag: "🇸🇦", currency: "SAR" },
++  { code: "AE", slug: "ae", name: "الإمارات", flag: "🇦🇪", currency: "AED" }
++];
++
++export const categoryEmoji: Record<string, string> = {
++  food: "🍔",
++  streaming: "🎬",
++  shopping: "🛍️",
++  health: "💊",
++  transport: "🚗",
++  education: "📚",
++  finance: "💰",
++  "real-estate": "🏠",
++  travel: "✈️",
++  gaming: "🎮",
++  kids: "🧒",
++  tools: "🔧",
++  religious: "📿",
++  government: "🏛️",
++  freelance: "💼"
++};
++
++/** كل الفئات الموجودة فعلًا في الداتا */
++export const BEST_CATEGORIES: AppCategory[] = [
++  ...new Set(staticApps.map((a) => a.category))
++];
++
++/** عدد تطبيقات فئة معينة في دولة معينة (من الداتا الثابتة — للـ params) */
++export function comboAppCount(category: string, country: CountryCode): number {
++  return staticApps.filter(
++    (a) => a.category === category && a.countries.includes(country)
++  ).length;
++}
++
++/**
++ * الكومبوهات الصالحة للـ generateStaticParams:
++ * أي (فئة × دولة) فيها تطبيق واحد على الأقل. = 45 صفحة
++ */
++export function bestCombos(): { category: string; country: string }[] {
++  const combos: { category: string; country: string }[] = [];
++  for (const cat of BEST_CATEGORIES) {
++    for (const c of BEST_COUNTRIES) {
++      if (comboAppCount(cat, c.code) >= 1) {
++        combos.push({ category: cat, country: c.slug });
++      }
++    }
++  }
++  return combos;
++}
++
++export function countryFromSlug(slug: string): CountryInfo | undefined {
++  return BEST_COUNTRIES.find((c) => c.slug === slug);
++}
++
++/** اختيار وترتيب التطبيقات: الأعلى تقييمًا أولاً */
++export function filterBest(
++  apps: AppItem[],
++  category: string,
++  country: CountryCode
++): AppItem[] {
++  return apps
++    .filter((a) => a.category === category && a.countries.includes(country))
++    .sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name, "ar"));
++}
++
++/** سعر التطبيق في الدولة — جاهز للعرض */
++export function localPriceLabel(
++  app: AppItem,
++  country: CountryInfo
++): string {
++  const p = app.pricing.find((x) => x.country === country.code);
++  if (!p || p.monthly === undefined) return "سعر متغير";
++  if (p.monthly === 0) return "مجاني";
++  const sym = country.currency === "EGP" ? "ج.م" : country.currency === "SAR" ? "ر.س" : "د.إ";
++  const num = new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 0 }).format(p.monthly);
++  return `${num} ${sym}/ش`;
++}
++
++/** ملخصات ذكية للهيدر */
++export function bestVerdicts(list: AppItem[], country: CountryInfo) {
++  const withPrices = list.filter((a) => {
++    const p = a.pricing.find((x) => x.country === country.code);
++    return p && (p.monthly ?? 0) > 0;
++  });
++  const cheapest = [...withPrices].sort(
++    (x, y) =>
++      (x.pricing.find((p) => p.country === country.code)?.monthly ?? 9e9) -
++      (y.pricing.find((p) => p.country === country.code)?.monthly ?? 9e9)
++  )[0];
++  const freeCount = list.length - withPrices.length;
++  return { cheapest, freeCount, top: list[0] };
++}
++
++export function categoryName(cat: string): string {
++  return categoryLabels[cat as AppCategory] ?? cat;
++}
+-- 
+2.47.3
+
