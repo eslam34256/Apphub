@@ -91,6 +91,19 @@ button, a {
   }
 }
 
+/* خلفيات البراند الداكنة — مستخدمة في هيرو كل الصفحات الثابتة وكروت الـ CTA.
+   بدونها النص الأبيض بيبقى على الخلفية الكريمي = غير مرئي نهائيًا */
+.gradient-brand {
+  background:
+    radial-gradient(700px 260px at 85% -10%, rgba(201, 168, 118, 0.22), transparent 60%),
+    radial-gradient(500px 220px at 8% 110%, rgba(133, 150, 190, 0.15), transparent 60%),
+    linear-gradient(135deg, #1a2942 0%, #162138 52%, #0f1830 100%);
+}
+
+.bg-gradient-navy {
+  background: linear-gradient(135deg, #1a2942 0%, #162138 52%, #0f1830 100%);
+}
+
 .glass-dark {
   background: rgba(26, 41, 66, 0.4);
   backdrop-filter: blur(20px);
