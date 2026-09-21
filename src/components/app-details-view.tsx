@@ -15,6 +15,7 @@ import { useTranslatedText, useTranslatedArray } from "@/hooks/use-translated-te
 import { formatMoney, getCheapestCountry } from "@/lib/helpers";
 import { ReviewsSection } from "@/components/reviews-section";
 import { AppStoreButtons } from "@/components/app-store-buttons";
+import { WatchPriceButton } from "@/components/watch-price-button";
 import { CommentsSection } from "@/components/comments-section";
 
 const categoryTranslations: Record<string, { ar: string; en: string }> = {
@@ -121,6 +122,12 @@ export function AppDetailsView({ app }: { app: AppItem }) {
               appName={app.name}
             />
           </div>
+
+          {/* تنبيه نزول السعر (Watchlist) */}
+          <WatchPriceButton
+            appSlug={app.slug}
+            currentPrice={app.pricing?.[0]?.monthly ?? undefined}
+          />
 
           {/* Description */}
           {translatedDescription && (
