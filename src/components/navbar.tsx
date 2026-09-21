@@ -45,6 +45,10 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // الهيدر الشفاف (نص أبيض) موجود بس فوق الـ hero الداكن في الهوم —
+  // باقي الصفحات: هيدر فاتح بنص غامق عشان النص يبقى باين دايمًا
+  const darkHero = isHomePage && !scrolled;
+
   const links = [
     { href: "/", label: t("nav_home") },
     { href: "/apps", label: t("nav_apps") },
@@ -52,27 +56,30 @@ export function Navbar() {
     { href: "/calculator", label: t("nav_calculator") },
     { href: "/compare-hub", label: t("nav_compare") },
     { href: "/deals", label: t("nav_deals") },
+    { href: "/price-index", label: t("nav_index") },
+    { href: "/shop", label: t("nav_store") },
+    { href: "/data", label: t("nav_research") },
     { href: "/blog", label: t("nav_blog") }
   ];
 
   return (
+    <>
   <header
   className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-    scrolled
-      ? "bg-cream-50/95 backdrop-blur-md shadow-soft border-b border-cream-200"
-      : "bg-transparent"
+    darkHero
+      ? "bg-transparent"
+      : "bg-cream-50/95 backdrop-blur-md shadow-soft border-b border-cream-200"
   }`}
 >
       <div className="mx-auto max-w-7xl px-6">
-        <div className="flex items-center justify-between py-4">
-          {/* Logo */}
+        <div className="flex items-center justify-between py-4 gap-3">
           {/* Logo */}
 <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
   <div
     className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center heading-elegant text-lg sm:text-2xl shadow-elegant group-hover:scale-110 transition ${
-      scrolled
-        ? "bg-brand-900 text-white"
-        : "bg-white/10 backdrop-blur border border-white/20 text-white"
+      darkHero
+        ? "bg-white/10 backdrop-blur border border-white/20 text-white"
+        : "bg-brand-900 text-white"
     }`}
   >
     A
@@ -80,14 +87,14 @@ export function Navbar() {
   <div className="block">
     <p
       className={`heading-elegant text-lg sm:text-2xl ${
-        scrolled ? "text-brand-900" : "text-white"
+        darkHero ? "text-white" : "text-brand-900"
       }`}
     >
       AppHub
     </p>
     <p
       className={`text-[8px] sm:text-[10px] -mt-1 tracking-wider hidden sm:block ${
-        scrolled ? "text-charcoal-500" : "text-white/70"
+        darkHero ? "text-white/70" : "text-charcoal-500"
       }`}
     >
       {t("site_tagline")}
@@ -95,16 +102,16 @@ export function Navbar() {
   </div>
 </Link>
 
-          {/* Center Links - Desktop */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Center Links - Desktop (من xl عشان ١٠ روابط متسدحش) */}
+          <nav className="hidden xl:flex items-center gap-0.5">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-4 py-2 text-sm font-semibold rounded-lg transition ${
-                  scrolled
-                    ? "text-charcoal-800 hover:bg-cream-100 hover:text-brand-900"
-                    : "text-white hover:bg-white/10"
+                className={`px-2.5 py-2 text-[13px] font-semibold rounded-lg transition whitespace-nowrap ${
+                  darkHero
+                    ? "text-white hover:bg-white/10"
+                    : "text-charcoal-800 hover:bg-cream-100 hover:text-brand-900"
                 }`}
               >
                 {link.label}
@@ -130,9 +137,9 @@ export function Navbar() {
                 <Link
                   href="/profile"
                   className={`hidden md:flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
-                    scrolled
-                      ? "bg-cream-100 text-brand-900 hover:bg-cream-200"
-                      : "bg-white/10 backdrop-blur text-white border border-white/20 hover:bg-white/20"
+                    darkHero
+                      ? "bg-white/10 backdrop-blur text-white border border-white/20 hover:bg-white/20"
+                      : "bg-cream-100 text-brand-900 hover:bg-cream-200"
                   }`}
                 >
                   <div className="w-7 h-7 rounded-full bg-accent-400 flex items-center justify-center text-brand-900 text-xs font-bold">
@@ -145,9 +152,9 @@ export function Navbar() {
               <Link
                 href="/auth"
                 className={
-                  scrolled
-                    ? "btn-primary !py-2 !px-5 !text-sm"
-                    : "bg-white text-brand-900 px-5 py-2 rounded-full text-sm font-bold hover:bg-cream-50 transition"
+                  darkHero
+                    ? "bg-white text-brand-900 px-5 py-2 rounded-full text-sm font-bold hover:bg-cream-50 transition"
+                    : "btn-primary !py-2 !px-5 !text-sm"
                 }
               >
                 {t("nav_login")}
@@ -159,10 +166,14 @@ export function Navbar() {
               user={user}
               isAdmin={isAdmin}
               userName={userName}
+              lightMode={!darkHero}
             />
           </div>
         </div>
       </div>
     </header>
+    {/* فاصل ثابت تحت الهيدر العائم — في الهوم بس اللي الـ hero غامق من أول البكسل */}
+    {!isHomePage && <div className="h-[76px]" aria-hidden />}
+    </>
   );
 }

@@ -9,9 +9,11 @@ type Props = {
   user: any;
   isAdmin: boolean;
   userName: string;
+  /** هيدر فاتح (أي صفحة غير الهوم في الأعلى): الهامبورجر يبقى غامق مش أبيض على أبيض */
+  lightMode?: boolean;
 };
 
-export function MobileMenu({ links, user, isAdmin, userName }: Props) {
+export function MobileMenu({ links, user, isAdmin, userName, lightMode = false }: Props) {
   const { t, lang } = useLanguage();
   const [open, setOpen] = useState(false);
 
@@ -30,10 +32,14 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 hover:bg-white/20 transition"
+        className={`xl:hidden flex items-center justify-center w-10 h-10 rounded-xl transition ${
+          lightMode
+            ? "bg-cream-100 border border-cream-200 hover:bg-cream-200 text-brand-900"
+            : "bg-white/10 backdrop-blur border border-white/20 hover:bg-white/20 text-white"
+        }`}
         aria-label="فتح القائمة"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="3" y1="6" x2="21" y2="6" />
           <line x1="3" y1="12" x2="21" y2="12" />
           <line x1="3" y1="18" x2="21" y2="18" />
@@ -54,7 +60,7 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
               backgroundColor: "rgba(26, 26, 26, 0.6)",
               zIndex: 999998
             }}
-            className="md:hidden"
+            className="xl:hidden"
           />
 
           {/* Sidebar */}
@@ -74,7 +80,7 @@ export function MobileMenu({ links, user, isAdmin, userName }: Props) {
               flexDirection: "column",
               overflow: "hidden"
             }}
-            className="md:hidden"
+            className="xl:hidden"
           >
             {/* Header */}
             <div
