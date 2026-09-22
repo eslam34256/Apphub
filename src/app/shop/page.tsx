@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { buildMeta } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import { WaitlistForm } from "@/components/waitlist-form";
+import { ShopOrderButton } from "@/components/shop-order-button";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,12 @@ export default async function ShopPage() {
             <p className="text-xs text-charcoal-400">
               السعر النهائي هيتحدد مع التشغيل — ممنوع نعلن رقم قبل ما نلتزم بيه.
             </p>
+            {/* طلب التنفيذ اليدوي — حلقة الوصل الحقيقية */}
+            <ShopOrderButton
+              productSlug={p.slug}
+              productTitle={p.title}
+              needsPlayerId={p.kind === "topup"}
+            />
           </div>
         ))}
       </div>
