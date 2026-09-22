@@ -130,6 +130,16 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/telecom-radar" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_telecom")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/ai-radar" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_ai_radar")}
+                </Link>
+              </li>
+              <li>
                 <Link href="/blog" className="text-charcoal-500 hover:text-accent-600 transition">
                   {t("nav_blog")}
                 </Link>
