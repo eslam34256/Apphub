@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buildMeta } from "@/lib/seo";
+import { WaitlistForm } from "@/components/waitlist-form";
 
 export const metadata: Metadata = buildMeta({
   title: "بيانات وأبحاث — بيع تقارير السوق والـ API المدفوعة",
@@ -82,6 +83,32 @@ export default function DataPage() {
         </div>
       </div>
 
+      {/* عينة التقرير — جرّب قبل ما تشتري */}
+      <div className="rounded-3xl border-2 border-accent-300 bg-accent-50 p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5">
+        <div className="text-5xl" aria-hidden>📄</div>
+        <div className="flex-1 text-center sm:text-start space-y-1">
+          <h2 className="heading-elegant text-2xl text-brand-900">جرّب المنتج قبل ما تدفع</h2>
+          <p className="text-sm text-charcoal-600">
+            حمّل عينة مجانية من تقرير مؤشر الأسعار (CSV بصيغة Excel) — نفس جودة البيانات اللي بتوصل لعملاء Enterprise، مع شرط الإشارة للمصدر.
+          </p>
+        </div>
+        <div className="shrink-0 flex flex-col gap-2">
+          <a
+            href="/api/reports/index.csv"
+            download
+            className="rounded-full bg-brand-900 px-7 py-3 text-sm font-bold text-white hover:bg-brand-800 transition text-center"
+          >
+            ⬇️ عينة CSV مجانية
+          </a>
+          <Link
+            href="/press"
+            className="rounded-full bg-white border border-accent-300 px-7 py-3 text-sm font-bold text-brand-900 hover:bg-accent-50 transition text-center"
+          >
+            📰 مركز الصحافة
+          </Link>
+        </div>
+      </div>
+
       {/* الباقات */}
       <div>
         <h2 className="heading-elegant text-3xl text-brand-900 mb-6 text-center">اختر الوصول المناسب</h2>
@@ -138,6 +165,15 @@ export default function DataPage() {
           💡 <strong>مثال:</strong> «مصرف محلي حابب يقارن أسعار اشتراكات في مصر مقابل الدولار السعودي للتهديف الائتماني»
           — Enterprise بيقيفل العقد ويخصم تقرير الشهر اتوماتيك من حسابه.
         </p>
+      </div>
+
+      {/* فورم طلب العرض — بيسجّل في قائمة الانتظار نفسها */}
+      <div className="rounded-3xl bg-white p-8 shadow-soft text-center space-y-4">
+        <h2 className="heading-elegant text-3xl text-brand-900">📋 اطلب عرضك المخصص</h2>
+        <p className="text-charcoal-500 max-w-xl mx-auto">
+          سيب بريدك وفريق المبيعات هيرجعلك بعرض سعر مخصص لحجم استخدامك — من غير أي التزام.
+        </p>
+        <WaitlistForm interest="data-lead" />
       </div>
     </div>
   );

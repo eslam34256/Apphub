@@ -183,6 +183,11 @@ export function Footer() {
                   {t("footer_careers")}
                 </Link>
               </li>
+              <li>
+                <Link href="/press" className="text-charcoal-500 hover:text-accent-600 transition">
+                  {t("nav_press")}
+                </Link>
+              </li>
             </ul>
           </div>
 
