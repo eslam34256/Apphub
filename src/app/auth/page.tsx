@@ -6,6 +6,9 @@ import { signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/auth";
 
 type Mode = "login" | "signup";
 
+// بيظهر زرار جوجل بس لما المزود متفعّل في Supabase — ممنوع وعد بميزة مش شغالة (v30)
+const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_AUTH === "1";
+
 export default function AuthPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
@@ -59,13 +62,20 @@ export default function AuthPage() {
   }
 
   async function handleGoogle() {
-    setLoading(true);
     setError(null);
+    // بوابة آمنة: لو المزود مش متفعّل لسه → مفيش تنقّل أصلًا (v30)
+    if (!GOOGLE_ENABLED) {
+      setError("دخول جوجل مش متفعّل لسه — سجّل بالإيميل دلوقتي وبيمثلوا نفس الحساب.");
+      return;
+    }
+    setLoading(true);
     try {
       const { error } = await signInWithGoogle();
       if (error) throw error;
     } catch (err: any) {
-      setError(err.message ?? "حصل خطأ");
+      setError(err.message?.includes("provider")
+        ? "مزود دخول جوجل لسه بيتظبط — جرّب الإيميل"
+        : err.message ?? "حصل خطأ");
       setLoading(false);
     }
   }
@@ -115,13 +125,15 @@ export default function AuthPage() {
           {loading ? "جاري..." : mode === "login" ? "دخول" : "تسجيل"}
         </button>
 
-        <button
-          disabled={loading}
-          onClick={handleGoogle}
-          className="w-full rounded-2xl border px-4 py-3 font-bold disabled:opacity-60"
-        >
-          متابعة بـ Google
-        </button>
+        {GOOGLE_ENABLED && (
+          <button
+            disabled={loading}
+            onClick={handleGoogle}
+            className="w-full rounded-2xl border px-4 py-3 font-bold disabled:opacity-60"
+          >
+            متابعة بـ Google
+          </button>
+        )}
 
         {error && (
           <p className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-rose-700">

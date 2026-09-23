@@ -43,6 +43,14 @@
 ## ⚠️ لو حاجة ظهرت 503
 معناها ترحيل ناقص — راجع خطوة ① (تشغّلت SETUP-HUB؟) والـ env vars خطوة ②.
 
+## 🔐 (اختياري) تفعيل دخول Google — خطوات إدارية بره الكود
+لو عايز زرار «متابعة بـ Google» يشتغل في الإنتاج:
+1. [ ] **Google Cloud Console** (console.cloud.google.com): مشروع جديد → OAuth consent screen (External) → APIs & Services → Credentials → **Create OAuth Client ID (Web)** → في **Authorized redirect URIs** حط: `https://ujtjoedbspspspmuxjee.supabase.co/auth/v1/callback` (نفس مشروعك اللي في الـ URL) → خد الـ Client ID والـ Secret
+2. [ ] **Supabase** → Authentication → **Sign In / Providers** → Google → **Enable** → الصق Client ID + Secret → Save
+3. [ ] **Supabase** → Authentication → **URL Configuration**: Site URL = `https://apphub-eight.vercel.app` و Redirect URLs = `https://apphub-eight.vercel.app/auth/callback` (+ `http://localhost:3000/auth/callback` للتطوير لو حابب)
+4. [ ] **Vercel envs**: `NEXT_PUBLIC_GOOGLE_AUTH=1` + `NEXT_PUBLIC_SITE_URL=https://apphub-eight.vercel.app` → Redeploy
+5. [ ] عاامة: من غير الخطوات دي الزرار بيختفي لوحده (v30) — مفيش خطأ عديم المعنى زي `Unsupported provider`
+
 ## 🧭 بعد الـ Go-Live مباشرة (باقي الخطة)
 - v27: التقرير الربع سنوي الأول (الاستخراج تلقائي من السلاسل)
 - رادار فري فاير (الداتا جاهزة)
