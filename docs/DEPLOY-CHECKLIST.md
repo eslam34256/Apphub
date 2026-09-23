@@ -51,6 +51,11 @@
 4. [ ] **Vercel envs**: `NEXT_PUBLIC_GOOGLE_AUTH=1` + `NEXT_PUBLIC_SITE_URL=https://apphub-eight.vercel.app` → Redeploy
 5. [ ] عاامة: من غير الخطوات دي الزرار بيختفي لوحده (v30) — مفيش خطأ عديم المعنى زي `Unsupported provider`
 
+## 📲 (جاهز من v31) تثبيت كتطبيق — PWA
+- اندرويد/كروم: بطاقة «نزّل AppHub كتطبيق» تظهر تلقائيًا → «ثبّته دلوقتي» أو من قائمة متصفح «تثبيت التطبيق»
+- iOS: «مشاركة» ← «إضافة إلى الشاشة الرئيسية» (والبطاقة بتقوله كده لوحده)
+- تحقق: chrome://inspect أو أداة قياس Lighthouse → PWA: installable ✓ · أي تعديل manifest في المستقبل لازم `/manifest.json` bterror bماء `application/manifest+json` يفضل 200
+
 ## 🧭 بعد الـ Go-Live مباشرة (باقي الخطة)
 - v27: التقرير الربع سنوي الأول (الاستخراج تلقائي من السلاسل)
 - رادار فري فاير (الداتا جاهزة)

@@ -6,6 +6,8 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { getSiteSettings } from "@/lib/settings";
 import { LanguageProvider } from "@/contexts/language-context";
+import { PwaRegister } from "@/components/pwa-register";
+import { InstallPrompt } from "@/components/install-prompt";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -48,7 +50,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description: settings.site_description
     },
     robots: { index: true, follow: true },
-    icons: { icon: "/favicon.svg" }
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      title: "AppHub",
+      statusBarStyle: "black-translucent"
+    },
+    icons: { icon: "/favicon.svg", apple: "/apple-touch-icon.png" }
   };
 }
 
@@ -87,11 +95,13 @@ export default function RootLayout({
           </>
         )}
         <LanguageProvider>
+          <PwaRegister />
           <Navbar />
           <main className="flex-1 w-full">
             {children}
           </main>
           <Footer />
+          <InstallPrompt />
         </LanguageProvider>
       </body>
     </html>
