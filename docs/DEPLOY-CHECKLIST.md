@@ -51,6 +51,12 @@
 4. [ ] **Vercel envs**: `NEXT_PUBLIC_GOOGLE_AUTH=1` + `NEXT_PUBLIC_SITE_URL=https://apphub-eight.vercel.app` → Redeploy
 5. [ ] عاامة: من غير الخطوات دي الزرار بيختفي لوحده (v30) — مفيش خطأ عديم المعنى زي `Unsupported provider`
 
+## ④ بعد النشر مباشرة — ظهور في البحث (٥ دقايق)
+1. [ ] Search Console: verification meta (الـ env `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`) ثم Submit `sitemap.xml`
+2. [ ] Bing Webmaster بنفس env
+3. [ ] URL Inspection ← طلب إرشفة للصفحات الأهم (الهوم + رادارات + مراجعات+نصبات)
+4. [ ] لو عملت دومين خاص (apphub.eg في Vercel Domains): gbتّر env `NEXT_PUBLIC_SITE_URL` عشان canonical tags تبقى برضه إلى الدومين — التفاصيل كلها موجودة في `docs/STORES-AND-SEARCH.md`
+
 ## 📲 (جاهز من v31) تثبيت كتطبيق — PWA
 - اندرويد/كروم: بطاقة «نزّل AppHub كتطبيق» تظهر تلقائيًا → «ثبّته دلوقتي» أو من قائمة متصفح «تثبيت التطبيق»
 - iOS: «مشاركة» ← «إضافة إلى الشاشة الرئيسية» (والبطاقة بتقوله كده لوحده)

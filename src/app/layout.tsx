@@ -50,6 +50,10 @@ export async function generateMetadata(): Promise<Metadata> {
       description: settings.site_description
     },
     robots: { index: true, follow: true },
+    verification: {
+      ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : {}),
+      ...(process.env.NEXT_PUBLIC_BING_VERIFICATION ? { other: { "msvalidate.01": process.env.NEXT_PUBLIC_BING_VERIFICATION } } : {})
+    },
     manifest: "/manifest.json",
     appleWebApp: {
       capable: true,
