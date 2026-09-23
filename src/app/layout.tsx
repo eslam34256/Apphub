@@ -64,6 +64,12 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable} ${almarai.variable}`}>
       <body className={`${cairo.className} min-h-screen flex flex-col bg-cream-50`}>
+        {/* منع وميض الثيم: يقرأ التفضيل قبل أول رسم */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("apphub-theme");var d=t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark");}catch(e){}`
+          }}
+        />
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <Script

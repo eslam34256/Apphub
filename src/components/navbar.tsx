@@ -8,6 +8,7 @@ import { NotificationBell } from "./notification-bell";
 import { SearchBar } from "./search-bar";
 import { MobileMenu } from "./mobile-menu";
 import { LanguageSwitcher } from "./language-switcher";
+import { ThemeToggle } from "./theme-toggle";
 import { useLanguage } from "@/contexts/language-context";
 
 export function Navbar() {
@@ -121,6 +122,7 @@ export function Navbar() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle />
             <LanguageSwitcher />
 
             {user ? (

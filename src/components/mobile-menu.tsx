@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
+import { LanguageSwitcher } from "./language-switcher";
+import { ThemeToggle } from "./theme-toggle";
 
 type Props = {
   links: { href: string; label: string; icon?: string }[];
@@ -135,6 +137,12 @@ export function MobileMenu({ links, user, isAdmin, userName, lightMode = false }
                     {t("site_tagline")}
                   </p>
                 </div>
+              </div>
+
+              {/* مفاتيح اللغة والثيم — كانت مفقودة تمامًا على الموبايل */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginInlineStart: "auto", marginInlineEnd: "8px" }}>
+                <ThemeToggle />
+                <LanguageSwitcher />
               </div>
 
               <button
