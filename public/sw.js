@@ -3,8 +3,8 @@
    - صفحات HTML: network-first مع fallback للهوم المحفوظة (offl أوفلاين)
    - أصول ثابتة (_next/static, أيقونات): cache-first بتجديد هادئ
 */
-const SHELL = "apphub-shell-v2";
-const STATIC = "apphub-static-v2";
+const SHELL = "apphub-shell-v3";
+const STATIC = "apphub-static-v3";
 const PRECACHE = ["/", "/manifest.json", "/logo.png", "/logo-mark.png", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (e) => {

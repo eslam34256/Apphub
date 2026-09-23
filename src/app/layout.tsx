@@ -8,6 +8,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { LanguageProvider } from "@/contexts/language-context";
 import { PwaRegister } from "@/components/pwa-register";
 import { InstallPrompt } from "@/components/install-prompt";
+import { ShareFab } from "@/components/share-fab";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -106,6 +107,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <InstallPrompt />
+          <ShareFab />
         </LanguageProvider>
       </body>
     </html>
