@@ -57,7 +57,7 @@ export function InstallPrompt() {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon-192.png" alt="" className="h-11 w-11 rounded-2xl" />
+            <img src="/logo-mark.png" alt="" className="h-11 w-11 rounded-2xl" />
             <div>
               <p className="font-extrabold">📲 نزّل AppHub كتطبيق</p>
               <p className="text-xs text-white/75">أيقونة على شاشتك · يفتح بلا متصفح · أسرع في الرادارات</p>

@@ -39,15 +39,14 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-navy flex items-center justify-center text-white heading-elegant text-2xl">
-                A
-              </div>
-              <div>
-                <p className="heading-elegant text-2xl text-brand-900">AppHub</p>
-                <p className="text-[10px] text-charcoal-500 tracking-wider">
-                  {t("site_tagline")}
-                </p>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo.png"
+                alt="AppHub — دليل التطبيقات والأسعار"
+                width={220}
+                height={110}
+                className="h-11 w-auto"
+              />
             </div>
 
             <div className="space-y-2 text-sm text-charcoal-500">

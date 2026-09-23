@@ -60,7 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "AppHub",
       statusBarStyle: "black-translucent"
     },
-    icons: { icon: "/favicon.svg", apple: "/apple-touch-icon.png" }
+    icons: { icon: "/icon-64.png", apple: "/apple-touch-icon.png" }
   };
 }
 

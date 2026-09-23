@@ -97,46 +97,9 @@ export function MobileMenu({ links, user, isAdmin, userName, lightMode = false }
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div
-                  style={{
-                    width: "44px",
-                    height: "44px",
-                    borderRadius: "12px",
-                    background: "linear-gradient(135deg, #1a2942 0%, #2c3e5a 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                    fontWeight: 700,
-                    fontSize: "22px",
-                    fontFamily: "var(--font-playfair), Georgia, serif"
-                  }}
-                >
-                  A
-                </div>
-                <div>
-                  <p
-                    style={{
-                      fontWeight: 700,
-                      fontSize: "20px",
-                      margin: 0,
-                      color: "#1a2942",
-                      fontFamily: "var(--font-playfair), Georgia, serif"
-                    }}
-                  >
-                    AppHub
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "10px",
-                      color: "#8b7355",
-                      margin: 0,
-                      letterSpacing: "0.05em"
-                    }}
-                  >
-                    {t("site_tagline")}
-                  </p>
-                </div>
+                {/* اللوجو الرسمي الجديد */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="AppHub" width={210} height={105} style={{ height: "42px", width: "auto" }} />
               </div>
 
               {/* مفاتيح اللغة والثيم — كانت مفقودة تمامًا على الموبايل */}

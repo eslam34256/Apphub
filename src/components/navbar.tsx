@@ -74,33 +74,16 @@ export function Navbar() {
 >
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex items-center justify-between py-4 gap-3">
-          {/* Logo */}
+          {/* Logo الجديد — أصل البراند */}
 <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
-  <div
-    className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center heading-elegant text-lg sm:text-2xl shadow-elegant group-hover:scale-110 transition ${
-      darkHero
-        ? "bg-white/10 backdrop-blur border border-white/20 text-white"
-        : "bg-brand-900 text-white"
-    }`}
-  >
-    A
-  </div>
-  <div className="block">
-    <p
-      className={`heading-elegant text-lg sm:text-2xl ${
-        darkHero ? "text-white" : "text-brand-900"
-      }`}
-    >
-      AppHub
-    </p>
-    <p
-      className={`text-[8px] sm:text-[10px] -mt-1 tracking-wider hidden sm:block ${
-        darkHero ? "text-white/70" : "text-charcoal-500"
-      }`}
-    >
-      {t("site_tagline")}
-    </p>
-  </div>
+  {/* eslint-disable-next-line @next/next/no-img-element */}
+  <img
+    src="/logo.png"
+    alt="AppHub — دليل التطبيقات والأسعار"
+    className="h-10 sm:h-12 w-auto group-hover:scale-105 transition"
+    width={240}
+    height={120}
+  />
 </Link>
 
           {/* Center Links - Desktop (من xl عشان ١٠ روابط متسدحش) */}
