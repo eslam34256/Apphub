@@ -17,6 +17,7 @@ import {
 } from "@/lib/best";
 import { comparisons } from "@/data/comparisons";
 import { groupAppsBySubcategory } from "@/data/subcategories";
+import { safeJsonLd } from "@/lib/json-ld";
 
 /**
  * 🏆 صفحات «الأفضل في البلد» البرمجية — آلة الترافيك:
@@ -137,7 +138,7 @@ export default async function BestCategoryPage({ params }: PageProps) {
   return (
     <div className="bg-cream-50 min-h-screen">
       {schemas.map((s, i) => (
-        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(s) }} />
       ))}
 
       <div className="max-w-5xl mx-auto px-4 py-12 space-y-10">

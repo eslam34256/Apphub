@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const COUNTRIES = new Set(["EG", "SA", "AE"]);
@@ -10,6 +11,10 @@ const COUNTRIES = new Set(["EG", "SA", "AE"]);
  * DELETE {id} → تعطيل (معرف الـ UUID بيشتغل كرمز ملكية — بييجي في لينك الإيميل)
  */
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  if (isRateLimited(`post:watchlist:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ ok: false, error: "محاولات كتير متتالية — جرّب بعد دقيقة" }, { status: 429 });
+  }
   try {
     const b = await req.json();
     const email = String(b.email ?? "").trim().toLowerCase();

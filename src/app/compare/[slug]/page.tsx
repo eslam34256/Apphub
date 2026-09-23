@@ -11,6 +11,7 @@ import { PricingSection } from "@/components/compare/pricing-section";
 import { ProsConsCards } from "@/components/compare/pros-cons-cards";
 import { ComparisonFaq } from "@/components/compare/comparison-faq";
 import { RelatedComparisons } from "@/components/compare/related-comparisons";
+import { safeJsonLd } from "@/lib/json-ld";
 
 type PageProps = { params: { slug: string } };
 
@@ -57,7 +58,7 @@ export default function ComparisonPage({ params }: PageProps) {
         <script
           key={i}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(s) }}
         />
       ))}
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAppBySlug } from "@/lib/app-data";
 import { AppDetailsView } from "@/components/app-details-view";
+import { safeJsonLd } from "@/lib/json-ld";
 
 /**
  * صفحة تفاصيل التطبيق — Server Component بالكامل.
@@ -131,7 +132,7 @@ export default async function AppDetailsPage({ params }: PageProps) {
         <script
           key={i}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(s) }}
         />
       ))}
       <AppDetailsView app={app} />

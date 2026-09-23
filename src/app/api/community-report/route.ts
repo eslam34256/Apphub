@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 // حدود العقلانية لكل مقياس — نفس فلسفة الرادار (مفيش أرقام هبلة تدخل)
 const BOUNDS: Record<string, [number, number]> = {
@@ -14,6 +15,10 @@ const BOUNDS: Record<string, [number, number]> = {
 const DOMAINS = new Set(["food", "rides", "streaming", "bnpl"]);
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  if (isRateLimited(`post:community-report:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ ok: false, error: "محاولات كتير متتالية — جرّب بعد دقيقة" }, { status: 429 });
+  }
   try {
     const b = await req.json();
 

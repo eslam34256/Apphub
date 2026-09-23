@@ -17,6 +17,7 @@ import { TelecomRadarContent } from "@/components/radars/telecom-content";
 import { AiRadarContent } from "@/components/radars/ai-content";
 import { fetchUsdEgpRate } from "@/lib/ai-radar-data";
 import { CountryCode } from "@/lib/types";
+import { safeJsonLd } from "@/lib/json-ld";
 
 /**
  * 📡 مركز الرادارات — كل مستوايات التوفير في صفحة واحدة:
@@ -86,7 +87,7 @@ export default async function PriceRadarPage({
     <div className="space-y-10">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }}
       />
 
       {/* الهيدر */}

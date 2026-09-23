@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 /**
  *  إنشاء نية دفع Paymob لطلب متجر.
@@ -7,6 +8,10 @@ import { createClient } from "@/lib/supabase/server";
  *  بدونها: 503 صادق «بوابة الدفع بتتجهز».
  */
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  if (isRateLimited(`post:pay-intention:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ ok: false, error: "محاولات كتير متتالية — جرّب بعد دقيقة" }, { status: 429 });
+  }
   const key = process.env.PAYMOB_API_KEY;
   if (!key) {
     return NextResponse.json(
