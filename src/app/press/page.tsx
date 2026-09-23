@@ -92,6 +92,12 @@ export default function PressPage() {
         >
           ⬇️ حمّل CSV
         </a>
+        <Link
+          href="/reports/q3-2026"
+          className="shrink-0 rounded-full bg-accent-400 px-7 py-3 text-sm font-bold text-brand-900 hover:bg-accent-500 transition"
+        >
+          📊 تقرير Q3 2026
+        </Link>
       </section>
 
       {/* اقتباسات جاهزة */}
