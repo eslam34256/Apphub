@@ -22,7 +22,7 @@ const TIERS = [
       "إعادة التحميل كل ساعة",
       "CC-BY سمة AppHub"
     ],
-    cta: { label: "ابدأ فورًا", href: "/developers" },
+    cta: { label: "ابدأ فورًا بالـ APIs المفتوحة", href: "/press" },
     featured: false
   },
   {

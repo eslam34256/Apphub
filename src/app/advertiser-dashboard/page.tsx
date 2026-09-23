@@ -213,9 +213,12 @@ export default async function AdvertiserDashboardPage() {
                           {(ad.revenue ?? 0).toLocaleString()} ج
                         </td>
                         <td className="p-3">
-                          <button className="text-brand-600 hover:underline text-xs">
-                            تعديل
-                          </button>
+                          <a
+                            href="mailto:advertising@apphub.eg?subject=طلب تعديل إعلان"
+                            className="text-brand-600 hover:underline text-xs"
+                          >
+                            اطلب تعديل
+                          </a>
                         </td>
                       </tr>
                     );
