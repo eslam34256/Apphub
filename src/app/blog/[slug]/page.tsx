@@ -3,6 +3,20 @@ import { blogPosts } from "@/data/blog-posts";
 import { buildMeta } from "@/lib/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
+
+/** v36: دعم الروابط داخل نصوص المقالات [نص](رابط) — داخلية وخارجية (SEO داخلي) */
+function inline(text: string, keyBase: string) {
+  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+  return parts.map((part, i) => {
+    const m = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (!m) return part;
+    const [, label, href] = m;
+    if (href.startsWith("/")) {
+      return <Link key={`${keyBase}-${i}`} href={href} className="font-bold text-brand-600 underline decoration-2 underline-offset-4 hover:text-brand-500">{label}</Link>;
+    }
+    return <a key={`${keyBase}-${i}`} href={href} target="_blank" rel="noopener noreferrer" className="font-bold text-brand-600 underline decoration-2 underline-offset-4 hover:text-brand-500">{label}</a>;
+  });
+}
 type Props = { params: { slug: string } };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = blogPosts.find(p => p.slug === params.slug);
@@ -32,9 +46,9 @@ export default function BlogPostPage({ params }: Props) {
             if (!t) return null;
             if (t.startsWith("## ")) return <h2 key={i} className="mt-6 text-2xl font-bold">{t.replace("## ","")}</h2>;
             if (t.startsWith("### ")) return <h3 key={i} className="mt-4 text-xl font-bold">{t.replace("### ","")}</h3>;
-            if (t.startsWith("- ")) return <li key={i} className="mr-4 list-disc text-slate-700">{t.replace("- ","")}</li>;
+            if (t.startsWith("- ")) return <li key={i} className="mr-4 list-disc text-slate-700">{inline(t.replace("- ", ""), `li${i}`)}</li>;
             if (t.startsWith("**") && t.endsWith("**")) return <p key={i} className="font-bold">{t.replace(/\*\*/g,"")}</p>;
-            return <p key={i} className="text-slate-700">{t}</p>;
+            return <p key={i} className="text-slate-700">{inline(t, `p${i}`)}</p>;
           })}
         </article>
       </div>
