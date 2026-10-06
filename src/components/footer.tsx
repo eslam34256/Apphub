@@ -4,15 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/language-context";
 import { createClient } from "@/lib/supabase/client";
+import { CONTACT } from "@/lib/contact";
 
 export function Footer() {
   const { t, lang } = useLanguage();
   const [settings, setSettings] = useState<any>({
     site_name: "AppHub",
-    contact_email: "Eslam34256@gmail.com",
-    whatsapp_number: "+201155572676",
-    phone_number: "01155572676",
-    address: lang === "ar" ? "القاهرة، مصر" : "Cairo, Egypt"
+    contact_email: CONTACT.email,
+    whatsapp_number: CONTACT.whatsapp,
+    phone_number: CONTACT.phone,
+    address: lang === "ar" ? CONTACT.location : "Cairo, Egypt"
   });
 
   useEffect(() => {

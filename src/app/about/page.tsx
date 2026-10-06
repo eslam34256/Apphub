@@ -1,5 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { apps } from "@/data/apps";
+
+// v37: أرقام صادقة محسوبة من الداتا نفسها — مفيش ادعاءات تسويقية
+const ABOUT_STATS = [
+  { icon: "📱", value: `+${apps.length}`, label: "تطبيق مُراجع" },
+  { icon: "🌍", value: `${new Set(apps.flatMap(a => a.countries)).size}`, label: "دول" },
+  { icon: "📂", value: `${new Set(apps.map(a => a.category)).size}`, label: "فئة" },
+  { icon: "📡", value: "4", label: "رادارات أسعار يومية" }
+];
 
 export const metadata: Metadata = {
   title: "من نحن — AppHub",
@@ -39,17 +48,12 @@ export default function AboutPage() {
           </p>
           <p className="text-slate-600 leading-relaxed">
             <strong className="text-brand-600">AppHub</strong> جه عشان يحل المشكلة دي.
-            بنوفّر لك معلومات دقيقة، مقارنات شفافة، ومراجعات حقيقية لكل التطبيقات
-            في المنطقة العربية.
+            بنوفّر لك معلومات دقيقة، مقارنات شفافة، وأسعار موثّقة بمصادر معلنة وتاريخ مراجعة
+            لكل التطبيقات في المنطقة العربية.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          {[
-            { icon: "📱", value: "163+", label: "تطبيق" },
-            { icon: "🌍", value: "3", label: "دول" },
-            { icon: "📂", value: "15", label: "فئة" },
-            { icon: "💬", value: "1000+", label: "مراجعة" }
-          ].map((stat) => (
+          {ABOUT_STATS.map((stat) => (
             <div key={stat.label} className="rounded-2xl bg-white p-5 shadow-soft text-center">
               <div className="text-4xl mb-2">{stat.icon}</div>
               <div className="text-3xl font-extrabold text-brand-600">{stat.value}</div>

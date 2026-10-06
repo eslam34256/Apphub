@@ -3,6 +3,7 @@ import { useState } from "react";
 import { recommendApps } from "@/lib/recommend";
 import { CountryCode } from "@/lib/types";
 import { AppCard } from "@/components/app-card";
+import { NlChoose } from "@/components/ai/nl-choose";
 export default function AIPage() {
   const [activity, setActivity] = useState("watch");
   const [priority, setPriority] = useState("quality");
@@ -11,6 +12,7 @@ export default function AIPage() {
   function handleRecommend() { setResults(recommendApps({ activity, priority, country })); }
   return (
     <div className="space-y-6">
+      <NlChoose />
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="mb-2 text-2xl font-extrabold">الترشيح الذكي</h1>
         <p className="mb-4 text-slate-500">جاوب 3 أسئلة وسنرشح لك أفضل التطبيقات.</p>

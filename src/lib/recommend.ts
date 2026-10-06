@@ -10,7 +10,7 @@ type Answers = { activity: string; priority: string; country: CountryCode };
  * عشان السؤال «عايز تتفرج» ميرشحش أنغامي والعكس.
  */
 type Scope = { sub?: string[]; cats?: string[] };
-const activityToScope: Record<string, Scope> = {
+export const activityToScope: Record<string, Scope> = {
   food: { cats: ["food"] },
   watch: { sub: ["streaming-video"] },
   music: { sub: ["streaming-music"] },
@@ -20,7 +20,15 @@ const activityToScope: Record<string, Scope> = {
   health: { cats: ["health"] },
   mobility: { cats: ["transport"] },
   finance: { cats: ["finance"] },
-  home: { cats: ["real-estate"] }
+  home: { cats: ["real-estate"] },
+  // v37 — «ساعدني أختار» بيفهم طلبات أكتر من الفورم القديم
+  tools: { cats: ["tools"] },
+  gaming: { cats: ["gaming"] },
+  religious: { cats: ["religious"] },
+  kids: { cats: ["kids"] },
+  travel: { cats: ["travel"] },
+  freelance: { cats: ["freelance"] },
+  topup: { cats: ["topup"] }
 };
 
 export function recommendApps({ activity, priority, country }: Answers): AppItem[] {

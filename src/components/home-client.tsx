@@ -121,6 +121,21 @@ export function HomeClient({ initialDbApps, radarCount = null }: { initialDbApps
   </div>
 </section>
 
+      {/* v37 — Decision CTA: positioning الجديد «إحنا نختارلك» */}
+      <section className="bg-cream-50 pt-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <Link href="/ai" className="block rounded-3xl gradient-brand p-6 sm:p-8 text-white shadow-xl transition hover:opacity-95">
+            <div className="flex flex-col sm:flex-row items-center gap-4 justify-between text-center sm:text-right">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold">مش عارف تختار؟ إحنا نختارلك 🤖</h2>
+                <p className="mt-1.5 text-white/85">اكتب طلبك بالعامية — احتياجك وميزانيتك وبلدك — وهنديك أفضل ٣ اختيارات بأسبابها.</p>
+              </div>
+              <span className="shrink-0 rounded-2xl bg-white text-brand-700 font-extrabold px-6 py-3">🤖 ساعدني أختار</span>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* ═══════════════════════════════════════ */}
       {/* FEATURED APPS SECTION                   */}
       {/* ═══════════════════════════════════════ */}

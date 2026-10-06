@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { CONTACT } from "@/lib/contact";
 
 export type SiteSettings = {
   site_name: string;
@@ -19,9 +20,9 @@ export type SiteSettings = {
 const defaultSettings: SiteSettings = {
   site_name: "AppHub",
   site_description: "دليل التطبيقات العربي الأول",
-  contact_email: "info@apphub.eg",
-  whatsapp_number: "+201000000000",
-  phone_number: "+201000000000",
+  contact_email: CONTACT.email,
+  whatsapp_number: CONTACT.whatsapp,
+  phone_number: CONTACT.phone,
   address: "القاهرة، مصر",
   working_hours: "الأحد - الخميس: 9 ص - 6 م",
   facebook_url: "",
