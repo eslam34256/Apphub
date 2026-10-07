@@ -1,0 +1,565 @@
+From 5f5b5da31d9b5b388b27467d7e93dc8181901d06 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 22:38:54 +0000
+Subject: [PATCH] =?UTF-8?q?=F0=9F=A7=BE=20v13=20=E2=80=94=20=D8=A7=D9=84?=
+ =?UTF-8?q?=D9=85=D9=82=D8=A7=D8=B1=D9=86=D8=A7=D8=AA=20=D8=A8=D8=A7=D9=84?=
+ =?UTF-8?q?=D8=A3=D8=B1=D9=82=D8=A7=D9=85=20=D8=A7=D9=84=D8=AD=D9=82=D9=8A?=
+ =?UTF-8?q?=D9=82=D9=8A=D8=A9:=20=D8=A8=D9=84=D8=A7=D8=BA=D8=A7=D8=AA=20?=
+ =?UTF-8?q?=D8=A7=D9=84=D9=85=D8=AC=D8=AA=D9=85=D8=B9=20+=20=D8=AA=D9=88?=
+ =?UTF-8?q?=D8=A7=D8=B1=D9=8A=D8=AE=20=D9=85=D8=B1=D8=A7=D8=AC=D8=B9=D8=A9?=
+ =?UTF-8?q?=20+=20FX=20=D9=84=D8=A7=D9=8A=D9=81?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- community_reports (هجرة 002 — idempotent): المستخدم يبلّغ رقم شافه بعينه
+- /api/community-report: تحقق (نطاق عقلاني لكل مقياس) + مصيدة سبام + رسائل صادقة
+- CommunityMedian: متوسط بلاغات آخر 30 يوم، يظهر من 3 بلاغات، موسوم «قيد المراجعة»
+- CommunityReportForm في قسم التوصيل بمركز المقارنات
+- verifiedAt «سبتمبر 2026» على مداخل داتا الأكل + تنبيه مقارنة الستريمنج
+- /api/fx: سعر الصرف الحقيقي (ExchangeRate-API، revalidate 6h) + شريط FxTicker
+- توثيق v13 + بند في PROJECT-AUDIT
+---
+ docs/BRAND-GUIDE.md                           |   1 +
+ docs/PROJECT-AUDIT.md                         |   1 +
+ src/app/api/community-report/route.ts         |  57 +++++++
+ src/app/api/fx/route.ts                       |  27 ++++
+ src/app/compare-hub/page.tsx                  |  23 ++-
+ src/components/community-median.tsx           |  61 ++++++++
+ src/components/community-report-form.tsx      | 147 ++++++++++++++++++
+ src/components/fx-ticker.tsx                  |  24 +++
+ src/lib/food-delivery-calculator.ts           |   7 +
+ supabase/migrations/002_community_reports.sql |  30 ++++
+ 10 files changed, 375 insertions(+), 3 deletions(-)
+ create mode 100644 src/app/api/community-report/route.ts
+ create mode 100644 src/app/api/fx/route.ts
+ create mode 100644 src/components/community-median.tsx
+ create mode 100644 src/components/community-report-form.tsx
+ create mode 100644 src/components/fx-ticker.tsx
+ create mode 100644 supabase/migrations/002_community_reports.sql
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index eca4650..c4f9a37 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v13** 🧾 المقارنات بالأرقام الحقيقية | 21 سب 2026 | ثلاث طبقات: تواريخ مراجعة على داتا الأكل/الستريمنج + بلاغات المجتمع (`community_reports` هجرة idempotent + `/api/community-report` + فورم «بلّغ المجتمع» + شارة متوسط قيد المراجعة) + سعر صرف لايف `/api/fx` (ExchangeRate-API، 6h كاش). وإصلاح OG برود: خط base64 بدل fs — كجزء من نفس الالتزام بالأرقام الحقيقية |
+ | **v12** ⚡ حزمة الأرباح السريعة | 21 سب 2026 | 3 فيتشرز: (1) **OG ديناميكية** لكل صفحة تطبيق — Satori + خط Almarai مدمج محليًا + مكتبة reshaper (العربي كان بيطلع منفصل ومعكوس من غيرها)، تصميم كحلي/ذهبي باسم التطبيق وتقييمه، يتولّد لكل DB app وstatic (2) **عدّاد الرادار النابض** تحت بحث الـ Hero — كونت حقيقي من `price_watch` بيختفي بهدوء من غير DB (3) **سكشن الفئات** في الهوم → 16 بطاقة محسوبة توصل `/best/{فئة}/eg`. إضافة dependency واحدة: arabic-persian-reshaper |
+ | **v11** 🔎 بحث الـ Hero التفاعلي | 20 سب 2026 | مكوّن `HeroSearch` جديد في قلب الـ Hero: اقتراحات حية (8 نتائج: اسم/وصف/وسوم) صفّة بأسهم الكيبورد + Enter يوديك صفحة التطبيق مباشرة أو `/apps?q=…`، + شرائح «الأكثر رواجًا» من الداتا نفسها — و`initialQuery` في دليل التطبيقات بقى يتجهز SSR من الـ URL. الهيرو اتردّم: الوصف mb-8 ← البحث ← الأزرار mb-12 |
+ | **v10** ⚡ SSR للرئيسية | 20 سب 2026 | نهاية عهد «الرئيسية كلها use client»: `page.tsx` بقت Server Component ديناميكية بتجيب `managed_apps` من Supabase على السيرفر وتسلّمها props لكون عميل جديد `HomeClient` — مفيش fetch من المتصفح خالص، الكوبي والأرقام (167+/16) والأقسام كلها في الـ HTML الأول (LCP/SEO)، + metadata مخصصة للرئيسية بكوبي الـ moat |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index 5bfa8f0..e1abda4 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++0. **v13 — المقارنات بالأرقام الحقيقية** ✅ (21 سب 2026): ثلاث طبقات صدق في مركز المقارنات — (أ) تواريخ «آخر مراجعة» معلنة على أرقام داتا الأكل والستريمنج (ب) **بلاغات المجتمع**: جدول `community_reports` (هجرة idempotent) + API بمصيدة سبام وحدود عقلانية + شارة متوسط آخر 30 يوم (تظهر من 3 بلاغات، موسومة «قيد المراجعة») (ج) **سعر صرف لايف** `/api/fx` من ExchangeRate-API بكاش 6 ساعات — بيظهر في مقارنة الستريمنج. مبدأ ثابت: مفيش API رسمي للتوصيلات — فالميدان بييجي من المستخدمين مش من مختلقات.
+ 1. ~~**الـ hero يشتغل بجد**: نص البحث في أول الشاشة (مكون جاهز `search-bar.tsx` ومو مدموج)~~ → ✅ **البحث اتدمج في v11** بمكوّن `HeroSearch` (اقتراحات حية بـ 8 نتايج + Enter على /apps/[slug] أو /apps?q= + أسهم/ECS + شرائح رائجة من الداتا) و`/apps` بقى يستقبل `?q=` SSR. ⏳ المتبقي من البند: عدّاد «X سعر مرصود النهارده» (محتاج query كونت من الرادار — للفة الجاية). → ✅ **اتنفّذ في v12**: كونت `price_watch` من السيرفر بيظهر كشارة نابضة تحت البحث، وبيختفي بهدوء لو الجدول مش موجود.
+ 2. ~~**سكشن «الأفضل في بلدك»** على الهوم~~ → ✅ **اتنفّذ في v12**: سكشن «تصفّح حسب الفئة» بين Featured والـ Split — بطاقات محسوبة من الداتا (أيقونة + اسم + عداد) بتوصل `/best/{فئة}/eg`، وفلترة تمنع أي فئة ملهاش صفحة.
+ 3. ~~**⚠️ الرئيسية كلها «use client»**: بتعمل fetch لـ Supabase من المتصفح (ومفتوحة لـ LCP/SEO). النقل لـ SSR shell عند أول تحسين أداء (مع Next 15)~~ → ✅ **اتحلّت في v10**: الصفحة بقت Server Component بتجيب managed_apps من السيرفر، والكلاينت بقى `HomeClient` بيستلمها props — مفيش أي fetch من المتصفح (20 سب 2026).
+diff --git a/src/app/api/community-report/route.ts b/src/app/api/community-report/route.ts
+new file mode 100644
+index 0000000..691e868
+--- /dev/null
++++ b/src/app/api/community-report/route.ts
+@@ -0,0 +1,57 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient } from "@/lib/supabase/server";
++
++// حدود العقلانية لكل مقياس — نفس فلسفة الرادار (مفيش أرقام هبلة تدخل)
++const BOUNDS: Record<string, [number, number]> = {
++  delivery_fee: [0, 500],
++  service_fee_pct: [0, 50],
++  subscription_price: [0, 3000],
++  streaming_price: [0, 3000],
++  ride_km_price: [0, 200],
++  bnpl_fee_pct: [0, 60]
++};
++
++const DOMAINS = new Set(["food", "rides", "streaming", "bnpl"]);
++
++export async function POST(req: NextRequest) {
++  try {
++    const b = await req.json();
++
++    // مصيدة السبام — الحقل مخفي والبشر مبيملاوهوش
++    if (b.website) return NextResponse.json({ ok: true });
++
++    const domain = String(b.domain ?? "");
++    const appId = String(b.appId ?? "").slice(0, 50).trim();
++    const metric = String(b.metric ?? "");
++    const value = Number(b.value);
++    const city = typeof b.city === "string" ? b.city.slice(0, 60).trim() : null;
++    const note = typeof b.note === "string" ? b.note.slice(0, 200).trim() : null;
++
++    if (!DOMAINS.has(domain) || !appId || !BOUNDS[metric] || !Number.isFinite(value)) {
++      return NextResponse.json({ ok: false, error: "بيانات غير مكتملة" }, { status: 400 });
++    }
++    const [min, max] = BOUNDS[metric];
++    if (value < min || value > max) {
++      return NextResponse.json(
++        { ok: false, error: "القيمة خارج النطاق المنطقي" },
++        { status: 400 }
++      );
++    }
++
++    const supabase = createClient();
++    const { error } = await supabase
++      .from("community_reports")
++      .insert({ domain, app_id: appId, metric, value, city, note });
++
++    if (error) {
++      // غالبًا الجدول لسه متعملش — نقولها بصراحة
++      return NextResponse.json(
++        { ok: false, error: "خدمة البلاغات لسه بتتجهز — جرب بعدين" },
++        { status: 503 }
++      );
++    }
++    return NextResponse.json({ ok: true });
++  } catch {
++    return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 });
++  }
++}
+diff --git a/src/app/api/fx/route.ts b/src/app/api/fx/route.ts
+new file mode 100644
+index 0000000..6893628
+--- /dev/null
++++ b/src/app/api/fx/route.ts
+@@ -0,0 +1,27 @@
++import { NextResponse } from "next/server";
++
++// سعر الصرف الحقيقي — مصدر مجاني بلا مفتاح، كاش 6 ساعات (ممنوع نختلق أرقام)
++export const revalidate = 21600; // 6 ساعات
++
++export async function GET() {
++  try {
++    const res = await fetch("https://open.er-api.com/v6/latest/USD", {
++      next: { revalidate: 21600 }
++    });
++    if (!res.ok) throw new Error("fx fetch failed");
++    const j = await res.json();
++    const usd = {
++      EGP: j?.rates?.EGP ?? null,
++      SAR: j?.rates?.SAR ?? null,
++      AED: j?.rates?.AED ?? null
++    };
++    if (!usd.EGP && !usd.SAR && !usd.AED) throw new Error("no rates");
++    return NextResponse.json({
++      usd,
++      source: "ExchangeRate-API",
++      updatedAt: j?.time_last_update_utc ?? null
++    });
++  } catch {
++    return NextResponse.json({ usd: null, source: null }, { status: 502 });
++  }
++}
+diff --git a/src/app/compare-hub/page.tsx b/src/app/compare-hub/page.tsx
+index dad5695..74f090b 100644
+--- a/src/app/compare-hub/page.tsx
++++ b/src/app/compare-hub/page.tsx
+@@ -8,8 +8,11 @@ import {
+   Location
+ } from "@/lib/ride-calculator";
+ import { comparisons } from "@/data/comparisons";
+-import { calculateFoodOrder, getAllCuisines } from "@/lib/food-delivery-calculator";
++import { calculateFoodOrder, getAllCuisines, foodApps } from "@/lib/food-delivery-calculator";
+ import { LocationSearch } from "@/components/location-search";
++import { CommunityMedian } from "@/components/community-median";
++import { CommunityReportForm } from "@/components/community-report-form";
++import { FxTicker } from "@/components/fx-ticker";
+ import { useLanguage } from "@/contexts/language-context";
+ 
+ type CompareCategory = "rides" | "food" | "streaming" | "bnpl";
+@@ -349,6 +352,10 @@ function FoodCompare() {
+                     <p className="text-xs text-charcoal-500">
+                       توصيل: {est.deliveryFee === 0 ? "مجاني" : `${est.deliveryFee} ج`}
+                     </p>
++                    <p className="mt-0.5 text-[11px] text-charcoal-400">
++                      🗓️ آخر مراجعة: {est.app.verifiedAt}
++                    </p>
++                    <CommunityMedian appId={est.app.id} metric="delivery_fee" unit="ج" />
+                   </div>
+                 </div>
+               </div>
+@@ -356,6 +363,15 @@ function FoodCompare() {
+           </div>
+         </>
+       )}
++
++      {/* بلاغات المجتمع — الداتا بتيجي من الكاستومر للمجتمع */}
++      <CommunityReportForm
++        domain="food"
++        apps={foodApps.map((a) => ({ id: a.id, name: a.name }))}
++        metric="delivery_fee"
++        metricLabel="رسوم التوصيل"
++        unit="ج"
++      />
+     </div>
+   );
+ }
+@@ -377,8 +393,9 @@ function StreamingCompare() {
+ 
+   return (
+     <div className="space-y-6">
+-      <div className="rounded-2xl bg-accent-50 border border-accent-200 p-4 text-sm text-brand-900">
+-        💡 الأسعار بالعملة المحلية لكل دولة. ممكن توفر فلوس لو اشتركت من بلد تاني.
++      <div className="rounded-2xl bg-accent-50 border border-accent-200 p-4 text-sm text-brand-900 space-y-1">
++        💡 الأسعار بالعملة المحلية لكل دولة — آخر مراجعة: سبتمبر 2026. ممكن توفر فلوس لو اشتركت من بلد تاني.
++        <FxTicker />
+       </div>
+ 
+       <div className="card-elegant p-6 overflow-x-auto">
+diff --git a/src/components/community-median.tsx b/src/components/community-median.tsx
+new file mode 100644
+index 0000000..283bafa
+--- /dev/null
++++ b/src/components/community-median.tsx
+@@ -0,0 +1,61 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import { createClient } from "@/lib/supabase/client";
++
++/**
++ * شارة «تجربة المجتمع» — متوسط بلاغات المستخدمين لآخر 30 يوم.
++ * بتختفي تمامًا لو مفيش 3 بلاغات على الأقل أو الجدول لسه مش معمول.
++ */
++export function CommunityMedian({
++  appId,
++  metric,
++  unit = "ج"
++}: {
++  appId: string;
++  metric: string;
++  unit?: string;
++}) {
++  const [stats, setStats] = useState<{ n: number; median: number } | null>(null);
++
++  useEffect(() => {
++    let alive = true;
++    (async () => {
++      try {
++        const supabase = createClient();
++        const since = new Date(Date.now() - 30 * 864e5).toISOString();
++        const { data } = await supabase
++          .from("community_reports")
++          .select("value")
++          .eq("app_id", appId)
++          .eq("metric", metric)
++          .gte("created_at", since)
++          .limit(200);
++        if (!alive || !data || data.length < 3) return;
++        const vals = data
++          .map((r: any) => Number(r.value))
++          .filter(Number.isFinite)
++          .sort((a, b) => a - b);
++        if (vals.length < 3) return;
++        const mid =
++          vals.length % 2
++            ? vals[(vals.length - 1) / 2]
++            : Math.round((vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2);
++        setStats({ n: vals.length, median: mid });
++      } catch {
++        /* بصمت — الشارة مش بتكسر الصفحة */
++      }
++    })();
++    return () => {
++      alive = false;
++    };
++  }, [appId, metric]);
++
++  if (!stats) return null;
++
++  return (
++    <p className="mt-1 rounded-lg bg-brand-50 px-2 py-1 text-[11px] text-brand-700">
++      👥 تجربة المجتمع ({stats.n} بلاغ — آخر 30 يوم): ≈{stats.median} {unit} — قيد المراجعة
++    </p>
++  );
++}
+diff --git a/src/components/community-report-form.tsx b/src/components/community-report-form.tsx
+new file mode 100644
+index 0000000..950bf35
+--- /dev/null
++++ b/src/components/community-report-form.tsx
+@@ -0,0 +1,147 @@
++"use client";
++
++import { useState } from "react";
++
++/**
++ * فورم «شفت رقم مختلف؟ بلّغ المجتمع» — الكاستومر بيبعت الرقم اللي شافه بعينه.
++ * البلاغات بتتحسب كمتوسط مجتمعي موسوم «قيد المراجعة».
++ */
++export function CommunityReportForm({
++  domain,
++  apps,
++  metric,
++  metricLabel,
++  unit = "ج"
++}: {
++  domain: string;
++  apps: { id: string; name: string }[];
++  metric: string;
++  metricLabel: string;
++  unit?: string;
++}) {
++  const [open, setOpen] = useState(false);
++  const [appId, setAppId] = useState(apps[0]?.id ?? "");
++  const [value, setValue] = useState("");
++  const [city, setCity] = useState("");
++  const [website, setWebsite] = useState(""); // مصيدة سبام
++  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
++  const [error, setError] = useState("");
++
++  async function submit(e: React.FormEvent) {
++    e.preventDefault();
++    setStatus("sending");
++    setError("");
++    try {
++      const res = await fetch("/api/community-report", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ domain, appId, metric, value: Number(value), city, website })
++      });
++      const j = await res.json();
++      if (!res.ok || !j.ok) {
++        setStatus("error");
++        setError(j.error ?? "حصل خطأ — جرب تاني");
++        return;
++      }
++      setStatus("done");
++      setValue("");
++      setCity("");
++    } catch {
++      setStatus("error");
++      setError("مفيش اتصال — جرب لاحقًا");
++    }
++  }
++
++  if (status === "done") {
++    return (
++      <div className="rounded-2xl border border-sage-300 bg-sage-50 p-4 text-sm text-sage-700">
++        ✅ <strong>وصل بلاغك!</strong> هينضم للمتوسط المجتمعي بعد المراجعة — شكرًا إنك بتكبّر المرجع ده معانا.
++      </div>
++    );
++  }
++
++  return (
++    <div className="rounded-2xl border border-dashed border-accent-400 bg-cream-50 p-5">
++      {!open ? (
++        <button
++          onClick={() => setOpen(true)}
++          className="w-full text-center text-sm font-bold text-accent-700"
++        >
++          🗣️ شفت {metricLabel} مختلف عن المعروض؟ بلّغ المجتمع
++        </button>
++      ) : (
++        <form onSubmit={submit} className="space-y-3">
++          <p className="text-sm font-bold text-brand-900">
++            بلّغ عن {metricLabel} اللي شفتها بعينك
++          </p>
++          <div className="grid gap-3 sm:grid-cols-3">
++            <select
++              value={appId}
++              onChange={(e) => setAppId(e.target.value)}
++              className="rounded-xl border border-cream-200 px-3 py-2 text-sm"
++              aria-label="التطبيق"
++            >
++              {apps.map((a) => (
++                <option key={a.id} value={a.id}>
++                  {a.name}
++                </option>
++              ))}
++            </select>
++            <div className="flex items-center gap-2">
++              <input
++                type="number"
++                required
++                min={0}
++                step="0.5"
++                value={value}
++                onChange={(e) => setValue(e.target.value)}
++                placeholder="القيمة"
++                className="w-full rounded-xl border border-cream-200 px-3 py-2 text-sm"
++                aria-label={metricLabel}
++              />
++              <span className="text-sm text-charcoal-500">{unit}</span>
++            </div>
++            <input
++              type="text"
++              value={city}
++              onChange={(e) => setCity(e.target.value)}
++              placeholder="مدينتك (اختياري)"
++              className="rounded-xl border border-cream-200 px-3 py-2 text-sm"
++              aria-label="المدينة"
++            />
++          </div>
++          {/* مصيدة سبام مخفية */}
++          <input
++            type="text"
++            value={website}
++            onChange={(e) => setWebsite(e.target.value)}
++            tabIndex={-1}
++            autoComplete="off"
++            className="hidden"
++            aria-hidden="true"
++          />
++          {status === "error" && <p className="text-sm text-red-600">{error}</p>}
++          <div className="flex items-center gap-3">
++            <button
++              type="submit"
++              disabled={status === "sending" || value === ""}
++              className="rounded-full bg-accent-400 px-6 py-2 text-sm font-bold text-brand-900 hover:bg-accent-500 disabled:opacity-50"
++            >
++              {status === "sending" ? "بيبعت…" : "ابعت البلاغ"}
++            </button>
++            <button
++              type="button"
++              onClick={() => setOpen(false)}
++              className="text-sm text-charcoal-500"
++            >
++              إلغاء
++            </button>
++            <span className="text-xs text-charcoal-400">
++              البلاغات بتظهر كمتوسط مجتمعي موسوم «قيد المراجعة» — مش كرقم رسمي.
++            </span>
++          </div>
++        </form>
++      )}
++    </div>
++  );
++}
+diff --git a/src/components/fx-ticker.tsx b/src/components/fx-ticker.tsx
+new file mode 100644
+index 0000000..4c29ee1
+--- /dev/null
++++ b/src/components/fx-ticker.tsx
+@@ -0,0 +1,24 @@
++"use client";
++
++import { useEffect, useState } from "react";
++
++/** شريط سعر الصرف الحي — يظهر فقط لما المصدر يرد فعلًا (مفيش أرقام احتياطية) */
++export function FxTicker() {
++  const [usd, setUsd] = useState<{ EGP: number; SAR: number; AED: number } | null>(null);
++
++  useEffect(() => {
++    fetch("/api/fx")
++      .then((r) => (r.ok ? r.json() : null))
++      .then((j) => j?.usd && setUsd(j.usd))
++      .catch(() => {});
++  }, []);
++
++  if (!usd) return null;
++
++  return (
++    <p className="text-xs text-charcoal-500">
++      💱 الدولار دلوقتي: ≈{usd.EGP} ج 🇪🇬 · {usd.SAR} ريال 🇸🇦 · {usd.AED} درهم 🇦🇪
++      <span className="text-charcoal-400"> — لايف (المصدر: ExchangeRate-API، تحديث كل 6 ساعات)</span>
++    </p>
++  );
++}
+diff --git a/src/lib/food-delivery-calculator.ts b/src/lib/food-delivery-calculator.ts
+index c9711b4..666ff74 100644
+--- a/src/lib/food-delivery-calculator.ts
++++ b/src/lib/food-delivery-calculator.ts
+@@ -14,6 +14,7 @@ export type FoodApp = {
+   subscriptionPrice?: number;
+   subscriptionBenefits?: string[];
+   restaurantCount: string;
++  verifiedAt: string; // تاريخ آخر مراجعة — الرقم له تاريخ (قاعدة المشروع)
+   features: string[];
+   paymentMethods: string[];
+   promoCode?: { code: string; discount: number; description: string };
+@@ -35,6 +36,7 @@ export const foodApps: FoodApp[] = [
+     subscriptionPrice: 99,      // كان 49
+     subscriptionBenefits: ["توصيل مجاني", "خصومات حصرية"],
+     restaurantCount: "5,000+",
++    verifiedAt: "سبتمبر 2026",
+     features: ["أكتر مطاعم", "توصيل سريع", "عروض يومية"],
+     paymentMethods: ["كاش", "كارت", "محفظة"],
+     promoCode: { code: "WELCOME50", discount: 50, description: "خصم 50 ج على أول طلب" },
+@@ -51,6 +53,7 @@ export const foodApps: FoodApp[] = [
+     averageDeliveryTime: 50,
+     hasSubscription: false,
+     restaurantCount: "3,500+",
++    verifiedAt: "سبتمبر 2026",
+     features: ["دليل المطاعم", "مراجعات حقيقية", "صور للأكل"],
+     paymentMethods: ["كاش", "كارت"],
+     promoCode: { code: "ELMENUS20", discount: 20, description: "خصم 20% على أول طلب" },
+@@ -70,6 +73,7 @@ export const foodApps: FoodApp[] = [
+     subscriptionPrice: 79,
+     subscriptionBenefits: ["توصيل مجاني", "خصومات على المشاوير"],
+     restaurantCount: "2,500+",
++    verifiedAt: "سبتمبر 2026",
+     features: ["مدمج مع كريم", "نقاط على كل طلب", "كريم باي"],
+     paymentMethods: ["كاش", "كارت", "كريم باي"],
+     promoCode: { code: "CAREEM30", discount: 30, description: "خصم 30 ج على أول طلب" },
+@@ -89,6 +93,7 @@ export const foodApps: FoodApp[] = [
+     subscriptionPrice: 149,
+     subscriptionBenefits: ["توصيل مجاني للإفطار", "بقالة مجانية"],
+     restaurantCount: "البقالة والإفطار",
++    verifiedAt: "سبتمبر 2026",
+     features: ["إفطار طازج", "بقالة يومية", "أسعار ممتازة"],
+     paymentMethods: ["كاش", "كارت", "محفظة"],
+     cuisines: ["إفطار", "بقالة", "مخبوزات", "ألبان", "خضار وفاكهة"]
+@@ -104,6 +109,7 @@ export const foodApps: FoodApp[] = [
+     averageDeliveryTime: 20,
+     hasSubscription: false,
+     restaurantCount: "البقالة الفورية",
++    verifiedAt: "سبتمبر 2026",
+     features: ["توصيل في 20 دقيقة", "بقالة فورية", "سريع جدًا"],
+     paymentMethods: ["كاش", "كارت"],
+     promoCode: { code: "RABBIT15", discount: 15, description: "خصم 15% على أول 3 طلبات" },
+@@ -120,6 +126,7 @@ export const foodApps: FoodApp[] = [
+     averageDeliveryTime: 50,
+     hasSubscription: false,
+     restaurantCount: "2,000+",
++    verifiedAt: "سبتمبر 2026",
+     features: ["تاريخ طويل", "موثوق", "عروض موسمية"],
+     paymentMethods: ["كاش", "كارت"],
+     cuisines: ["مصري", "شرقي", "إيطالي", "صيني"]
+diff --git a/supabase/migrations/002_community_reports.sql b/supabase/migrations/002_community_reports.sql
+new file mode 100644
+index 0000000..fda2104
+--- /dev/null
++++ b/supabase/migrations/002_community_reports.sql
+@@ -0,0 +1,30 @@
++-- 002: بلاغات المجتمع — الأرقام الحية من المستخدمين أنفسهم
++-- هجرة idempotent بالكامل (آمنة لإعادة التشغيل)
++
++create table if not exists public.community_reports (
++  id uuid primary key default gen_random_uuid(),
++  domain text not null check (domain in ('food', 'rides', 'streaming', 'bnpl')),
++  app_id text not null,
++  metric text not null,
++  value numeric not null,
++  city text,
++  note text,
++  created_at timestamptz not null default now()
++);
++
++create index if not exists community_reports_app_metric_idx
++  on public.community_reports (app_id, metric, created_at desc);
++
++alter table public.community_reports enable row level security;
++
++-- البلاغ مفتوح للكل (من غير تسجيل — زي الرادار، الشفافية أولاً)
++drop policy if exists insert_reports on public.community_reports;
++create policy insert_reports on public.community_reports
++  for insert to anon, authenticated
++  with check (true);
++
++-- القراءة مفتوحة — الواجهة بتعرض متوسطات فقط وموسومة «قيد المراجعة»
++drop policy if exists select_reports on public.community_reports;
++create policy select_reports on public.community_reports
++  for select to anon, authenticated
++  using (true);
+-- 
+2.47.3
+

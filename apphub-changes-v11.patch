@@ -1,0 +1,296 @@
+From e71195e208477d0e7c9a73c1aa94066471e949a2 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 18:07:57 +0000
+Subject: [PATCH] =?UTF-8?q?=F0=9F=94=8E=20v11=20=E2=80=94=20=D8=A8=D8=AD?=
+ =?UTF-8?q?=D8=AB=20=D8=A7=D9=84=D9=80=20Hero=20=D8=A7=D9=84=D8=AA=D9=81?=
+ =?UTF-8?q?=D8=A7=D8=B9=D9=84=D9=8A:=20=D8=A7=D9=84=D9=80=20hero=20=D8=A8?=
+ =?UTF-8?q?=D9=82=D9=89=20=D8=A8=D9=8A=D8=B4=D8=AA=D8=BA=D9=84=20=D8=A8?=
+ =?UTF-8?q?=D8=AC=D8=AF?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- HeroSearch جديد: اقتراحات حية (8 نتائج، اسم/وصف/وسوم)، تنقّل بالأسهم
+  وEnter يفتح صفحة التطبيق مباشرة أو /apps?q=…، ECS يقفل، قفل عند الضغط بره
+- شرائح «الأكثر رواجًا» من الداتا نفسها (نتفليكس/سبوتيفاي/شاهد/طلبات)
+- /apps بقى يقبل ?q= سيرفر-سايد: AppsDirectory فيه initialQuery
+- إعادة ترديم الـ Hero: الوصف ← البحث ← الأزرار بمسافات مظبوطة
+- توثيق: BRAND-GUIDE (v11) + PROJECT-AUDIT (إغلاق بند البحث)
+---
+ docs/BRAND-GUIDE.md               |   1 +
+ docs/PROJECT-AUDIT.md             |   2 +-
+ src/app/apps/page.tsx             |   6 +-
+ src/components/apps-directory.tsx |   4 +-
+ src/components/hero-search.tsx    | 163 ++++++++++++++++++++++++++++++
+ src/components/home-client.tsx    |  10 +-
+ 6 files changed, 178 insertions(+), 8 deletions(-)
+ create mode 100644 src/components/hero-search.tsx
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index de19e81..b539f1f 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v11** 🔎 بحث الـ Hero التفاعلي | 20 سب 2026 | مكوّن `HeroSearch` جديد في قلب الـ Hero: اقتراحات حية (8 نتائج: اسم/وصف/وسوم) صفّة بأسهم الكيبورد + Enter يوديك صفحة التطبيق مباشرة أو `/apps?q=…`، + شرائح «الأكثر رواجًا» من الداتا نفسها — و`initialQuery` في دليل التطبيقات بقى يتجهز SSR من الـ URL. الهيرو اتردّم: الوصف mb-8 ← البحث ← الأزرار mb-12 |
+ | **v10** ⚡ SSR للرئيسية | 20 سب 2026 | نهاية عهد «الرئيسية كلها use client»: `page.tsx` بقت Server Component ديناميكية بتجيب `managed_apps` من Supabase على السيرفر وتسلّمها props لكون عميل جديد `HomeClient` — مفيش fetch من المتصفح خالص، الكوبي والأرقام (167+/16) والأقسام كلها في الـ HTML الأول (LCP/SEO)، + metadata مخصصة للرئيسية بكوبي الـ moat |
+ | **v9** 🧭 صقافة الثقة (E-E-A-T) + تنشيف المحتوى | 20 سب 2026 | صفحة `/methodology` كاملة (مصادر الأسعار، قواعد أمان الرادار 30%—300% والمراجعة اليدوية، معايير النجوم المعلنة، حدود الدقة بصراحة) + رابطها في الفوتر والـ sitemap — وتنشيف 2025→2026: مقال «أفضل تطبيقات مصر» اتنقّح لعام 2026 مع حقل `updatedAt` جديد بيظهر في صفحة المقال، وروابط داخلية لرادار الأسعار وحاسبة الاشتراكات في المقالات الثلاثة، وتاريخ مراجعة الخصوصية/الشروط بقى سبتمبر 2026 |
+ | **v8** 📡 تنبيهات الرادار (التيليجرام) + تصحيحات التصميم | 18 سب 2026 | استرجاع v3 من العزلة + بث تيليجرام فوري ببديل أوفر من نفس النوع + كارت قناة — وتصحيحات تصميم: خط Almarai للعناوين العربية (Playfair مفيهوش عربي وكان نازل بخط النظام)، خلفية hero مملوكة بدون Unsplash، إحصاءات حية بدل «163+» الثابتة، كوبي الـ hero بقى بيبيع موقعنا («كل اشتراكاتك بسعرها الحقيقي») — ووثيقة `docs/PROJECT-AUDIT.md` |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index e2584ea..121253a 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,7 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
+-1. **الـ hero يشتغل بجد**: نص البحث في أول الشاشة (مكون جاهز `search-bar.tsx` ومو مدموج) + عدّاد «X سعر مرصود النهارده» بدل بطاقة ثانية
++1. ~~**الـ hero يشتغل بجد**: نص البحث في أول الشاشة (مكون جاهز `search-bar.tsx` ومو مدموج)~~ → ✅ **البحث اتدمج في v11** بمكوّن `HeroSearch` (اقتراحات حية بـ 8 نتايج + Enter على /apps/[slug] أو /apps?q= + أسهم/ECS + شرائح رائجة من الداتا) و`/apps` بقى يستقبل `?q=` SSR. ⏳ المتبقي من البند: عدّاد «X سعر مرصود النهارده» (محتاج query كونت من الرادار — للفة الجاية).
+ 2. **سكشن «الأفضل في بلدك»** على الهوم: بطاقات الفئات الـ 16 اللي بتوصل لـ 48 صفحة /best — جسر الماكينة الجديدة
+ 3. ~~**⚠️ الرئيسية كلها «use client»**: بتعمل fetch لـ Supabase من المتصفح (ومفتوحة لـ LCP/SEO). النقل لـ SSR shell عند أول تحسين أداء (مع Next 15)~~ → ✅ **اتحلّت في v10**: الصفحة بقت Server Component بتجيب managed_apps من السيرفر، والكلاينت بقى `HomeClient` بيستلمها props — مفيش أي fetch من المتصفح (20 سب 2026).
+ 4. صورة OG ديناميكية للصفحات (موجود `/api/og` — يربط)
+diff --git a/src/app/apps/page.tsx b/src/app/apps/page.tsx
+index 78f3039..447a183 100644
+--- a/src/app/apps/page.tsx
++++ b/src/app/apps/page.tsx
+@@ -5,7 +5,7 @@ import { AppItem } from "@/lib/types";
+ 
+ export const revalidate = 0;
+ 
+-export default async function AppsPage() {
++export default async function AppsPage({ searchParams }: { searchParams: { q?: string } }) {
+   const supabase = createClient();
+ 
+   const { data: dbApps } = await supabase
+@@ -52,8 +52,8 @@ export default async function AppsPage() {
+           </p>
+         </div>
+ 
+-        {/* Apps Directory */}
+-        <AppsDirectory apps={allApps} />
++        {/* Apps Directory — ?q= بيجهز البحث من الـ Hero */}
++        <AppsDirectory apps={allApps} initialQuery={typeof searchParams.q === "string" ? searchParams.q : ""} />
+       </div>
+     </div>
+   );
+diff --git a/src/components/apps-directory.tsx b/src/components/apps-directory.tsx
+index 95c9082..1467747 100644
+--- a/src/components/apps-directory.tsx
++++ b/src/components/apps-directory.tsx
+@@ -6,8 +6,8 @@ import { groupAppsBySubcategory, subcategoryOf } from "@/data/subcategories";
+ import { AppItem, CountryCode, AppCategory } from "@/lib/types";
+ import { categoryLabels, countryLabels, categoryIcons } from "@/lib/constants";
+ 
+-export function AppsDirectory({ apps }: { apps: AppItem[] }) {
+-  const [query, setQuery] = useState("");
++export function AppsDirectory({ apps, initialQuery = "" }: { apps: AppItem[]; initialQuery?: string }) {
++  const [query, setQuery] = useState(initialQuery);
+   const [country, setCountry] = useState<CountryCode | "all">("all");
+   const [viewMode, setViewMode] = useState<"categories" | "all">("categories");
+ 
+diff --git a/src/components/hero-search.tsx b/src/components/hero-search.tsx
+new file mode 100644
+index 0000000..0da345d
+--- /dev/null
++++ b/src/components/hero-search.tsx
+@@ -0,0 +1,163 @@
++"use client";
++
++import { useEffect, useMemo, useRef, useState } from "react";
++import Link from "next/link";
++import { useRouter } from "next/navigation";
++import { AppItem } from "@/lib/types";
++import { categoryLabels } from "@/lib/constants";
++import { useLanguage } from "@/contexts/language-context";
++
++// بحث تفاعلي في الـ Hero: اقتراحات حية + Enter يوديك /apps?q=... أو صفحة التطبيق مباشرة
++export function HeroSearch({ apps }: { apps: AppItem[] }) {
++  const { lang } = useLanguage();
++  const router = useRouter();
++  const [q, setQ] = useState("");
++  const [open, setOpen] = useState(false);
++  const [hi, setHi] = useState(-1);
++  const boxRef = useRef<HTMLDivElement>(null);
++
++  const ql = q.trim().toLowerCase();
++
++  const results = useMemo(() => {
++    if (!ql) return [];
++    return apps
++      .filter(
++        (a) =>
++          a.name.toLowerCase().includes(ql) ||
++          a.shortDescription.toLowerCase().includes(ql) ||
++          a.tags.join(" ").toLowerCase().includes(ql)
++      )
++      .slice(0, 8);
++  }, [apps, ql]);
++
++  // قفل القايمة لما تضغط بره
++  useEffect(() => {
++    function onDocClick(e: MouseEvent) {
++      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
++    }
++    document.addEventListener("click", onDocClick);
++    return () => document.removeEventListener("click", onDocClick);
++  }, []);
++
++  function go() {
++    if (hi >= 0 && results[hi]) {
++      router.push(`/apps/${results[hi].slug}`);
++      return;
++    }
++    if (ql) router.push(`/apps?q=${encodeURIComponent(q.trim())}`);
++    else router.push("/apps");
++  }
++
++  function onKeyDown(e: React.KeyboardEvent) {
++    if (e.key === "Enter") {
++      e.preventDefault();
++      go();
++    } else if (e.key === "ArrowDown") {
++      e.preventDefault();
++      setHi((h) => Math.min(h + 1, results.length - 1));
++      setOpen(true);
++    } else if (e.key === "ArrowUp") {
++      e.preventDefault();
++      setHi((h) => Math.max(h - 1, -1));
++    } else if (e.key === "Escape") {
++      setOpen(false);
++    }
++  }
++
++  // شرائح الرائج — أسماء حقيقية من الداتا نفسها (مفيش ترجمة ملفوظة)
++  const trendingSlugs = ["netflix", "spotify", "shahid", "talabat"];
++  const trending = trendingSlugs
++    .map((slug) => apps.find((a) => a.slug === slug))
++    .filter((a): a is AppItem => Boolean(a));
++
++  const placeholder =
++    lang === "ar"
++      ? "دوّر على تطبيق أو اشتراك… (مثلًا: نتفليكس، سبوتيفاي، شاهد)"
++      : "Search an app or subscription… (e.g. Netflix, Spotify, Shahid)";
++  const searchLabel = lang === "ar" ? "بحث" : "Search";
++  const trendingLabel = lang === "ar" ? "الأكثر رواجًا:" : "Trending:";
++  const emptyText =
++    lang === "ar"
++      ? "مفيش نتائج مطابقة — جرّب اسم تاني"
++      : "No matching results — try another name";
++
++  return (
++    <div ref={boxRef} className="relative w-full max-w-2xl mx-auto text-right">
++      {/* صندوق البحث */}
++      <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-2xl ring-1 ring-black/10">
++        <span className="text-xl" aria-hidden>🔍</span>
++        <input
++          value={q}
++          onChange={(e) => {
++            setQ(e.target.value);
++            setHi(-1);
++            setOpen(true);
++          }}
++          onFocus={() => setOpen(true)}
++          onKeyDown={onKeyDown}
++          placeholder={placeholder}
++          autoComplete="off"
++          aria-label={lang === "ar" ? "بحث في التطبيقات" : "Search apps"}
++          className="w-full bg-transparent py-3 text-base sm:text-lg text-brand-900 placeholder:text-charcoal-400 focus:outline-none"
++        />
++        <button
++          onClick={go}
++          className="shrink-0 bg-accent-400 text-brand-900 px-6 py-3 rounded-full font-bold hover:bg-accent-500 transition"
++        >
++          {searchLabel}
++        </button>
++      </div>
++
++      {/* الاقتراحات الحية */}
++      {open && ql.length > 0 && (
++        <div
++          role="listbox"
++          className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-cream-200 overflow-hidden z-30"
++        >
++          {results.map((a, i) => (
++            <Link
++              key={a.id}
++              href={`/apps/${a.slug}`}
++              role="option"
++              aria-selected={hi === i}
++              onMouseEnter={() => setHi(i)}
++              className={`flex items-center gap-3 px-5 py-3 transition ${
++                hi === i ? "bg-cream-100" : "bg-white"
++              }`}
++            >
++              <span className="text-2xl" aria-hidden>{a.icon}</span>
++              <span className="flex-1 min-w-0">
++                <span className="block font-bold text-brand-900 truncate">{a.name}</span>
++                <span className="block text-xs text-charcoal-500 truncate">
++                  {categoryLabels[a.category] ?? a.category}
++                </span>
++              </span>
++              <span className="text-sm text-amber-600 font-bold shrink-0">
++                ★ {a.rating.toFixed(1)}
++              </span>
++            </Link>
++          ))}
++          {results.length === 0 && (
++            <p className="px-5 py-4 text-sm text-charcoal-500">{emptyText}</p>
++          )}
++        </div>
++      )}
++
++      {/* شرائح الرائج */}
++      {trending.length > 0 && (
++        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
++          <span className="text-white/70 ml-1">{trendingLabel}</span>
++          {trending.map((a) => (
++            <Link
++              key={a.id}
++              href={`/apps/${a.slug}`}
++              className="rounded-full bg-white/10 backdrop-blur border border-white/20 text-white px-4 py-1.5 hover:bg-white/20 transition"
++            >
++              {a.icon} {a.name}
++            </Link>
++          ))}
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/src/components/home-client.tsx b/src/components/home-client.tsx
+index 1233fe6..9179c8d 100644
+--- a/src/components/home-client.tsx
++++ b/src/components/home-client.tsx
+@@ -6,6 +6,7 @@ import { apps as staticApps } from "@/data/apps";
+ import { deals } from "@/data/deals";
+ import { getActiveDeals } from "@/lib/deals";
+ import { NewsletterForm } from "@/components/newsletter-form";
++import { HeroSearch } from "@/components/hero-search";
+ import { AppItem } from "@/lib/types";
+ import { useLanguage } from "@/contexts/language-context";
+ 
+@@ -45,12 +46,17 @@ export function HomeClient({ initialDbApps }: { initialDbApps: AppItem[] }) {
+       <span className="text-accent-400 italic block">{t("hero_title_2")}</span>
+     </h1>
+ 
+-    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-12 leading-relaxed text-shadow-soft animate-slide-up px-4">
++    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 leading-relaxed text-shadow-soft animate-slide-up px-4">
+       {t("hero_description")}
+     </p>
+ 
++    {/* بحث الـ Hero التفاعلي */}
++    <div className="animate-slide-up px-4 mb-8 w-full">
++      <HeroSearch apps={allApps} />
++    </div>
++
+     {/* Buttons */}
+-    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up px-4 mb-16">
++    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up px-4 mb-12">
+       <Link 
+         href="/apps" 
+         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent-400 text-brand-900 px-8 py-4 rounded-full font-bold hover:bg-accent-500 transition shadow-xl"
+-- 
+2.47.3
+

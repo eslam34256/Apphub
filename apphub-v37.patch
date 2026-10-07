@@ -1,0 +1,451 @@
+From 9065afa0de66e5dfaaae62582db76a33fbff013d Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Tue, 6 Oct 2026 14:17:40 +0000
+Subject: [PATCH] =?UTF-8?q?v37:=20=F0=9F=A4=96=20AppHub=202.0=20=E2=80=94?=
+ =?UTF-8?q?=20=C2=AB=D8=B3=D8=A7=D8=B9=D8=AF=D9=86=D9=8A=20=D8=A3=D8=AE?=
+ =?UTF-8?q?=D8=AA=D8=A7=D8=B1=C2=BB=20+=20=D8=A5=D8=B5=D9=84=D8=A7=D8=AD?=
+ =?UTF-8?q?=20=D8=A7=D9=84=D8=AB=D9=82=D8=A9=20=D9=83=D8=A7=D9=85=D9=84?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Killer Feature:
+- /ai: محرك قرار بالعامية (بلد+ميزانية+مجاني+مجال+كلمة مفتاحية) → 🥇🥉 بأسباب + CTA جرّبه
+- الهوم: positioning جديد «مش عارف تختار؟ إحنا نختارلك» فوق الفيتشرد
+
+إصلاح الثقة (قبل أي Marketing):
+- contact.ts مصدر واحد: البريد/الواتساب الحقيقي في Footer+Contact+Settings fallback
+- About: 1000+ مراجعة → أرقام محسوبة من الداتا (تطبيقات/فئات/دول/رادارات)
+- recommend: ٧ مجالات جديدة للمحرك (tools/gaming/religious/kids/travel/freelance/topup)
+---
+ src/app/about/page.tsx          |  20 +++--
+ src/app/ai/page.tsx             |   2 +
+ src/components/ai/nl-choose.tsx |  97 +++++++++++++++++++++++++
+ src/components/footer.tsx       |   9 ++-
+ src/components/home-client.tsx  |  15 ++++
+ src/lib/contact.ts              |  10 +++
+ src/lib/nl-choose.ts            | 125 ++++++++++++++++++++++++++++++++
+ src/lib/recommend.ts            |  12 ++-
+ src/lib/settings.ts             |   7 +-
+ 9 files changed, 280 insertions(+), 17 deletions(-)
+ create mode 100644 src/components/ai/nl-choose.tsx
+ create mode 100644 src/lib/contact.ts
+ create mode 100644 src/lib/nl-choose.ts
+
+diff --git a/src/app/about/page.tsx b/src/app/about/page.tsx
+index 67bf430..66b99a0 100644
+--- a/src/app/about/page.tsx
++++ b/src/app/about/page.tsx
+@@ -1,5 +1,14 @@
+ import Link from "next/link";
+ import type { Metadata } from "next";
++import { apps } from "@/data/apps";
++
++// v37: أرقام صادقة محسوبة من الداتا نفسها — مفيش ادعاءات تسويقية
++const ABOUT_STATS = [
++  { icon: "📱", value: `+${apps.length}`, label: "تطبيق مُراجع" },
++  { icon: "🌍", value: `${new Set(apps.flatMap(a => a.countries)).size}`, label: "دول" },
++  { icon: "📂", value: `${new Set(apps.map(a => a.category)).size}`, label: "فئة" },
++  { icon: "📡", value: "4", label: "رادارات أسعار يومية" }
++];
+ 
+ export const metadata: Metadata = {
+   title: "من نحن — AppHub",
+@@ -39,17 +48,12 @@ export default function AboutPage() {
+           </p>
+           <p className="text-slate-600 leading-relaxed">
+             <strong className="text-brand-600">AppHub</strong> جه عشان يحل المشكلة دي.
+-            بنوفّر لك معلومات دقيقة، مقارنات شفافة، ومراجعات حقيقية لكل التطبيقات
+-            في المنطقة العربية.
++            بنوفّر لك معلومات دقيقة، مقارنات شفافة، وأسعار موثّقة بمصادر معلنة وتاريخ مراجعة
++            لكل التطبيقات في المنطقة العربية.
+           </p>
+         </div>
+         <div className="grid grid-cols-2 gap-4">
+-          {[
+-            { icon: "📱", value: "163+", label: "تطبيق" },
+-            { icon: "🌍", value: "3", label: "دول" },
+-            { icon: "📂", value: "15", label: "فئة" },
+-            { icon: "💬", value: "1000+", label: "مراجعة" }
+-          ].map((stat) => (
++          {ABOUT_STATS.map((stat) => (
+             <div key={stat.label} className="rounded-2xl bg-white p-5 shadow-soft text-center">
+               <div className="text-4xl mb-2">{stat.icon}</div>
+               <div className="text-3xl font-extrabold text-brand-600">{stat.value}</div>
+diff --git a/src/app/ai/page.tsx b/src/app/ai/page.tsx
+index 58e284f..05c7970 100644
+--- a/src/app/ai/page.tsx
++++ b/src/app/ai/page.tsx
+@@ -3,6 +3,7 @@ import { useState } from "react";
+ import { recommendApps } from "@/lib/recommend";
+ import { CountryCode } from "@/lib/types";
+ import { AppCard } from "@/components/app-card";
++import { NlChoose } from "@/components/ai/nl-choose";
+ export default function AIPage() {
+   const [activity, setActivity] = useState("watch");
+   const [priority, setPriority] = useState("quality");
+@@ -11,6 +12,7 @@ export default function AIPage() {
+   function handleRecommend() { setResults(recommendApps({ activity, priority, country })); }
+   return (
+     <div className="space-y-6">
++      <NlChoose />
+       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+         <h1 className="mb-2 text-2xl font-extrabold">الترشيح الذكي</h1>
+         <p className="mb-4 text-slate-500">جاوب 3 أسئلة وسنرشح لك أفضل التطبيقات.</p>
+diff --git a/src/components/ai/nl-choose.tsx b/src/components/ai/nl-choose.tsx
+new file mode 100644
+index 0000000..204a6e2
+--- /dev/null
++++ b/src/components/ai/nl-choose.tsx
+@@ -0,0 +1,97 @@
++"use client";
++
++import { useState } from "react";
++import Link from "next/link";
++import { choose, ChooseResult } from "@/lib/nl-choose";
++
++/** v37 — Killer Feature: المستخدم يكتب بالعامية وإحنا بنختارله 🥇🥉 بأسباب */
++export function NlChoose() {
++  const [q, setQ] = useState("");
++  const [res, setRes] = useState<ChooseResult | null>(null);
++
++  const run = (text: string) => {
++    if (!text.trim()) return;
++    setQ(text);
++    setRes(choose(text));
++  };
++
++  const examples = [
++    "عايز تطبيق أتعلم بيه إنجليزي ببلاش",
++    "vpn كويس ورخيص",
++    "أفضل تطبيق توصيل أكل في مصر",
++    "برنامج pdf مجاني"
++  ];
++
++  return (
++    <section className="rounded-3xl gradient-brand p-6 sm:p-8 text-white shadow-xl">
++      <div className="flex items-center gap-3 mb-2">
++        <span className="text-3xl">🤖</span>
++        <h2 className="text-2xl sm:text-3xl font-extrabold">ساعدني أختار</h2>
++      </div>
++      <p className="text-white/85 mb-5">
++        اكتب طلبك بالعامية عادي — ميزانيتك وبلدك واحتياجك — وهنطلعلك أفضل ٣ اختيارات بأسبابها.
++      </p>
++      <form
++        className="flex flex-col sm:flex-row gap-3"
++        onSubmit={e => { e.preventDefault(); run(q); }}
++      >
++        <input
++          value={q}
++          onChange={e => setQ(e.target.value)}
++          placeholder="مثال: عايز برنامج زي Canva بس مجاني…"
++          className="flex-1 rounded-2xl border-0 bg-white px-5 py-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-white/30"
++        />
++        <button type="submit" className="rounded-2xl bg-slate-900 px-8 py-4 font-extrabold text-white hover:bg-slate-800 transition-colors">
++          🤖 اختارلي
++        </button>
++      </form>
++      <div className="mt-3 flex flex-wrap gap-2">
++        {examples.map(ex => (
++          <button
++            key={ex}
++            onClick={() => run(ex)}
++            className="rounded-full bg-white/15 px-3.5 py-1.5 text-xs hover:bg-white/25 transition-colors"
++          >
++            {ex}
++          </button>
++        ))}
++      </div>
++
++      {res && (
++        <div className="mt-6 space-y-3 animate-fade-in">
++          <p className="text-xs text-white/70">
++            فهمنا طلبك كده: {res.intent.activity ? "مجال " : ""}
++            {res.intent.freeOnly ? "مجاني · " : ""}
++            {res.intent.budget ? `ميزانية ${res.intent.budget}ج · ` : ""}
++            بلد: {res.intent.country === "EG" ? "مصر 🇪🇬" : res.intent.country === "SA" ? "السعودية 🇸🇦" : "الإمارات 🇦🇪"}
++            {" "}· رشّحنا من {res.poolSize} تطبيق مناسب
++          </p>
++          {res.medals.map(m => (
++            <div key={m.medal} className="rounded-2xl bg-white p-4 sm:p-5 text-slate-900 shadow-lg">
++              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
++                <div className="flex items-center gap-3 flex-1">
++                  <span className="text-3xl">{m.medal}</span>
++                  <div>
++                    <p className="text-xs font-bold text-brand-600">{m.title}</p>
++                    <h3 className="text-lg font-extrabold">{m.app.icon} {m.app.name}</h3>
++                  </div>
++                </div>
++                <Link
++                  href={`/apps/${m.app.slug}`}
++                  className="shrink-0 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-500 transition-colors text-center"
++                >
++                  جرّبه ←
++                </Link>
++              </div>
++              <div className="mt-3 flex flex-wrap gap-2">
++                {m.reasons.map(r => (
++                  <span key={r} className="rounded-full bg-cream-100 px-3 py-1 text-xs font-bold text-slate-700">{r}</span>
++                ))}
++              </div>
++            </div>
++          ))}
++        </div>
++      )}
++    </section>
++  );
++}
+diff --git a/src/components/footer.tsx b/src/components/footer.tsx
+index da8e837..9e9c630 100644
+--- a/src/components/footer.tsx
++++ b/src/components/footer.tsx
+@@ -4,15 +4,16 @@ import Link from "next/link";
+ import { useEffect, useState } from "react";
+ import { useLanguage } from "@/contexts/language-context";
+ import { createClient } from "@/lib/supabase/client";
++import { CONTACT } from "@/lib/contact";
+ 
+ export function Footer() {
+   const { t, lang } = useLanguage();
+   const [settings, setSettings] = useState<any>({
+     site_name: "AppHub",
+-    contact_email: "Eslam34256@gmail.com",
+-    whatsapp_number: "+201155572676",
+-    phone_number: "01155572676",
+-    address: lang === "ar" ? "القاهرة، مصر" : "Cairo, Egypt"
++    contact_email: CONTACT.email,
++    whatsapp_number: CONTACT.whatsapp,
++    phone_number: CONTACT.phone,
++    address: lang === "ar" ? CONTACT.location : "Cairo, Egypt"
+   });
+ 
+   useEffect(() => {
+diff --git a/src/components/home-client.tsx b/src/components/home-client.tsx
+index 912ff38..a97d320 100644
+--- a/src/components/home-client.tsx
++++ b/src/components/home-client.tsx
+@@ -121,6 +121,21 @@ export function HomeClient({ initialDbApps, radarCount = null }: { initialDbApps
+   </div>
+ </section>
+ 
++      {/* v37 — Decision CTA: positioning الجديد «إحنا نختارلك» */}
++      <section className="bg-cream-50 pt-10">
++        <div className="max-w-7xl mx-auto px-6">
++          <Link href="/ai" className="block rounded-3xl gradient-brand p-6 sm:p-8 text-white shadow-xl transition hover:opacity-95">
++            <div className="flex flex-col sm:flex-row items-center gap-4 justify-between text-center sm:text-right">
++              <div>
++                <h2 className="text-2xl sm:text-3xl font-extrabold">مش عارف تختار؟ إحنا نختارلك 🤖</h2>
++                <p className="mt-1.5 text-white/85">اكتب طلبك بالعامية — احتياجك وميزانيتك وبلدك — وهنديك أفضل ٣ اختيارات بأسبابها.</p>
++              </div>
++              <span className="shrink-0 rounded-2xl bg-white text-brand-700 font-extrabold px-6 py-3">🤖 ساعدني أختار</span>
++            </div>
++          </Link>
++        </div>
++      </section>
++
+       {/* ═══════════════════════════════════════ */}
+       {/* FEATURED APPS SECTION                   */}
+       {/* ═══════════════════════════════════════ */}
+diff --git a/src/lib/contact.ts b/src/lib/contact.ts
+new file mode 100644
+index 0000000..7d486a1
+--- /dev/null
++++ b/src/lib/contact.ts
+@@ -0,0 +1,10 @@
++/**
++ * v37 — مصدر واحد لحقيقة بيانات التواصل (الثقة أولًا):
++ * كل الصفحات (Footer/Contact/About) بتقرا من هنا — مفيش placeholder في أي حتة.
++ */
++export const CONTACT = {
++  email: "Eslam34256@gmail.com",
++  whatsapp: "+201155572676",
++  phone: "01155572676",
++  location: "القاهرة، مصر"
++} as const;
+diff --git a/src/lib/nl-choose.ts b/src/lib/nl-choose.ts
+new file mode 100644
+index 0000000..993eaaf
+--- /dev/null
++++ b/src/lib/nl-choose.ts
+@@ -0,0 +1,125 @@
++import { apps } from "@/data/apps";
++import { activityToScope } from "./recommend";
++import { subcategoryOf } from "@/data/subcategories";
++import { getMonthlyPrice } from "./helpers";
++import { AppItem, CountryCode } from "./types";
++
++/**
++ * v37 — «🤖 ساعدني أختار»: محرك قرار بفهم العامية.
++ * المستخدم يكتب طلبه حر → بنستخرج البلد + النشاط + الأولوية + الميزانية + «مجاني» + كلمة مفتاحية،
++ * وبنرجع 🥇🥉 بأسباب واضحة — كله فوق الداتا الموجودة، بدون أي API خارجي.
++ */
++
++export type NlIntent = {
++  country: CountryCode;
++  activity?: string;
++  priority: "price" | "quality" | "business";
++  freeOnly: boolean;
++  budget?: number;
++  keyword?: string;
++};
++
++export type MedalResult = {
++  medal: "🥇" | "🥈" | "🥉";
++  title: string;
++  app: AppItem;
++  price: number;
++  reasons: string[];
++};
++
++export type ChooseResult = { intent: NlIntent; medals: MedalResult[]; poolSize: number };
++
++const norm = (s: string) =>
++  s.toLowerCase().replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/ـ/g, "");
++
++const ACTIVITY_WORDS: [RegExp, string][] = [
++  [/(انجليزي|لغه|لغات|تعلم|كورس|ذاكر|تعليم|دورات)/, "learning"],
++  [/(افلام|مسلسل|نتفليكس|شاهد|مشاهده|تفرج|سينما)/, "watch"],
++  [/(موسيقي|اغاني|انغامي|بودكاست)/, "music"],
++  [/(اكل|توصيل|مطعم|طعام|بيتزا|فطور)/, "food"],
++  [/(تسوق|شوبينج|متجر|اشتري)/, "shopping"],
++  [/(صحه|رياضه|دايت|تمارين|جيم)/, "health"],
++  [/(مواصلات|تاكسي|اوبر|كابتن)/, "mobility"],
++  [/(بنك|فلوس|محفظه|استثمار|تمويل|محاسبه)/, "finance"],
++  [/(عقار|شقه|ارض|ايجار)/, "home"],
++  [/(قران|اذكار|صلاه|دين)/, "religious"],
++  [/(اطفال|كرتون|ولادي)/, "kids"],
++  [/(سفر|طيران|حجز|فندق)/, "travel"],
++  [/(فريلانس|شغل حر)/, "freelance"],
++  [/(شدات|شحن|العاب|لعبه|جيمز|ببجي)/, "gaming"],
++  [/(vpn|pdf|تصميم|canva|مونتاج|انتاجيه|حمايه|خصوصيه)/, "tools"]
++];
++
++export function parseIntent(raw: string): NlIntent {
++  const q = norm(raw);
++  const country: CountryCode = /سعود/.test(q) ? "SA" : /(امارات|دبي|ابوظبي)/.test(q) ? "AE" : "EG";
++  const freeOnly = /(مجاني|ببلاش|بلاش|free)/.test(q);
++  const budgetMatch = q.match(/(\d{1,5})\s*(جنيه|جنيه|ج\b)/);
++  const budget = budgetMatch ? parseInt(budgetMatch[1], 10) : undefined;
++  const priority: NlIntent["priority"] = /(ارخص|رخيص|اوفر|توفير|ميزانيه|cheap)/.test(q)
++    ? "price"
++    : /(شركه|بيزنس|business|crm)/.test(q)
++      ? "business"
++      : "quality";
++  let activity: string | undefined;
++  for (const [re, act] of ACTIVITY_WORDS) {
++    if (re.test(q)) { activity = act; break; }
++  }
++  const latin = raw.match(/[a-zA-Z][a-zA-Z0-9-]{2,}/);
++  return { country, activity, priority, freeOnly, budget, keyword: latin ? latin[0].toLowerCase() : undefined };
++}
++
++const priceLine = (p: number) => (p === 0 ? "مجاني تمامًا" : `حوالي ${p} ج/شهر`);
++
++function reasonsFor(app: AppItem, price: number): string[] {
++  const r = [`تقييم ${app.rating}⭐`, priceLine(price)];
++  if (app.tags?.length) r.push(`قوي في: ${app.tags.slice(0, 2).join("، ")}`);
++  return r;
++}
++
++export function choose(raw: string): ChooseResult {
++  const intent = parseIntent(raw);
++  const scope = intent.activity ? activityToScope[intent.activity] : undefined;
++
++  let pool = apps.filter(a => a.countries.includes(intent.country));
++  if (scope) {
++    pool = pool.filter(a =>
++      scope.sub ? scope.sub.includes(subcategoryOf(a)) : scope.cats ? scope.cats.includes(a.category) : true
++    );
++  }
++  if (intent.keyword) {
++    const k = norm(intent.keyword);
++    const kw = pool.filter(a => norm(a.name).includes(k) || a.tags.some(t => norm(t).includes(k)) || norm(a.description).includes(k));
++    if (kw.length) pool = kw;
++  }
++
++  const priced = pool.map(app => ({ app, price: getMonthlyPrice(app, intent.country) }));
++  const budgetCap = intent.budget;
++  let candidates = priced;
++  if (intent.freeOnly) candidates = priced.filter(p => p.price === 0);
++  else if (budgetCap !== undefined) candidates = priced.filter(p => p.price <= budgetCap);
++  if (!candidates.length) candidates = priced;
++
++  const score = ({ app, price }: { app: AppItem; price: number }) => {
++    let s = app.rating;
++    if (intent.priority === "price") s += price === 0 ? 4 : price <= 50 ? 3 : price <= 150 ? 2 : 1;
++    if (intent.priority === "business") s += app.businessUse?.length ? 3 : 0;
++    return s;
++  };
++
++  const sorted = [...candidates].sort((a, b) => score(b) - score(a));
++  const medals: MedalResult[] = [];
++
++  if (sorted[0]) medals.push({ medal: "🥇", title: "أفضل اختيار ليك", app: sorted[0].app, price: sorted[0].price, reasons: reasonsFor(sorted[0].app, sorted[0].price) });
++
++  const rest = sorted.slice(1);
++  const cheapest = [...rest].sort((a, b) => a.price - b.price)[0];
++  if (cheapest) medals.push({ medal: "🥈", title: "البديل الأرخص", app: cheapest.app, price: cheapest.price, reasons: reasonsFor(cheapest.app, cheapest.price) });
++
++  const freeBest =
++    [...rest].filter(p => p.app.id !== cheapest?.app.id && p.price === 0).sort((a, b) => b.app.rating - a.app.rating)[0] ??
++    rest.filter(p => p.app.id !== cheapest?.app.id).sort((a, b) => b.app.rating - a.app.rating)[0];
++  if (freeBest) medals.push({ medal: "🥉", title: freeBest.price === 0 ? "أفضل خيار مجاني" : "أعلى تقييم", app: freeBest.app, price: freeBest.price, reasons: reasonsFor(freeBest.app, freeBest.price) });
++
++  return { intent, medals, poolSize: candidates.length };
++}
+diff --git a/src/lib/recommend.ts b/src/lib/recommend.ts
+index fb4f4ea..d57015e 100644
+--- a/src/lib/recommend.ts
++++ b/src/lib/recommend.ts
+@@ -10,7 +10,7 @@ type Answers = { activity: string; priority: string; country: CountryCode };
+  * عشان السؤال «عايز تتفرج» ميرشحش أنغامي والعكس.
+  */
+ type Scope = { sub?: string[]; cats?: string[] };
+-const activityToScope: Record<string, Scope> = {
++export const activityToScope: Record<string, Scope> = {
+   food: { cats: ["food"] },
+   watch: { sub: ["streaming-video"] },
+   music: { sub: ["streaming-music"] },
+@@ -20,7 +20,15 @@ const activityToScope: Record<string, Scope> = {
+   health: { cats: ["health"] },
+   mobility: { cats: ["transport"] },
+   finance: { cats: ["finance"] },
+-  home: { cats: ["real-estate"] }
++  home: { cats: ["real-estate"] },
++  // v37 — «ساعدني أختار» بيفهم طلبات أكتر من الفورم القديم
++  tools: { cats: ["tools"] },
++  gaming: { cats: ["gaming"] },
++  religious: { cats: ["religious"] },
++  kids: { cats: ["kids"] },
++  travel: { cats: ["travel"] },
++  freelance: { cats: ["freelance"] },
++  topup: { cats: ["topup"] }
+ };
+ 
+ export function recommendApps({ activity, priority, country }: Answers): AppItem[] {
+diff --git a/src/lib/settings.ts b/src/lib/settings.ts
+index 7de0272..a5b3f78 100644
+--- a/src/lib/settings.ts
++++ b/src/lib/settings.ts
+@@ -1,4 +1,5 @@
+ import { createClient } from "@/lib/supabase/server";
++import { CONTACT } from "@/lib/contact";
+ 
+ export type SiteSettings = {
+   site_name: string;
+@@ -19,9 +20,9 @@ export type SiteSettings = {
+ const defaultSettings: SiteSettings = {
+   site_name: "AppHub",
+   site_description: "دليل التطبيقات العربي الأول",
+-  contact_email: "info@apphub.eg",
+-  whatsapp_number: "+201000000000",
+-  phone_number: "+201000000000",
++  contact_email: CONTACT.email,
++  whatsapp_number: CONTACT.whatsapp,
++  phone_number: CONTACT.phone,
+   address: "القاهرة، مصر",
+   working_hours: "الأحد - الخميس: 9 ص - 6 م",
+   facebook_url: "",
+-- 
+2.47.3
+

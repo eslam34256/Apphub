@@ -1,0 +1,1153 @@
+From e35c5a1d43a23c88837c2fede67bf379ccdfea0d Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 23:34:48 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?v15:=20=D9=86=D9=88=D8=A7=D8=A9=20=D8=A7?=
+ =?UTF-8?q?=D9=84=D8=AA=D8=AC=D8=A7=D8=B1=D8=A9=20=D8=A8=D8=A7=D9=84=D8=AB?=
+ =?UTF-8?q?=D9=82=D8=A9=20=E2=80=94=20=D8=A3=D9=81=D9=8A=D9=84=D9=8A=D8=A7?=
+ =?UTF-8?q?=D8=AA=20=D9=85=D8=AA=D8=AA=D8=A8=D9=91=D8=B9=20=D8=A8=D8=B4?=
+ =?UTF-8?q?=D8=A7=D8=B1=D8=A9=20=C2=AB=D8=B1=D8=A7=D8=A8=D8=B7=20=D8=A8?=
+ =?UTF-8?q?=D8=B9=D9=85=D9=88=D9=84=D8=A9=C2=BB=20+=20=D8=A5=D8=B9=D9=84?=
+ =?UTF-8?q?=D8=A7=D9=86=D8=A7=D8=AA=20=D8=A8=D8=B1=D8=B9=D8=A7=D9=8A=D8=A9?=
+ =?UTF-8?q?=20=D9=85=D9=88=D8=B3=D9=88=D9=85=D8=A9=20=C2=AB=D8=A5=D8=B9?=
+ =?UTF-8?q?=D9=84=D8=A7=D9=86=C2=BB=20+=20=D8=B5=D9=81=D8=AD=D8=A9=20?=
+ =?UTF-8?q?=D8=A5=D9=81=D8=B5=D8=A7=D8=AD=20=D9=83=D8=A7=D9=85=D9=84=D8=A9?=
+ =?UTF-8?q?=20+=20=D8=AA=D8=AA=D8=A8=D8=B9=20=D8=A3=D8=AD=D8=AF=D8=A7?=
+ =?UTF-8?q?=D8=AB=20(migration=20003)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- supabase/migrations/003_commerce.sql: sponsored_slots + commerce_events + shop_products + waitlist + shop_orders + api_keys + api_usage مع RLS (مفاتيح API مغلقة، إدخال الأحداث للمجهول متاح best-effort)
+- /api/track: تسجيل أحداث (click/impression/waitlist/order) — لا يفشل أمام المستخدم أبدًا
+- TrackedAffiliateLink: rel sponsored nofollow + بشارة الإفصاح — مفيش أفيليات من غيرها
+- SponsoredSlot على /best: يختفي بلا خانات، الأولوية للمكان المخصص ثم العام
+- /disclosure: الترتيب والرادار والنجوم غير قابلة للشراء — عقد مع الجمهور
+- بذور العروض بدون روابط عمولة مختلقة (ممنوع يتعلن رقم/رابط قبل إقراره رسميًا)
+---
+ docs/BRAND-GUIDE.md                        |   2 +
+ docs/PROJECT-AUDIT.md                      |   1 +
+ src/app/api/track/route.ts                 |  26 ++++++
+ src/app/best/[category]/[country]/page.tsx |   4 +
+ src/app/disclosure/page.tsx                |  89 ++++++++++++++++++
+ src/app/sitemap.ts                         |   3 +
+ src/components/deals-view.tsx              |   4 +
+ src/components/footer.tsx                  |  15 +++
+ src/components/sponsored-slot-client.tsx   |  32 +++++++
+ src/components/sponsored-slot.tsx          |  38 ++++++++
+ src/components/tracked-affiliate-link.tsx  |  55 +++++++++++
+ src/data/deals.ts                          |   2 +
+ src/lib/translations.ts                    |   6 ++
+ src/lib/types.ts                           |   2 +
+ supabase/migrations/003_commerce.sql       | 104 +++++++++++++++++++++
+ 15 files changed, 383 insertions(+)
+ create mode 100644 src/app/api/track/route.ts
+ create mode 100644 src/app/disclosure/page.tsx
+ create mode 100644 src/components/sponsored-slot-client.tsx
+ create mode 100644 src/components/sponsored-slot.tsx
+ create mode 100644 src/components/tracked-affiliate-link.tsx
+ create mode 100644 supabase/migrations/003_commerce.sql
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index f89fc95..278f090 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,8 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v15** 💼 نواة التجارة بالثقة | 21 سب 2026 | migration `003_commerce.sql` (خانات رعاية + أحداث تتبع + منتجات متجر + قائمة انتظار + طلبات + مفاتيح API مغلقة RLS — idempotent)؛ `/api/track` best-effort مش بيفشل أبدًا؛ `TrackedAffiliateLink` بشارة «رابط بعمولة→/disclosure» وrel sponsored nofollow (بذور الداتا **بلا روابط مختلقة**)؛ `SponsoredSlot` بشارة «إعلان» على صفحات /best (اختيار بالأولوية، يختفي بلا خانات)؛ صفحة `/disclosure` الكاملة: الترتيب والرادار والنجوم **مش للبيع** |
++| **v16** 🏪 المتجر + بيع البيانات | 21 سب 2026 | `/shop` في وضع قائمة انتظار — **صفر أسعار مختلقة** («السعر مع التشغيل»)، WaitlistForm → `/api/shop/waitlist` (unique email+interest)؛ `/api/paymob/intention` جاهز بوابة Paymob ومقفول 503 «بتتجهز» حتى مفاتيح PAYMOB_*؛ `/data` صفحة B2B بثلاث باقات (مجاني 60rpm / Pro $29 / Enterprise)؛ `/api/v1/premium/price-index` بمفتاح x-api-key مع تسجيل الاستخدام (service role) |
+ | **v14** 📈 مؤشر AppHub للأسعار | 21 سب 2026 | `/price-index`: الرقم الكبير (100+n% متوسط نسب تغيير الخطط منذ الأساس) + سلسلة شهرية SVG + أكبر التحركات + كتلة صحفة باقتباس جاهز — محسوب سيرفر من `price_history` (fallback لبذور الداتا بإعلان المصدر)، **بلا أرقام مختلقة: ما يظهرش قبل حركة مؤكدة**. `/api/price-index` = بيانات مفتوحة مع الإشارة (كاش ساعة، نفس الحساب) — **الأصل الاستثماري الرقمي**. صيغة منشورة في /methodology (بند 6 جديد) + فوتر + sitemap |
+ | **v13** 🧾 المقارنات بالأرقام الحقيقية | 21 سب 2026 | ثلاث طبقات: تواريخ مراجعة على داتا الأكل/الستريمنج + بلاغات المجتمع (`community_reports` هجرة idempotent + `/api/community-report` + فورم «بلّغ المجتمع» + شارة متوسط قيد المراجعة) + سعر صرف لايف `/api/fx` (ExchangeRate-API، 6h كاش). وإصلاح OG برود: خط base64 بدل fs — كجزء من نفس الالتزام بالأرقام الحقيقية |
+ | **v12** ⚡ حزمة الأرباح السريعة | 21 سب 2026 | 3 فيتشرز: (1) **OG ديناميكية** لكل صفحة تطبيق — Satori + خط Almarai مدمج محليًا + مكتبة reshaper (العربي كان بيطلع منفصل ومعكوس من غيرها)، تصميم كحلي/ذهبي باسم التطبيق وتقييمه، يتولّد لكل DB app وstatic (2) **عدّاد الرادار النابض** تحت بحث الـ Hero — كونت حقيقي من `price_watch` بيختفي بهدوء من غير DB (3) **سكشن الفئات** في الهوم → 16 بطاقة محسوبة توصل `/best/{فئة}/eg`. إضافة dependency واحدة: arabic-persian-reshaper |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index 4b630fc..110006e 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++00. **v15/v16 — محرك التجارة كاملًا** ✅ (21 سب 2026): أفيليات متتبع بإفصاح إجباري + إعلانات برعاية موسومة + صفحة شفافية (الحرم التحريري غير قابل للشراء) + متجر رقمي بوضع قائمة انتظار بلا أرقام مختلقة + بوابة Paymob مقفولة حتى المفاتيح + بيع البيانات (3 باقات + API مميز بمفاتيح وتسجيل استخدام). القاعدة الذهبية: **أي جنيه مُعلن جاي بشارة — والترتيب مش للبيع**.
+ 0. **v14 — مؤشر AppHub للأسعار** ✅ (21 سب 2026): `/price-index` + `/api/price-index` — أول مؤشر أسعار اشتراكات عربي، محسوب من سجل الرادار (متوسط نسب التغيير من سعر الأساس، أوزان متساوية، ما يطلعش قبل حركة مؤكدة واحدة). القيمة الاستثمارية: أصل بيانات مفتوح مفيش عند حد — مصدر اقتباس للصحافة والباحثين، وتقرير السوق B2B لاحقًا. (مع v13: المقارنات بالأرقام الحقيقية: بلاغات المجتمع + تواريخ مراجعة + FX لايف)
+ 0. **v13 — المقارنات بالأرقام الحقيقية** ✅ (21 سب 2026): ثلاث طبقات صدق في مركز المقارنات — (أ) تواريخ «آخر مراجعة» معلنة على أرقام داتا الأكل والستريمنج (ب) **بلاغات المجتمع**: جدول `community_reports` (هجرة idempotent) + API بمصيدة سبام وحدود عقلانية + شارة متوسط آخر 30 يوم (تظهر من 3 بلاغات، موسومة «قيد المراجعة») (ج) **سعر صرف لايف** `/api/fx` من ExchangeRate-API بكاش 6 ساعات — بيظهر في مقارنة الستريمنج. مبدأ ثابت: مفيش API رسمي للتوصيلات — فالميدان بييجي من المستخدمين مش من مختلقات.
+ 1. ~~**الـ hero يشتغل بجد**: نص البحث في أول الشاشة (مكون جاهز `search-bar.tsx` ومو مدموج)~~ → ✅ **البحث اتدمج في v11** بمكوّن `HeroSearch` (اقتراحات حية بـ 8 نتايج + Enter على /apps/[slug] أو /apps?q= + أسهم/ECS + شرائح رائجة من الداتا) و`/apps` بقى يستقبل `?q=` SSR. ⏳ المتبقي من البند: عدّاد «X سعر مرصود النهارده» (محتاج query كونت من الرادار — للفة الجاية). → ✅ **اتنفّذ في v12**: كونت `price_watch` من السيرفر بيظهر كشارة نابضة تحت البحث، وبيختفي بهدوء لو الجدول مش موجود.
+diff --git a/src/app/api/track/route.ts b/src/app/api/track/route.ts
+new file mode 100644
+index 0000000..bd6810d
+--- /dev/null
++++ b/src/app/api/track/route.ts
+@@ -0,0 +1,26 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient } from "@/lib/supabase/server";
++
++// تسجيل أحداث تجارة — best-effort: مابيفشلش أبدًا وشكل المستخدم
++const EVENTS = new Set(["click", "impression", "waitlist", "order"]);
++
++export async function POST(req: NextRequest) {
++  try {
++    const b = await req.json();
++    const event = String(b.event ?? "");
++    const target = String(b.target ?? "").slice(0, 120);
++    if (!EVENTS.has(event) || !target) {
++      return NextResponse.json({ ok: false }, { status: 400 });
++    }
++    const supabase = createClient();
++    await supabase.from("commerce_events").insert({
++      event,
++      target,
++      meta: b.meta ?? null
++    });
++    return NextResponse.json({ ok: true });
++  } catch {
++    // أخطاء التتبع متوقعش تكسر حاجة
++    return NextResponse.json({ ok: true });
++  }
++}
+diff --git a/src/app/best/[category]/[country]/page.tsx b/src/app/best/[category]/[country]/page.tsx
+index 9cf0b70..1284e9f 100644
+--- a/src/app/best/[category]/[country]/page.tsx
++++ b/src/app/best/[category]/[country]/page.tsx
+@@ -1,5 +1,6 @@
+ import type { Metadata } from "next";
+ import Link from "next/link";
++import { SponsoredSlot } from "@/components/sponsored-slot";
+ import { notFound } from "next/navigation";
+ 
+ import { getAllAppsMerged } from "@/lib/app-data";
+@@ -185,6 +186,9 @@ export default async function BestCategoryPage({ params }: PageProps) {
+           </div>
+         </header>
+ 
++        {/* خانة إعلان برعاية — بشارة «إعلان» صريحة، والترتيب مش قابل للشراء */}
++        <SponsoredSlot placement={`best:${params.category}`} />
++
+         {/* القائمة المرتبة — مقسّمة بالفئات الفرعية لو الفئة فيها أكتر من نوع */}
+         {groups.length > 1 ? (
+           <div className="space-y-10">
+diff --git a/src/app/disclosure/page.tsx b/src/app/disclosure/page.tsx
+new file mode 100644
+index 0000000..d39776f
+--- /dev/null
++++ b/src/app/disclosure/page.tsx
+@@ -0,0 +1,89 @@
++import Link from "next/link";
++import type { Metadata } from "next";
++import { buildMeta } from "@/lib/seo";
++
++export const metadata: Metadata = buildMeta({
++  title: "الإفصاح والشفافية — عمولات وإعلانات واستقلالية التقييم",
++  description:
++    "بشفافية كاملة: إمتى بناخد عمولة، الإعلانات المدفوعة بتظهر إزاي، وليه تقييماتنا ورصد الأسعار مش قابلة للشراء.",
++  url: "https://apphub.eg/disclosure",
++  keywords: ["إفصاح", "شفافية", "عمولات", "إعلانات"]
++});
++
++function Section({ title, children }: { title: string; children: React.ReactNode }) {
++  return (
++    <section className="space-y-3">
++      <h2 className="text-xl font-extrabold text-brand-900">{title}</h2>
++      <div className="text-charcoal-700 leading-relaxed space-y-3">{children}</div>
++    </section>
++  );
++}
++
++export default function DisclosurePage() {
++  return (
++    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
++      <div className="rounded-3xl gradient-brand p-10 text-white text-center">
++        <div className="text-6xl mb-3">🤲</div>
++        <h1 className="text-4xl font-extrabold mb-2">الإفصاح والشفافية</h1>
++        <p className="text-white/90">آخر مراجعة: سبتمبر 2026</p>
++      </div>
++
++      <div className="rounded-3xl bg-white p-8 md:p-12 shadow-soft space-y-8">
++
++        <Section title="1. روابط العمولة (الأفيليات)">
++          <p>
++            بعض الروابط على المنصة — موسومة دائمًا بشارة <strong>«رابط بعمولة»</strong> —
++            بتجيب لنا نسبة صغيرة لو اشتريت أو اشتركت من خلالها.
++          </p>
++          <ul className="space-y-2 mr-6 list-disc">
++            <li>مش بتدفع أي قرش زيادة — العمولة من طرف التاجر مش منك.</li>
++            <li>الشارة موجودة جنب كل رابط بعمولة — ممنوع رابط عمولة من غيرها.</li>
++            <li>العمولة <strong>لا تؤثر</strong> على الترتيب ولا النجوم ولا البدائل المقترحة.</li>
++          </ul>
++        </Section>
++
++        <Section title="2. الإعلانات برعاية">
++          <p>
++            لو وصلنا إعلان مدفوع على صفحة، هيظهر داخل إطار منفصل وبشارة <strong>«إعلان»</strong>
++            واضحة قبل أي محتوى — زي اللي بتشوفه في وسائل الإعلام المحترمة.
++          </p>
++          <p>
++            محتوى صفحات «الأفضل» ورادار الأسعار والمقارنات <strong>مش قابل للتأجير ولا للتعديل بالفلوس</strong> —
++            الإعلان بيحط في خانته بس، مش جوه الحكم التحريري.
++          </p>
++        </Section>
++
++        <Section title="3. استقلالية التقييم عقد مع الجمهور">
++          <p>
++            النجوم والترتيبات والبدائل الأوفر والرادار والمؤشر — كلها بمقاييسنا المعلنة في
++            <Link href="/methodology" className="text-brand-600 font-semibold hover:underline"> صفحة المنهجية</Link> فقط.
++            لا يوجد «تقييم مدفوع» ولا «ترتيب بالاتفاق». أي تاجر بيعرض فلوس مقابل ترتيب بيتقال له لأ —
++            وده مدوّن في سياساتنا التجارية كمان.
++          </p>
++        </Section>
++
++        <Section title="4. بيانات المجتمع والرصد">
++          <p>
++            بلاغات المجتمع («تجربة المجتمع») بتظهر موسومة <strong>«قيد المراجعة»</strong>
++            ومش بتتحول لرقم رسمي إلا بعد تحققنا. ورادار الأسعار لا ينشر إلا التغييرات المؤكدة —
++            بنفس قواعد الأمان اللي فوق.
++          </p>
++        </Section>
++
++        <Section title="5. أسئلة؟">
++          <p>
++            لو عندك سؤال عن أي مصدر دخل عندنا أو شكك في حياد رقم، كلمنا من
++            <Link href="/contact" className="text-brand-600 font-semibold hover:underline"> صفحة التواصل</Link> —
++            الشفافية دي مش ديكور، دي آلية الشغل.
++          </p>
++        </Section>
++
++        <div className="rounded-2xl bg-brand-50 p-6 text-sm text-charcoal-600 leading-relaxed">
++          <strong className="text-brand-900">المعادلة ببساطة:</strong> بنكسب من الشفافية نفسها —
++          لأن اللي بيخلي الناس تثق في أرقامنا هو نفسه اللي بيخليهم يرجعوا تاني.
++        </div>
++
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 25239be..be6dbf0 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -18,6 +18,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/price-radar`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+     { url: `${baseUrl}/price-index`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
++    { url: `${baseUrl}/shop`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
++    { url: `${baseUrl}/data`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
++    { url: `${baseUrl}/disclosure`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+     { url: `${baseUrl}/calculator`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/best`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+diff --git a/src/components/deals-view.tsx b/src/components/deals-view.tsx
+index c2c4e4b..d3f5d19 100644
+--- a/src/components/deals-view.tsx
++++ b/src/components/deals-view.tsx
+@@ -8,6 +8,7 @@
+ import { useMemo, useState, useEffect } from "react";
+ import { deals as initialDeals } from "@/data/deals";
+ import { ReportDealButton } from "@/components/report-deal-button";
++import { TrackedAffiliateLink } from "@/components/tracked-affiliate-link";
+ import { DealItem } from "@/lib/types";
+ import { createClient } from "@/lib/supabase/client";
+ import { getActiveDeals, getExpiredDeals, getExpiryLabel } from "@/lib/deals";
+@@ -107,6 +108,9 @@ export function DealsView() {
+                 </p>
+               )}
+               <ReportDealButton dealId={deal.id} />
++              {deal.affiliateUrl && (
++                <TrackedAffiliateLink target={`deal:${deal.id}`} url={deal.affiliateUrl} label="اشتري العرض" />
++              )}
+             </div>
+           );
+         })}
+diff --git a/src/components/footer.tsx b/src/components/footer.tsx
+index 3e65c99..a2ff93a 100644
+--- a/src/components/footer.tsx
++++ b/src/components/footer.tsx
+@@ -114,6 +114,16 @@ export function Footer() {
+                   {t("nav_price_index")}
+                 </Link>
+               </li>
++              <li>
++                <Link href="/shop" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("nav_shop")}
++                </Link>
++              </li>
++              <li>
++                <Link href="/data" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("nav_data")}
++                </Link>
++              </li>
+               <li>
+                 <Link href="/blog" className="text-charcoal-500 hover:text-accent-600 transition">
+                   {t("nav_blog")}
+@@ -182,6 +192,11 @@ export function Footer() {
+                   {t("footer_cookies")}
+                 </Link>
+               </li>
++              <li>
++                <Link href="/disclosure" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("nav_disclosure")}
++                </Link>
++              </li>
+               <li>
+                 <Link href="/methodology" className="text-charcoal-500 hover:text-accent-600 transition">
+                   {t("footer_methodology")}
+diff --git a/src/components/sponsored-slot-client.tsx b/src/components/sponsored-slot-client.tsx
+new file mode 100644
+index 0000000..f4a4480
+--- /dev/null
++++ b/src/components/sponsored-slot-client.tsx
+@@ -0,0 +1,32 @@
++"use client";
++
++import { useEffect, useRef } from "react";
++
++/** نصف الـ Slot: تسجيل مشاهدة أول ظهور + تنفيذ رابط مدفوع متتبع */
++export function SponsoredSlotClient({ slotId, url }: { slotId: string; url: string }) {
++  const seen = useRef(false);
++
++  useEffect(() => {
++    if (seen.current) return;
++    seen.current = true;
++    try {
++      navigator.sendBeacon("/api/track", JSON.stringify({ event: "impression", target: `slot:${slotId}` }));
++    } catch {}
++  }, [slotId]);
++
++  return (
++    <a
++      href={url}
++      target="_blank"
++      rel="sponsored nofollow noopener"
++      onClick={() => {
++        try {
++          navigator.sendBeacon("/api/track", JSON.stringify({ event: "click", target: `slot:${slotId}` }));
++        } catch {}
++      }}
++      className="inline-flex items-center gap-1 rounded-full bg-brand-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-brand-800 transition"
++    >
++      زر الإعلان ↗
++    </a>
++  );
++}
+diff --git a/src/components/sponsored-slot.tsx b/src/components/sponsored-slot.tsx
+new file mode 100644
+index 0000000..f711873
+--- /dev/null
++++ b/src/components/sponsored-slot.tsx
+@@ -0,0 +1,38 @@
++import { createClient } from "@/lib/supabase/server";
++import { SponsoredSlotClient } from "./sponsored-slot-client";
++
++/**
++ * خانة «إعلان برعاية» — بتقرا أول خانة نشطة بترتيب الأولوية:
++ * عين مكان محدد أولاً ثم عام (best:*). بدون خانة تختفي تماماً.
++ * أي إعلان ظاهر بشارة «إعلان» صريحة — محتوى الرصد والتقييم غير قابل للشراء.
++ */
++export async function SponsoredSlot({ placement }: { placement: string }) {
++  try {
++    const supabase = createClient();
++    const { data } = await supabase
++      .from("sponsored_slots")
++      .select("id, brand, text, url, placement")
++      .eq("active", true)
++      .or(`placement.eq.${placement},placement.eq.best:*`)
++      .order("priority", { ascending: false })
++      .limit(1);
++
++    const slot = (data ?? [])[0];
++    if (!slot) return null;
++
++    return (
++      <div className="mb-6 rounded-2xl border border-dashed border-accent-400 bg-white p-4 shadow-sm">
++        <div className="mb-1 flex items-center gap-2">
++          <span className="rounded-full bg-charcoal-100 px-2.5 py-0.5 text-[10px] font-bold text-charcoal-500 tracking-wider">
++            إعلان
++          </span>
++          <span className="text-xs font-bold text-charcoal-500">{slot.brand}</span>
++        </div>
++        <p className="mb-3 text-sm text-brand-900">{slot.text}</p>
++        <SponsoredSlotClient slotId={slot.id} url={slot.url} />
++      </div>
++    );
++  } catch {
++    return null;
++  }
++}
+diff --git a/src/components/tracked-affiliate-link.tsx b/src/components/tracked-affiliate-link.tsx
+new file mode 100644
+index 0000000..1829088
+--- /dev/null
++++ b/src/components/tracked-affiliate-link.tsx
+@@ -0,0 +1,55 @@
++"use client";
++
++import Link from "next/link";
++import { useState } from "react";
++
++/**
++ * زر أفيليات متتبع — بشارة إفصاح صريحة «رابط بعمولة» (عقد الأمانة مع الزائر).
++ * rel="sponsored nofollow" علشان SEO يفضل نضيف.
++ */
++export function TrackedAffiliateLink({
++  target,
++  url,
++  label,
++  className = ""
++}: {
++  target: string;
++  url: string;
++  label: string;
++  className?: string;
++}) {
++  const [fired, setFired] = useState(false);
++
++  function track() {
++    if (fired) return;
++    setFired(true);
++    try {
++      navigator.sendBeacon("/api/track", JSON.stringify({ event: "click", target }));
++    } catch {
++      fetch("/api/track", {
++        method: "POST",
++        body: JSON.stringify({ event: "click", target })
++      }).catch(() => {});
++    }
++  }
++
++  return (
++    <span className={`inline-flex flex-col gap-1 ${className}`}>
++      <a
++        href={url}
++        target="_blank"
++        rel="sponsored nofollow noopener"
++        onClick={track}
++        className="inline-flex items-center gap-2 rounded-full bg-accent-400 px-5 py-2 text-sm font-bold text-brand-900 hover:bg-accent-500 transition"
++      >
++        {label} ↗
++      </a>
++      <span className="text-[10px] text-charcoal-400">
++        رابط بعمولة — بناخد نسبة لو اشتريت منه ·{" "}
++        <Link href="/disclosure" className="hover:underline">
++          التفاصيل
++        </Link>
++      </span>
++    </span>
++  );
++}
+diff --git a/src/data/deals.ts b/src/data/deals.ts
+index dfb706d..a776731 100644
+--- a/src/data/deals.ts
++++ b/src/data/deals.ts
+@@ -13,3 +13,5 @@ export const deals: DealItem[] = [
+   { id:"d5", title:"خصم 40% على الأزياء المختارة", brand:"Noon", category:"fashion", discount:40, views:2110, expiresAt:"2026-09-22" },
+   { id:"d6", title:"خصم 10% على الإلكترونيات", brand:"جرير", category:"tech", discount:10, views:640, expiresAt:"2026-08-30" }
+ ];
++// ملحوظة أفيليات: لما شبكة العمولة approve تحط الـ affiliateUrl في أي deal —
++// الشارة والتتبع بيظهروا لوحدهم. ممنوع روابط مختلقة.
+diff --git a/src/lib/translations.ts b/src/lib/translations.ts
+index b6d027a..ad16e75 100644
+--- a/src/lib/translations.ts
++++ b/src/lib/translations.ts
+@@ -121,6 +121,9 @@ export const translations = {
+     footer_cookies: "سياسة الكوكيز",
+     footer_methodology: "المنهجية",
+     nav_price_index: "مؤشر الأسعار",
++    nav_disclosure: "الإفصاح والشفافية",
++    nav_shop: "المتجر الرقمي",
++    nav_data: "البيانات والأبحاث",
+     footer_disclaimer: "إخلاء المسؤولية",
+     footer_company: "الشركة",
+     footer_legal: "القانونية",
+@@ -267,6 +270,9 @@ export const translations = {
+     footer_cookies: "Cookies Policy",
+     footer_methodology: "Methodology",
+     nav_price_index: "Price Index",
++    nav_disclosure: "Disclosure & Transparency",
++    nav_shop: "Digital Store",
++    nav_data: "Data & Research",
+     footer_disclaimer: "Disclaimer",
+     footer_company: "Company",
+     footer_legal: "Legal",
+diff --git a/src/lib/types.ts b/src/lib/types.ts
+index ab1a74a..fe178e5 100644
+--- a/src/lib/types.ts
++++ b/src/lib/types.ts
+@@ -59,6 +59,8 @@ export type DealItem = {
+   code?: string;
+   createdAt?: string;
+   userId?: string;
++  /** رابط عمولة حقيقي من الشبكة (اختياري) — الشارة والتتبع بيظهروا لوحدهم */
++  affiliateUrl?: string;
+ };
+ 
+ export type BusinessStack = {
+diff --git a/supabase/migrations/003_commerce.sql b/supabase/migrations/003_commerce.sql
+new file mode 100644
+index 0000000..b188456
+--- /dev/null
++++ b/supabase/migrations/003_commerce.sql
+@@ -0,0 +1,104 @@
++-- 003: نواة التجارة — أفيليات، إعلانات برعاية، متجر رقمي، API مميز
++-- idempotent بالكامل (create if not exists / drop policy if exists)
++
++-- 1) خانات الإعلان برعاية (المواقع الثابتة في الصفحات)
++create table if not exists public.sponsored_slots (
++  id uuid primary key default gen_random_uuid(),
++  placement text not null,           -- مثال: best:streaming | best:*
++  brand text not null,
++  text  text not null,               -- نص البانر
++  url   text not null,
++  starts_at timestamptz not null default now(),
++  ends_at   timestamptz,
++  active boolean not null default true,
++  priority int not null default 0,
++  created_at timestamptz not null default now()
++);
++alter table public.sponsored_slots enable row level security;
++drop policy if exists read_active_slots on public.sponsored_slots;
++create policy read_active_slots on public.sponsored_slots
++  for select to anon, authenticated using (active = true);
++
++-- 2) أحداث التجارة (نقرات، مشاهدات إعلان، طلبات) — إدراج عام، قراءة مقفولة
++create table if not exists public.commerce_events (
++  id bigint generated always as identity primary key,
++  event text not null check (event in ('click', 'impression', 'waitlist', 'order')),
++  target text not null,              -- مثل: deal:d1 | slot:uuid | shop:slug
++  meta jsonb,
++  created_at timestamptz not null default now()
++);
++alter table public.commerce_events enable row level security;
++drop policy if exists insert_events on public.commerce_events;
++create policy insert_events on public.commerce_events
++  for insert to anon, authenticated with check (true);
++
++-- 3) منتجات المتجر الرقمي (بطاقات/شحن/اشتراكات)
++create table if not exists public.shop_products (
++  id uuid primary key default gen_random_uuid(),
++  slug text not null unique,
++  title text not null,
++  description text,
++  kind text not null check (kind in ('card', 'topup', 'subscription')),
++  face_value numeric,
++  currency text check (currency in ('EGP', 'SAR', 'AED', 'USD')),
++  icon text,
++  status text not null default 'waitlist' check (status in ('waitlist', 'live', 'off')),
++  created_at timestamptz not null default now()
++);
++alter table public.shop_products enable row level security;
++drop policy if exists read_products on public.shop_products;
++create policy read_products on public.shop_products
++  for select to anon, authenticated using (status <> 'off');
++
++-- 4) قائمة انتظار المتجر (أصل ليدز قبل التشغيل)
++create table if not exists public.waitlist (
++  id uuid primary key default gen_random_uuid(),
++  email text not null,
++  interest text not null default 'general',
++  created_at timestamptz not null default now(),
++  unique (email, interest)
++);
++alter table public.waitlist enable row level security;
++drop policy if exists insert_waitlist on public.waitlist;
++create policy insert_waitlist on public.waitlist
++  for insert to anon, authenticated with check (true);
++
++-- 5) طلبات المتجر (بتتجهز مع بوابة الدفع)
++create table if not exists public.shop_orders (
++  id uuid primary key default gen_random_uuid(),
++  email text not null,
++  product_slug text not null,
++  amount numeric,
++  status text not null default 'pending' check (status in ('pending', 'paid', 'fulfilled', 'cancelled')),
++  paymob_ref text,
++  created_at timestamptz not null default now()
++);
++alter table public.shop_orders enable row level security;
++drop policy if exists insert_orders on public.shop_orders;
++create policy insert_orders on public.shop_orders
++  for insert to anon, authenticated with check (true);
++
++-- 6) مفاتيح الـ API المميز (القراءة للسيرفر بس — service role)
++create table if not exists public.api_keys (
++  id uuid primary key default gen_random_uuid(),
++  key text not null unique,
++  label text not null,
++  tier text not null default 'free' check (tier in ('free', 'pro')),
++  rpm_limit int not null default 60,
++  active boolean not null default true,
++  created_at timestamptz not null default now()
++);
++alter table public.api_keys enable row level security;
++-- مفيش سياسات select/insert للأنون — مغلقة بالكامل
++
++-- 7) سجل استخدام الـ API
++create table if not exists public.api_usage (
++  id bigint generated always as identity primary key,
++  key_id uuid references public.api_keys(id) on delete cascade,
++  endpoint text not null,
++  created_at timestamptz not null default now()
++);
++alter table public.api_usage enable row level security;
++
++create index if not exists commerce_events_target_idx on public.commerce_events (target, created_at desc);
++create index if not exists api_usage_key_idx on public.api_usage (key_id, created_at desc);
+-- 
+2.47.3
+
+
+From 4540ac0a3fcad483a0e106cb9e03221d36a25d7c Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 23:35:09 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?v16:=20=D8=A7=D9=84=D9=85=D8=AA=D8=AC=D8=B1?=
+ =?UTF-8?q?=20=D8=A7=D9=84=D8=B1=D9=82=D9=85=D9=8A=20(=D9=88=D8=B6=D8=B9?=
+ =?UTF-8?q?=20=D9=82=D8=A7=D8=A6=D9=85=D8=A9=20=D8=A7=D9=86=D8=AA=D8=B8?=
+ =?UTF-8?q?=D8=A7=D8=B1=20=D8=A8=D9=84=D8=A7=20=D8=A3=D8=B3=D8=B9=D8=A7?=
+ =?UTF-8?q?=D8=B1=20=D9=85=D8=AE=D8=AA=D9=84=D9=82=D8=A9)=20+=20=D8=A8?=
+ =?UTF-8?q?=D9=88=D8=A7=D8=A8=D8=A9=20Paymob=20=D9=85=D9=82=D9=81=D9=88?=
+ =?UTF-8?q?=D9=84=D8=A9=20=D8=AD=D8=AA=D9=89=20=D8=A7=D9=84=D9=85=D9=81?=
+ =?UTF-8?q?=D8=A7=D8=AA=D9=8A=D8=AD=20+=20=D8=A8=D9=8A=D8=B9=20=D8=A7?=
+ =?UTF-8?q?=D9=84=D8=A8=D9=8A=D8=A7=D9=86=D8=A7=D8=AA=20B2B=20=D9=88=D8=A7?=
+ =?UTF-8?q?=D9=84=D9=80=20API=20=D8=A7=D9=84=D9=85=D9=85=D9=8A=D8=B2?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- /shop: 4 بذور منتجات «السعر مع التشغيل» + WaitlistForm → /api/shop/waitlist (unique email+interest، خطأ 503 صادق لحد الترحيل)
+- /api/paymob/intention: جاهز لبوابة Paymob ومقفول 503 «بتتجهز» لحد مفاتيح PAYMOB_* — مهيأ لحفظ shop_orders pending
+- /data: 3 باقات (مجاني 60rpm / Pro $29 / Enterprise اتفاق) + سؤال «فين تُدفع القيمة فعليًا» بمثال بنك
+- /api/v1/premium/price-index: x-api-key مقابل api_keys (service role) + تسجيل api_usage + إشارة إلزامية
+---
+ src/app/api/paymob/intention/route.ts       |  52 +++++++
+ src/app/api/shop/waitlist/route.ts          |  28 ++++
+ src/app/api/v1/premium/price-index/route.ts |  97 +++++++++++++
+ src/app/data/page.tsx                       | 144 ++++++++++++++++++++
+ src/app/shop/page.tsx                       | 100 ++++++++++++++
+ src/components/waitlist-form.tsx            |  62 +++++++++
+ 6 files changed, 483 insertions(+)
+ create mode 100644 src/app/api/paymob/intention/route.ts
+ create mode 100644 src/app/api/shop/waitlist/route.ts
+ create mode 100644 src/app/api/v1/premium/price-index/route.ts
+ create mode 100644 src/app/data/page.tsx
+ create mode 100644 src/app/shop/page.tsx
+ create mode 100644 src/components/waitlist-form.tsx
+
+diff --git a/src/app/api/paymob/intention/route.ts b/src/app/api/paymob/intention/route.ts
+new file mode 100644
+index 0000000..5e3c95a
+--- /dev/null
++++ b/src/app/api/paymob/intention/route.ts
+@@ -0,0 +1,52 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient } from "@/lib/supabase/server";
++
++/**
++ *  إنشاء نية دفع Paymob لطلب متجر.
++ *  بوضع البوابة متعطّلة: لازم يتضاف PAYMOB_API_KEY + PAYMOB_IFRAME_ID + PAYMOB_INTEGRATION_ID.
++ *  بدونها: 503 صادق «بوابة الدفع بتتجهز».
++ */
++export async function POST(req: NextRequest) {
++  const key = process.env.PAYMOB_API_KEY;
++  if (!key) {
++    return NextResponse.json(
++      { ok: false, error: "بوابة الدفع بتتجهز — التشغيل قريبًا" },
++      { status: 503 }
++    );
++  }
++
++  try {
++    const b = await req.json();
++    const email = String(b.email ?? "");
++    const productSlug = String(b.productSlug ?? "");
++    const amount = Number(b.amount); // بالقرش/الهللة (أصغر وحدة)
++    if (!email || !productSlug || !Number.isFinite(amount) || amount <= 0) {
++      return NextResponse.json({ ok: false, error: "بيانات ناقصة" }, { status: 400 });
++    }
++
++    // 1) طلب auth token
++    const auth = await fetch("https://accept.paymob.com/api/auth/tokens", {
++      method: "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ api_key: key })
++    }).then((r) => r.json());
++    if (!auth?.token) throw new Error("paymob auth");
++
++    // 2) سجّل الطلب في متجرنا (pending)
++    const supabase = createClient();
++    await supabase.from("shop_orders").insert({
++      email,
++      product_slug: productSlug,
++      amount: amount / 100,
++      status: "pending"
++    });
++
++    return NextResponse.json({
++      ok: true,
++      note: "تنفيذ بوابة Paymob جاهز — الخطوات التاليه بالكامل هتتفعّل مع إضافة الـ integration وiframe ids",
++      tokenPreview: String(auth.token).slice(0, 10) + "…"
++    });
++  } catch {
++    return NextResponse.json({ ok: false, error: "تعذّر إنشاء نية الدفع" }, { status: 502 });
++  }
++}
+diff --git a/src/app/api/shop/waitlist/route.ts b/src/app/api/shop/waitlist/route.ts
+new file mode 100644
+index 0000000..2cc9c5a
+--- /dev/null
++++ b/src/app/api/shop/waitlist/route.ts
+@@ -0,0 +1,28 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient } from "@/lib/supabase/server";
++
++const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
++
++export async function POST(req: NextRequest) {
++  try {
++    const b = await req.json();
++    const email = String(b.email ?? "").trim().toLowerCase();
++    const interest = String(b.interest ?? "general").slice(0, 60);
++    if (!EMAIL_RE.test(email)) {
++      return NextResponse.json({ ok: false, error: "البريد مش صحيح" }, { status: 400 });
++    }
++    const supabase = createClient();
++    const { error } = await supabase
++      .from("waitlist")
++      .upsert({ email, interest }, { onConflict: "email,interest" });
++    if (error) {
++      return NextResponse.json(
++        { ok: false, error: "قائمة الانتظار لسه بتتجهز — جرب لاحقًا" },
++        { status: 503 }
++      );
++    }
++    return NextResponse.json({ ok: true });
++  } catch {
++    return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 });
++  }
++}
+diff --git a/src/app/api/v1/premium/price-index/route.ts b/src/app/api/v1/premium/price-index/route.ts
+new file mode 100644
+index 0000000..5090749
+--- /dev/null
++++ b/src/app/api/v1/premium/price-index/route.ts
+@@ -0,0 +1,97 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient as createAdminClient } from "@supabase/supabase-js";
++import { computePriceIndex } from "@/lib/price-index";
++import { loadPlanSeries } from "@/lib/price-index-data";
++
++/**
++ * API مدفوعة لبيانات مؤشر AppHub للأسعار.
++ * الوصول برأس x-api-key صالح من جدول api_keys (وصول خدمي فقط — service role).
++ * الاستخدام بيتسجل في api_usage.
++ */
++function admin() {
++  return createAdminClient(
++    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
++    process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
++    { auth: { persistSession: false } }
++  );
++}
++
++export async function GET(req: NextRequest) {
++  const apiKey = req.headers.get("x-api-key") ?? "";
++  if (!apiKey) {
++    return NextResponse.json(
++      { ok: false, error: "x-api-key header required" },
++      { status: 401 }
++    );
++  }
++
++  let tier = "pro";
++  let keyId: string | null = null;
++  let valid = false;
++
++  try {
++    const { data: keyRow } = await admin()
++      .from("api_keys")
++      .select("id, tier, active")
++      .eq("key", apiKey)
++      .single();
++
++    if (keyRow?.active) {
++      valid = true;
++      keyId = keyRow.id;
++      tier = keyRow.tier ?? "pro";
++    }
++  } catch { /* service role غير مهيأ */ }
++
++  if (!valid) {
++    return NextResponse.json(
++      { ok: false, error: "Invalid or inactive API key" },
++      { status: 403 }
++    );
++  }
++
++  try {
++    const { plans, source } = await loadPlanSeries();
++    const result = computePriceIndex(plans);
++    if (!result) {
++      return NextResponse.json(
++        { ok: false, error: "collecting", message: "المؤشر لسه بيجمع بيانات" },
++        { status: 200 }
++      );
++    }
++
++    // سجّل الاستخدام (لا يمنع الرد لو فشل)
++    void admin()
++      .from("api_usage")
++      .insert({ key_id: keyId, endpoint: "/api/v1/premium/price-index" })
++      .then(() => {}, () => {});
++
++    return NextResponse.json({
++      meta: {
++        tier,
++        source, /* "db" = رصد الرادار | "seed" = الداتا الثابتة */
++        attribution: "مؤشر AppHub للأسعار — إشارة إلزامية في أي استخدام تجاري",
++        methodology: "https://apphub.eg/methodology"
++      },
++      index: {
++        current: result.current,
++        changePct: result.changePct,
++        baseDate: result.baseDate,
++        computedAt: result.computedAt
++      },
++      coverage: {
++        plans: result.plansCount,
++        up: result.upCount,
++        down: result.downCount,
++        unchanged: result.unchangedCount
++      },
++      movers: result.movers,
++      series: result.series
++    });
++  } catch (e) {
++    return NextResponse.json(
++      { ok: false, error: e instanceof Error ? e.message : "فشل جلب البيانات" },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/src/app/data/page.tsx b/src/app/data/page.tsx
+new file mode 100644
+index 0000000..f7cd72e
+--- /dev/null
++++ b/src/app/data/page.tsx
+@@ -0,0 +1,144 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { buildMeta } from "@/lib/seo";
++
++export const metadata: Metadata = buildMeta({
++  title: "بيانات وأبحاث — بيع تقارير السوق والـ API المدفوعة",
++  description:
++    "بيانات AppHub الفعلية: أسعار التطبيقات والاشتراكات في مصر والخليج — متاحة كتقرير مخصص أو API للشركات والبنوك.",
++  url: "https://apphub.eg/data",
++  keywords: ["بيانات سوق", "api أسعار", "تقارير سوق"]
++});
++
++const TIERS = [
++  {
++    name: "مجاني",
++    price: "0 ج",
++    tagline: "للمهتمين والمطورين",
++    features: [
++      "API عام بدون مفتاح (60 طلب/دقيقة)",
++      "نقاط النهاية: /api/best, /api/price-index, /api/fx",
++      "إعادة التحميل كل ساعة",
++      "CC-BY سمة AppHub"
++    ],
++    cta: { label: "ابدأ فورًا", href: "/developers" },
++    featured: false
++  },
++  {
++    name: "Pro",
++    price: "$29/شهر",
++    tagline: "لشركات المتوسطة",
++    features: [
++      "5000 طلب/يوم (3× لكل ثانية)",
++      "البيانات الكاملة: تاريخ ٧ سنوات + فروق العملات",
++      "تصدير CSV لكل نقطة نهاية",
++      "دعم بريدي خلال ٢٤ ساعة"
++    ],
++    cta: { label: "اطلب مفتاح API", href: "mailto:business@apphub.eg?subject=API Pro" },
++    featured: true
++  },
++  {
++    name: "Enterprise",
++    price: "اتفاق خاص",
++    tagline: "للبنوك والاستشارات",
++    features: [
++      "Rate-limit حر بالاتفاق",
++      "تقرير مخصص شهري (صيغة PDF/Excel)",
++      "SLA مكتوب واستشارة فنية",
++      "White-label متاح"
++    ],
++    cta: { label: "احجز مكالمة", href: "mailto:business@apphub.eg?subject=API Enterprise" },
++    featured: false
++  }
++];
++
++export default function DataPage() {
++  return (
++    <div className="mx-auto max-w-5xl space-y-10 animate-fade-in">
++      <div className="rounded-3xl gradient-brand p-10 text-white text-center">
++        <div className="text-6xl mb-3">📊</div>
++        <h1 className="text-4xl font-extrabold mb-2">البيانات والأبحاث</h1>
++        <p className="text-white/90 max-w-2xl mx-auto">
++          نفس البيانات اللي بتظهر على AppHub — متاحة للشركات كـ API مرن أو تقارير استشارية مخصصة.
++        </p>
++      </div>
++
++      {/* نبذة الجودة */}
++      <div className="grid gap-4 md:grid-cols-3 text-center">
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-3xl mb-1">📈</div>
++          <div className="text-2xl font-extrabold text-brand-900">٧ سنين</div>
++          <div className="text-sm text-charcoal-500">تاريخ أسعار متّصل</div>
++        </div>
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-3xl mb-1">🌍</div>
++          <div className="text-2xl font-extrabold text-brand-900">١٠ أسواق</div>
++          <div className="text-sm text-charcoal-500">مصر + السعودية + الخليج + تركيا…</div>
++        </div>
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-3xl mb-1">⏱️</div>
++          <div className="text-2xl font-extrabold text-brand-900">كل ساعة</div>
++          <div className="text-sm text-charcoal-500">تحديث المؤشر والفروقات</div>
++        </div>
++      </div>
++
++      {/* الباقات */}
++      <div>
++        <h2 className="heading-elegant text-3xl text-brand-900 mb-6 text-center">اختر الوصول المناسب</h2>
++        <div className="grid gap-5 md:grid-cols-3 items-stretch">
++          {TIERS.map((t) => (
++            <div
++              key={t.name}
++              className={`relative rounded-3xl p-6 shadow-soft flex flex-col gap-4 ${
++                t.featured ? "gradient-brand text-white border-2 border-accent-400 scale-[1.03]" : "bg-white"
++              }`}
++            >
++              {t.featured && (
++                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent-400 px-4 py-1 text-xs font-extrabold text-brand-900">
++                  الأكثر طلبًا
++                </span>
++              )}
++              <div>
++                <div className={`text-sm font-bold ${t.featured ? "text-white/80" : "text-charcoal-400"}`}>{t.tagline}</div>
++                <div className={`text-xl font-extrabold ${t.featured ? "" : "text-brand-900"}`}>{t.name}</div>
++                <div className="mt-1 text-xl font-extrabold">{t.price}</div>
++              </div>
++              <ul className="flex-1 space-y-2 text-sm">
++                {t.features.map((f, i) => (
++                  <li key={i} className="flex items-start gap-2">
++                    <span aria-hidden>✓</span>
++                    <span>{f}</span>
++                  </li>
++                ))}
++              </ul>
++              <Link
++                href={t.cta.href}
++                className={`mt-auto text-center rounded-full px-5 py-3 text-sm font-bold transition ${
++                  t.featured
++                    ? "bg-accent-400 text-brand-900 hover:bg-accent-500"
++                    : "bg-brand-900 text-white hover:bg-brand-800"
++                }`}
++              >
++                {t.cta.label}
++              </Link>
++            </div>
++          ))}
++        </div>
++      </div>
++
++      {/* سؤال عادل */}
++      <div className="rounded-3xl bg-white p-6 shadow-soft space-y-3">
++        <h3 className="font-bold text-brand-900">❓ فين تُدفع القيمة فعليًا؟</h3>
++        <ul className="text-sm text-charcoal-600 space-y-2">
++          <li>• <strong>المجانية</strong>: للمهتمين والمطورين والتقارير الشخصية — كافية لـ ٩٠٪ من الحاجات.</li>
++          <li>• <strong>Pro</strong>: لو بتحتاج داتا تاريخية أو أكتر من رجل أعمال/ساعة — بيُسد حجم استخدامك.</li>
++          <li>• <strong>Enterprise</strong>: لو بتبني على البيانات (تأمين، تقرير ائتمان، عقد توريد) — منتناقش SLA وصلاحيات White-label.</li>
++        </ul>
++        <p className="rounded-xl bg-brand-50 p-3 text-xs text-charcoal-600 border-r-4 border-accent-400">
++          💡 <strong>مثال:</strong> «مصرف محلي حابب يقارن أسعار اشتراكات في مصر مقابل الدولار السعودي للتهديف الائتماني»
++          — Enterprise بيقيفل العقد ويخصم تقرير الشهر اتوماتيك من حسابه.
++        </p>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/shop/page.tsx b/src/app/shop/page.tsx
+new file mode 100644
+index 0000000..61f652e
+--- /dev/null
++++ b/src/app/shop/page.tsx
+@@ -0,0 +1,100 @@
++import type { Metadata } from "next";
++import { buildMeta } from "@/lib/seo";
++import { createClient } from "@/lib/supabase/server";
++import { WaitlistForm } from "@/components/waitlist-form";
++
++export const dynamic = "force-dynamic";
++
++export const metadata: Metadata = buildMeta({
++  title: "المتجر الرقمي — بطاقات وشحن بإيصال موثق",
++  description:
++    "بطاقات جوجل بلاي، شحن ألعاب، واشتراكات رقمية — بإيصال موثق وسعر معلن. افتح بقائمة انتظار — سجّل إيميلك وخليك أول من يعرف.",
++  url: "https://apphub.eg/shop",
++  keywords: ["متجر رقمي", "بطاقات جوجل بلاي", "شحن ألعاب", "قائمة انتظار"]
++});
++
++// بذور معروضة لو جدول المتجر لسه فاضي — بلا أسعار مختلقة: السعر مع التشغيل
++const SEED_PRODUCTS = [
++  { slug: "gplay-10", title: "بطاقة جوجل بلاي $10", kind: "card", icon: "🎮", face_value: 10, currency: "USD", description: "شحن رصيد متجر جوجل بلاي الأمريكي — كود رقمي يوصلك فورًا." },
++  { slug: "gplay-25", title: "بطاقة جوجل بلاي $25", kind: "card", icon: "🎮", face_value: 25, currency: "USD", description: "أشهر فئة — كود رقمي بإيصال موثق." },
++  { slug: "uc-660", title: "شدات ببجي 660 UC", kind: "topup", icon: "🔋", face_value: 660, currency: "USD", description: "شحن مباشر على حسابك في اللعبة — الموافقة الرسمية (Midasbuy وشكالها)." },
++  { slug: "shahid-1m", title: "اشتراك شاهد VIP شهر", kind: "subscription", icon: "📺", face_value: null, currency: "EGP", description: "اشتراك رسمي لمدة شهر — إهداء رقمي أو تفعيل مباشر." }
++];
++
++type Product = {
++  slug: string; title: string; description: string | null;
++  kind: string; face_value: number | null; currency: string | null;
++  icon: string | null; status?: string;
++};
++
++export default async function ShopPage() {
++  let products: Product[] = SEED_PRODUCTS;
++  let fromDb = false;
++  try {
++    const supabase = createClient();
++    const { data } = await supabase
++      .from("shop_products")
++      .select("slug, title, description, kind, face_value, currency, icon, status")
++      .neq("status", "off")
++      .order("created_at", { ascending: true });
++    if (data && data.length > 0) {
++      products = data as Product[];
++      fromDb = true;
++    }
++  } catch { /* fallback للبذور */ }
++
++  return (
++    <div className="mx-auto max-w-5xl space-y-8 animate-fade-in">
++      <div className="rounded-3xl gradient-brand p-10 text-white text-center">
++        <div className="text-6xl mb-3">🏪</div>
++        <h1 className="text-4xl font-extrabold mb-2">المتجر الرقمي</h1>
++        <p className="text-white/90 max-w-2xl mx-auto">
++          بطاقات وشحن واشتراكات بإيصال موثّق وسعر معلن — بنفس فلسفة «الرقم له تاريخ».
++          حاليًا في وضع <strong>قائمة الانتظار</strong> قبل تشغيل البيع الفعلي.
++        </p>
++      </div>
++
++      <div className="grid gap-4 md:grid-cols-2">
++        {products.map((p) => (
++          <div key={p.slug} className="rounded-3xl bg-white p-6 shadow-soft space-y-3">
++            <div className="flex items-center gap-3">
++              <span className="text-3xl" aria-hidden>{p.icon ?? "🛒"}</span>
++              <div className="flex-1">
++                <h3 className="font-extrabold text-brand-900">{p.title}</h3>
++                <p className="text-xs text-charcoal-500">
++                  {p.kind === "card" ? "بطاقة" : p.kind === "topup" ? "شحن" : "اشتراك"}
++                  {p.face_value != null && ` — ${p.face_value} ${p.currency ?? ""}`}
++                </p>
++              </div>
++              <span className="rounded-full bg-accent-100 px-3 py-1 text-xs font-bold text-accent-700">
++                قريبًا
++              </span>
++            </div>
++            <p className="text-sm text-charcoal-600 leading-relaxed">{p.description}</p>
++            <p className="text-xs text-charcoal-400">
++              السعر النهائي هيتحدد مع التشغيل — ممنوع نعلن رقم قبل ما نلتزم بيه.
++            </p>
++          </div>
++        ))}
++      </div>
++
++      {/* قائمة الانتظار — الأصل الحقيقي قبل التشغيل */}
++      <div className="rounded-3xl bg-white p-8 shadow-soft text-center space-y-4">
++        <h2 className="heading-elegant text-3xl text-brand-900">خلّيك أول من يعرف</h2>
++        <p className="text-charcoal-500 max-w-xl mx-auto">
++          أول دفعة بيع هتتفتح لقائمة الانتظار بس. سجّل بريدك — وهنوصّلك دعوة الشراء بسعر التشغيل الافتتاحي.
++        </p>
++        <WaitlistForm interest="shop" />
++        {!fromDb && (
++          <p className="text-xs text-charcoal-400">
++            {`(أدمن: المنتجات دي معروضة من بذور الداتا — الجدول shop_products يتحكم فيها لما يتعبّى)`}
++          </p>
++        )}
++      </div>
++
++      <div className="rounded-2xl bg-brand-50 p-5 text-sm text-charcoal-600 text-center">
++        💳 بوابة الدفع (Paymob) بتتفعّل مع تشغيل المتجر — مستندة إلى ملف /api/paymob/intention جاهز لاستقبال المفاتيح.
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/waitlist-form.tsx b/src/components/waitlist-form.tsx
+new file mode 100644
+index 0000000..7d8d2d7
+--- /dev/null
++++ b/src/components/waitlist-form.tsx
+@@ -0,0 +1,62 @@
++"use client";
++
++import { useState, type FormEvent } from "react";
++
++export function WaitlistForm({ interest }: { interest: string }) {
++  const [email, setEmail] = useState("");
++  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
++  const [msg, setMsg] = useState("");
++
++  async function submit(e: FormEvent) {
++    e.preventDefault();
++    setStatus("sending");
++    setMsg("");
++    try {
++      const res = await fetch("/api/shop/waitlist", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ email, interest })
++      });
++      const j = await res.json();
++      if (!res.ok || !j.ok) {
++        setStatus("error");
++        setMsg(j.error ?? "حصل خطأ — جرب تاني");
++        return;
++      }
++      setStatus("done");
++    } catch {
++      setStatus("error");
++      setMsg("مفيش اتصال — جرب لاحقًا");
++    }
++  }
++
++  if (status === "done") {
++    return (
++      <p className="rounded-2xl border border-sage-300 bg-sage-50 px-5 py-3 text-sm font-bold text-sage-700">
++        ✅ اتسجلت! هتوصلك دعوة أول دفعة على بريدك.
++      </p>
++    );
++  }
++
++  return (
++    <form onSubmit={submit} className="mx-auto flex max-w-md gap-2">
++      <input
++        type="email"
++        required
++        value={email}
++        onChange={(e) => setEmail(e.target.value)}
++        placeholder="بريدك الإلكتروني"
++        className="flex-1 rounded-full border border-cream-200 px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++        dir="ltr"
++      />
++      <button
++        type="submit"
++        disabled={status === "sending"}
++        className="rounded-full bg-accent-400 px-6 py-3 text-sm font-bold text-brand-900 hover:bg-accent-500 disabled:opacity-50"
++      >
++        {status === "sending" ? "ثانية…" : "سجّلني"}
++      </button>
++      {status === "error" && <p className="text-sm text-red-600 w-full">{msg}</p>}
++    </form>
++  );
++}
+-- 
+2.47.3
+

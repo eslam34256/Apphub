@@ -1,0 +1,1701 @@
+From 286704f549bf3779369a3c2150fd0497bc91d1cd Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 17:00:03 +0000
+Subject: [PATCH 1/4] =?UTF-8?q?=F0=9F=8E=A8=20=D8=AA=D8=B5=D8=AD=D9=8A?=
+ =?UTF-8?q?=D8=AD=D8=A7=D8=AA=20=D8=A7=D9=84=D8=AA=D8=B5=D9=85=D9=8A=D9=85?=
+ =?UTF-8?q?=20=D8=A7=D9=84=D8=AC=D8=A7=D8=AF=D8=A9=20=E2=80=94=20=D8=A7?=
+ =?UTF-8?q?=D9=84=D9=84=D9=88=D9=83=20=D8=A7=D9=84=D9=85=D9=82=D8=B5=D9=88?=
+ =?UTF-8?q?=D8=AF=20=D8=A8=D9=82=D9=89=20=D8=A8=D9=8A=D8=AA=D8=AD=D9=82?=
+ =?UTF-8?q?=D9=82?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- خط Elmarai للعناوين العربية: Playfair مفيهوش أحرف عربية فاللقمة كانت نازلة
+  بخط نظام المستخدم — سلسلة الخطوط دلوقتي بالحرف (لاتيني ← Playfair، عربي ← Almarai ← Cairo)
+- خلفية الـ hero مصنوعة محليًا: تدرج كحلي + توهج ذهبي + شبكة نقاط — بدل صورة
+  Unsplash خارجية (أسرع + براند مالك + وتشتغل لو الصورة اتعطلت)
+- إحصاءات حية بدل هاردكود: «163+ تطبيق/15 فئة» بقت محسوبة من الداتا (167/16 أوتوماتيك)
+- كوبي الـ hero بقى بيبيع التمركز: «كل اشتراكاتك بسعرها الحقيقي» — بدل «اكتشف أفضل التطبيقات» العامة
+- globals.css: تنظيف التكرارات الثلاثة في media hero-bg
+- docs/PROJECT-AUDIT.md: مراجعة المشروع الشاملة + قواعد التصميم المستفادة
+---
+ docs/BRAND-GUIDE.md     |  2 +-
+ docs/PROJECT-AUDIT.md   | 67 +++++++++++++++++++++++++++++++++++++++++
+ src/app/globals.css     | 30 +++++++++---------
+ src/app/layout.tsx      | 13 ++++++--
+ src/app/page.tsx        |  8 +++--
+ src/lib/translations.ts | 16 +++++-----
+ 6 files changed, 108 insertions(+), 28 deletions(-)
+ create mode 100644 docs/PROJECT-AUDIT.md
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 06cc048..6ab31b7 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,7 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
+-| **v8** 📡 تنبيهات الرادار (التيليجرام) | 18 سب 2026 | **استرجاع v3 أولًا** (الأتمتة كانت كوميت معزول بره main — اكتشف وهترجع) + بث تلقائي للقناة عند كل تغيّر منطقي فقط: «ارتفع/نزل من X لـ Y» + 💡 أوفر بديل من نفس الفئة الفرعية + كارت متابعة على /price-radar + docs تشغيل + env vars |
++| **v8** 📡 تنبيهات الرادار (التيليجرام) + تصحيحات التصميم | 18 سب 2026 | استرجاع v3 من العزلة + بث تيليجرام فوري ببديل أوفر من نفس النوع + كارت قناة — وتصحيحات تصميم: خط Almarai للعناوين العربية (Playfair مفيهوش عربي وكان نازل بخط النظام)، خلفية hero مملوكة بدون Unsplash، إحصاءات حية بدل «163+» الثابتة، كوبي الـ hero بقى بيبيع موقعنا («كل اشتراكاتك بسعرها الحقيقي») — ووثيقة `docs/PROJECT-AUDIT.md` |
+ 
+ ---
+ 
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+new file mode 100644
+index 0000000..00b06c3
+--- /dev/null
++++ b/docs/PROJECT-AUDIT.md
+@@ -0,0 +1,67 @@
++# 🧭 مراجعة المشروع الشاملة — وضع AppHub وما ينقصه ليكون استثماريًا
++
++> مراجعة على الموقع الحي + الكود (18 سبتمبر 2026).
++> الملحق التنفيذي: `BRAND-GUIDE.md` (الهوية والقواعد) — والملف ده عن **الفجوات والخطة**.
++
++---
++
++## 📊 الوضع بعد 8 سبرنتات
++
++| المؤشر | القيمة |
++|---|---|
++| روابط مفهرسة | **238** (167 تطبيق، 16 فئة، 48 «أفضل»، 7 مقارنات) |
++| أدوات Moat | رادار أسعار (أوتوماتيك + 📡 تيليجرام v8) + حاسبة مصروف |
++| سلامة البيانات | نظام فئات فرعية (57) + قواعد أمانة موثقة + ترتيب بالتقييم |
++| Google Search Console | ✅ متفعل (المستخدم) + sitemap مسلّم |
++
++**الحكم العام:** الماكينة سليمة ومتماسكة — المحتوى والأنظمة والأمانة متأسسين صح.
++الفجوات المتبقية **إدراكية وتسويقية** بالدرجة الأولى: الموقع لسه مش بيحكي قيمته في أول 10 ثواني.
++
++---
++
++## ✨ 1. تقييم التصميم — وضعه والأفعال
++
++### ✅ نقاط القوة (تتحافظ عليها)
++- نظام ألوان واحد ناضج: كحلي × كريم × ذهبي × أخضر هادي (غير تقليدي ومميز)
++- مكونات موحدة: `card-elegant`، أزرار pill، بادجات — تناسق عالي
++- حركات hover راقية وscroll smooth — تجربة ناعمة
++
++### 🐞 العيوب اللي اتكتشفت — واتصلحت في v8 ✅
++| العيب | أثره | الإصلاح |
++|---|---|---|
++| **Playfair بدون أحرف عربية** في `.heading-display/.heading-elegant` | كل العناوين الكبيرة كانت بتنزل بخط النظام — اللوك المقصود **متحققش أبدًا** | سلسلة خطوط بالحرف: Playfair (لاتيني) ← **Almarai** (عربي أنيق) ← Cairo |
++| **خلفية الـ hero صورة Unsplash خارجية** | بطء + عطل محتمل + ستوك عام مش من براندنا | خلفية CSS مصنوعة: تدرج كحلي + توهج ذهبي + شبكة نقاط — أسرع ومملوكة |
++| **أرقام hardcoded ستيل**: «163+ تطبيق» «15 فئة» | بتبقى غلط مع كل إضافة | كلها محسوبة من الداتا حيًا (167 تطبيق / 16 فئة أوتوماتيك) |
++| تكرار 3 بلوكات media في globals.css | نظافة | دمج |
++
++### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++1. **الـ hero يشتغل بجد**: نص البحث في أول الشاشة (مكون جاهز `search-bar.tsx` ومو مدموج) + عدّاد «X سعر مرصود النهارده» بدل بطاقة ثانية
++2. **سكشن «الأفضل في بلدك»** على الهوم: بطاقات الفئات الـ 16 اللي بتوصل لـ 48 صفحة /best — جسر الماكينة الجديدة
++3. **⚠️ الرئيسية كلها «use client»**: بتعمل fetch لـ Supabase من المتصفح (ومفتوحة لـ LCP/SEO). النقل لـ SSR shell عند أول تحسين أداء (مع Next 15)
++4. صورة OG ديناميكية للصفحات (موجود `/api/og` — يربط)
++
++---
++
++## 🚀 2. فجوات المنتج (بالأولوية لمستوى «فرصة استثمارية»)
++
++1. **صفحة «المنهجية» (E-E-A-T)** 🔴 عالية — جوجل في نيتش الفلوس بيحاسب على الشفافية: منهجية التقييم، مصادر الأسعار، قواعد الأمانة الثمانية، حقوق التعديل. ساعة بناء، قيمة كبيرة.
++2. **تنشيف المدونة لـ 2026** 🔴 عالية — مقالات 2025 بتوصل إشارة «موقع متروك». التواريخ والأسعار والروابط الداخلية لـ /best.
++3. **تنبيهات الإيميل HAVING stub** — فورم التنبيه موجود (price_alerts stub) — استكمال التوصيل بالإيميل بعد تيليجرام.
++4. **رادار الشدات 🔋** — امتداد المحرك للشحن (سهل بعد v7+v8 في المحرك).
++5. **الأرشيف الاجتماعي**: شهادات مستخدمين/لقطات قناة تيليجرام على الهوم (social proof بيتبني من أول مشترك — البداية: لقطة «X متابع في القناة»).
++6. **تشغيل الفلوس (CPA)**: زر الأفلييت موجود مكانه — الربط بواجهات ArabyAds/DCMnetwork بعد أول ترافيك قابل للقياس (عشان الأرقام تستحق العرض).
++
++### ⛔ أشياء واضحة مابتلزمش دلوقتي
++- ❌ تطبيق جوال native (PWA كافٍ لوقت طويل)
++- ❌ دول جديدة قبل إثبات الثلاثة الأولى
++- ❌ مقارنات بكمية عمياء — الدقة أهم من العدد
++
++---
++
++## 📐 3. قواعد التصميم المستفادة (انضمت للدليل)
++1. الخطوط تُختار **على مستوى الحرف**: أي family لازم تشمل العربية صراحة (الكسل الممنوع: «Latin + serif fallback»)
++2. ممنوع صور خارجية في واجهات أساسية — كل خلفية أو pattern بتتبني بالـ CSS جوه `globals.css`
++3. ممنوع أرقام ثابتة بتتقادم («163+») — دائمًا محسوبة من الداتا
++4. أي سكشن بيعرض إحصائية — قيمتها تتحسب من الداتا، أو أسقط السكشن (ممنوع placeholder)
++
++*«مميز» لا يعني أكثر حاجات — بيعني أقل حاجات شغالة صح بشكل واضح.* 💙
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 723187d..6c8887e 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -50,37 +50,39 @@ button, a {
+ }
+ 
+ .heading-display {
+-  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
++  /* سلسلة خطوط على مستوى الحرف: اللاتيني ← Playfair، العربي ← Almarai (الاحتياطي Cairo) */
++  font-family: var(--font-playfair), var(--font-almarai), var(--font-cairo), Georgia, serif;
+   font-weight: 900;
+   letter-spacing: -0.03em;
+   line-height: 0.95;
+ }
+ 
+ .heading-elegant {
+-  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
++  font-family: var(--font-playfair), var(--font-almarai), var(--font-cairo), Georgia, serif;
+   font-weight: 700;
+   letter-spacing: -0.02em;
+   line-height: 1.1;
+ }
+ 
++/* خلفية هيرو من صنعنا: تدرج كحلي + لمعان ذهبي + شبكة نقاط —
++   بدون صور خارجية، أسرع، وأثبت تحت أي اتصال */
+ .hero-bg {
+   background:
+-    linear-gradient(135deg, rgba(26, 41, 66, 0.88) 0%, rgba(26, 26, 26, 0.7) 100%),
+-    url('https://images.unsplash.com/photo-1551650975-87deedd944c3?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
++    radial-gradient(1200px 520px at 85% -12%, rgba(201, 168, 118, 0.28), transparent 62%),
++    radial-gradient(900px 420px at 8% 112%, rgba(133, 150, 190, 0.18), transparent 60%),
++    linear-gradient(135deg, #1a2942 0%, #162138 52%, #0f1830 100%);
+   min-height: 700px;
+   position: relative;
++  overflow: hidden;
+ }
+ 
+-@media (max-width: 768px) {
+-  .hero-bg {
+-    min-height: 600px;
+-  }
+-}
+-
+-@media (max-width: 768px) {
+-  .hero-bg {
+-    min-height: 600px;
+-  }
++.hero-bg::before {
++  content: "";
++  position: absolute;
++  inset: 0;
++  background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1.6px);
++  background-size: 28px 28px;
++  pointer-events: none;
+ }
+ 
+ @media (max-width: 768px) {
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 4d65417..9a954cf 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -1,5 +1,5 @@
+ import type { Metadata, Viewport } from "next";
+-import { Cairo, Playfair_Display } from "next/font/google";
++import { Cairo, Playfair_Display, Almarai } from "next/font/google";
+ import Script from "next/script";
+ import "./globals.css";
+ import { Navbar } from "@/components/navbar";
+@@ -21,6 +21,15 @@ const playfair = Playfair_Display({
+   variable: "--font-playfair"
+ });
+ 
++/* خط عرض عربي حقيقي — Playfair مفيهوش أحرف عربية فاللقمة العربية
++   كانت بتنزل بخط النظام (تصميم مش مقصود). Almarai أنيق وجاد، ببيِّن بالوزن */
++const almarai = Almarai({
++  subsets: ["arabic"],
++  weight: ["300", "400", "700", "800"],
++  display: "swap",
++  variable: "--font-almarai"
++});
++
+ export async function generateMetadata(): Promise<Metadata> {
+   const settings = await getSiteSettings();
+   return {
+@@ -53,7 +62,7 @@ export default function RootLayout({
+   children
+ }: Readonly<{ children: React.ReactNode }>) {
+   return (
+-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable}`}>
++    <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable} ${almarai.variable}`}>
+       <body className={`${cairo.className} min-h-screen flex flex-col bg-cream-50`}>
+         {process.env.NEXT_PUBLIC_GA_ID && (
+           <>
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index c0a1256..7798098 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -48,6 +48,8 @@ export default function HomePage() {
+   const dbSlugs = new Set(dbApps.map((a) => a.slug));
+   const filteredStatic = staticApps.filter((a) => !dbSlugs.has(a.slug));
+   const allApps = [...dbApps, ...filteredStatic];
++  // أرقام الحقيقة دايمًا متحسوبة من الداتا — ممنوع أرقام ثابتة بتبقى قديمة
++  const categoryCount = new Set(allApps.map((a) => a.category)).size;
+ 
+   const topApps = [...allApps].sort((a, b) => b.rating - a.rating).slice(0, 6);
+   // العروض الصالحة فقط — المنتهية مش هتظهر على الرئيسية
+@@ -106,7 +108,7 @@ export default function HomePage() {
+           <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_apps")}</p>
+         </div>
+         <div className="text-center">
+-          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">15</p>
++          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">{categoryCount}</p>
+           <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_categories")}</p>
+         </div>
+         <div className="text-center">
+@@ -171,10 +173,10 @@ export default function HomePage() {
+                 </div>
+                 <div className="absolute bottom-6 right-6 left-6 glass-light rounded-2xl p-6">
+                   <p className="heading-elegant text-2xl text-brand-900 mb-2">
+-                    {lang === "ar" ? "163+ تطبيق" : "163+ Apps"}
++                    {lang === "ar" ? `${allApps.length}+ تطبيق` : `${allApps.length}+ Apps`}
+                   </p>
+                   <p className="text-sm text-charcoal-500">
+-                    {lang === "ar" ? "في 15 فئة مختلفة" : "Across 15 categories"}
++                    {lang === "ar" ? `في ${categoryCount} فئة مختلفة` : `Across ${categoryCount} categories`}
+                   </p>
+                 </div>
+               </div>
+diff --git a/src/lib/translations.ts b/src/lib/translations.ts
+index c802b66..a931a3e 100644
+--- a/src/lib/translations.ts
++++ b/src/lib/translations.ts
+@@ -19,11 +19,11 @@ export const translations = {
+     search_placeholder: "ابحث في AppHub...",
+ 
+     // Hero Section
+-    hero_badge: "منصة عربية رائدة",
+-    hero_title_1: "اكتشف",
+-    hero_title_2: "أفضل التطبيقات",
++    hero_badge: "المرجع العربي لأسعار الاشتراكات",
++    hero_title_1: "كل اشتراكاتك",
++    hero_title_2: "بسعرها الحقيقي",
+     hero_title_3: "بكل سهولة",
+-    hero_description: "منصة عربية أنيقة تساعدك تختار التطبيق المناسب حسب بلدك وميزانيتك واحتياجك.",
++    hero_description: "بنرصد سعر كل اشتراك بالتاريخ، ونقارن البدائل من نفس النوع، ونحسبلك مصروفك الرقمي الشهري — عشان تدفع أقل مقابل نفس الجودة.",
+     apps_waiting: "تطبيق في انتظارك",
+     btn_browse_apps: "تصفح التطبيقات",
+     btn_smart_compare: "المقارنات الذكية",
+@@ -163,11 +163,11 @@ export const translations = {
+     search_placeholder: "Search in AppHub...",
+ 
+     // Hero Section
+-    hero_badge: "Leading Arabic Platform",
+-    hero_title_1: "Discover",
+-    hero_title_2: "The Best Apps",
++    hero_badge: "The Arabic subscription-price reference",
++    hero_title_1: "Every subscription you have",
++    hero_title_2: "at its true price",
+     hero_title_3: "With Ease",
+-    hero_description: "An elegant Arabic platform to help you choose the right app based on your country, budget, and needs.",
++    hero_description: "We track every subscription's price over time, compare alternatives of the same kind, and calculate your monthly digital spend — so you pay less for the same quality.",
+     apps_waiting: "apps waiting for you",
+     btn_browse_apps: "Browse Apps",
+     btn_smart_compare: "Smart Comparisons",
+-- 
+2.47.3
+
+
+From 037a863348783084ff77474639a82b8b61da7385 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 17:16:38 +0000
+Subject: [PATCH 2/4] =?UTF-8?q?=F0=9F=A7=AD=20v9=20=E2=80=94=20=D8=B5?=
+ =?UTF-8?q?=D9=82=D8=A7=D9=81=D8=A9=20=D8=A7=D9=84=D8=AB=D9=82=D8=A9=20(E-?=
+ =?UTF-8?q?E-A-T)=20+=20=D8=AA=D9=86=D8=B4=D9=8A=D9=81=20=D8=A7=D9=84?=
+ =?UTF-8?q?=D9=85=D8=AD=D8=AA=D9=88=D9=89=202026?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- صفحة /methodology: مصادر الأسعار الرسمية، قواعد أمان الرادار (30%—300%)،
+  المراجعة اليدوية بعد 3 فشلات، معايير التقييم المعلنة، حدود الدقة، وقناة التصحيح
+- رابط المنهجية في الفوتر (ترجمة ar/en) + إدخالها في sitemap.xml (priority 0.6)
+- تنشيف المدونة: مقال «أفضل 10 تطبيقات في مصر» منقّح لعام 2026،
+  نوع BlogPost بقى فيه updatedAt اختياري بتظهر كـ«آخر تنشيف» في صفحة المقال،
+  وروابط داخلية للرادار والحاسبة في المقالات الثلاثة
+- الخصوصية/الشروط: «آخر مراجعة: سبتمبر 2026»
+- توثيق: BRAND-GUIDE (سجل v9) + PROJECT-AUDIT (تحديث حالة بندين)
+---
+ docs/BRAND-GUIDE.md                 |   1 +
+ docs/PROJECT-AUDIT.md               |   4 +-
+ src/app/blog/[slug]/page.tsx        |   5 +-
+ src/app/methodology/page.tsx        | 125 ++++++++++++++++++++++++++++
+ src/app/privacy/page.tsx            |   2 +-
+ src/app/sitemap.ts                  |   1 +
+ src/app/terms/page.tsx              |   2 +-
+ src/components/footer.tsx           |   5 ++
+ src/data/blog-posts.ts              |   8 +-
+ src/lib/food-delivery-calculator.ts |   2 +-
+ src/lib/translations.ts             |   2 +
+ 11 files changed, 147 insertions(+), 10 deletions(-)
+ create mode 100644 src/app/methodology/page.tsx
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 6ab31b7..7c7f259 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v9** 🧭 صقافة الثقة (E-E-A-T) + تنشيف المحتوى | 20 سب 2026 | صفحة `/methodology` كاملة (مصادر الأسعار، قواعد أمان الرادار 30%—300% والمراجعة اليدوية، معايير النجوم المعلنة، حدود الدقة بصراحة) + رابطها في الفوتر والـ sitemap — وتنشيف 2025→2026: مقال «أفضل تطبيقات مصر» اتنقّح لعام 2026 مع حقل `updatedAt` جديد بيظهر في صفحة المقال، وروابط داخلية لرادار الأسعار وحاسبة الاشتراكات في المقالات الثلاثة، وتاريخ مراجعة الخصوصية/الشروط بقى سبتمبر 2026 |
+ | **v8** 📡 تنبيهات الرادار (التيليجرام) + تصحيحات التصميم | 18 سب 2026 | استرجاع v3 من العزلة + بث تيليجرام فوري ببديل أوفر من نفس النوع + كارت قناة — وتصحيحات تصميم: خط Almarai للعناوين العربية (Playfair مفيهوش عربي وكان نازل بخط النظام)، خلفية hero مملوكة بدون Unsplash، إحصاءات حية بدل «163+» الثابتة، كوبي الـ hero بقى بيبيع موقعنا («كل اشتراكاتك بسعرها الحقيقي») — ووثيقة `docs/PROJECT-AUDIT.md` |
+ 
+ ---
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index 00b06c3..8744df6 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -44,8 +44,8 @@
+ 
+ ## 🚀 2. فجوات المنتج (بالأولوية لمستوى «فرصة استثمارية»)
+ 
+-1. **صفحة «المنهجية» (E-E-A-T)** 🔴 عالية — جوجل في نيتش الفلوس بيحاسب على الشفافية: منهجية التقييم، مصادر الأسعار، قواعد الأمانة الثمانية، حقوق التعديل. ساعة بناء، قيمة كبيرة.
+-2. **تنشيف المدونة لـ 2026** 🔴 عالية — مقالات 2025 بتوصل إشارة «موقع متروك». التواريخ والأسعار والروابط الداخلية لـ /best.
++1. **صفحة «المنهجية» (E-E-A-T)** 🔴 عالية — جوجل في نيتش الفلوس بيحاسب على الشفافية: منهجية التقييم، مصادر الأسعار، قواعد الأمانة الثمانية، حقوق التعديل. ساعة بناء، قيمة كبيرة. ✅ **اتنفذت في v9** (`/methodology` + فوتر + sitemap، 20 سب 2026).
++2. **تنشيف المدونة لـ 2026** 🔴 عالية — مقالات 2025 بتوصل إشارة «موقع متروك». التواريخ والأسعار والروابط الداخلية لـ /best. ✅ **اتنفذت في v9** (مقال أفضل تطبيقات مصر منقّح لعام 2026 + حقل `updatedAt` معلن + روابط داخلية للرادار والحاسبة).
+ 3. **تنبيهات الإيميل HAVING stub** — فورم التنبيه موجود (price_alerts stub) — استكمال التوصيل بالإيميل بعد تيليجرام.
+ 4. **رادار الشدات 🔋** — امتداد المحرك للشحن (سهل بعد v7+v8 في المحرك).
+ 5. **الأرشيف الاجتماعي**: شهادات مستخدمين/لقطات قناة تيليجرام على الهوم (social proof بيتبني من أول مشترك — البداية: لقطة «X متابع في القناة»).
+diff --git a/src/app/blog/[slug]/page.tsx b/src/app/blog/[slug]/page.tsx
+index 2cde002..d3b4725 100644
+--- a/src/app/blog/[slug]/page.tsx
++++ b/src/app/blog/[slug]/page.tsx
+@@ -19,7 +19,10 @@ export default function BlogPostPage({ params }: Props) {
+       <div className="rounded-3xl bg-white p-6 shadow-sm">
+         <div className="mb-4 flex flex-wrap gap-2">{post.tags.map(tag => <span key={tag} className="rounded-full bg-brand-50 px-3 py-1 text-sm text-brand-600">{tag}</span>)}</div>
+         <h1 className="mb-2 text-3xl font-extrabold">{post.title}</h1>
+-        <p className="mb-4 text-slate-500">{post.author} — {new Date(post.createdAt).toLocaleDateString("ar-EG")}</p>
++        <p className="mb-4 text-slate-500">
++          {post.author} — نشر: {new Date(post.createdAt).toLocaleDateString("ar-EG")}
++          {post.updatedAt && <span className="mr-2 text-brand-600"> • آخر تنشيف: {new Date(post.updatedAt).toLocaleDateString("ar-EG")}</span>}
++        </p>
+         <p className="mb-6 text-lg text-slate-600">{post.excerpt}</p>
+       </div>
+       <div className="rounded-3xl bg-white p-6 shadow-sm">
+diff --git a/src/app/methodology/page.tsx b/src/app/methodology/page.tsx
+new file mode 100644
+index 0000000..86786b3
+--- /dev/null
++++ b/src/app/methodology/page.tsx
+@@ -0,0 +1,125 @@
++import Link from "next/link";
++import type { Metadata } from "next";
++import { buildMeta } from "@/lib/seo";
++
++export const metadata: Metadata = buildMeta({
++  title: "المنهجية — كيف نتحقق من الأسعار والتقييمات",
++  description: "منهجية AppHub في جمع الأسعار والتحقق منها: المصادر الرسمية، رادار الأسعار اليومي، قواعد الأمان، والتقييمات التحريرية بمعايير معلنة.",
++  url: "https://apphub.eg/methodology",
++  keywords: ["منهجية", "التحقق من الأسعار", "رادار الأسعار", "شفافية"]
++});
++
++function Section({ title, children }: { title: string; children: React.ReactNode }) {
++  return (
++    <section className="space-y-3">
++      <h2 className="text-xl font-extrabold text-brand-900">{title}</h2>
++      <div className="text-charcoal-700 leading-relaxed space-y-3">{children}</div>
++    </section>
++  );
++}
++
++export default function MethodologyPage() {
++  return (
++    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
++      <div className="rounded-3xl gradient-brand p-10 text-white text-center">
++        <div className="text-6xl mb-3">🧭</div>
++        <h1 className="text-4xl font-extrabold mb-2">المنهجية: كيف نتحقق من الأرقام</h1>
++        <p className="text-white/90">آخر مراجعة: سبتمبر 2026</p>
++      </div>
++
++      <div className="rounded-3xl bg-white p-8 md:p-12 shadow-soft space-y-8">
++
++        <Section title="مبدأنا الأول: الرقم له تاريخ">
++          <p>
++            ممنوع على منصتنا نشر أي سعر أو رقم من غير تاريخ تحقق معلن.
++            اللي بتشوفه في صفحات الأسعار مش «سعر عام» — ده رقم شفناه بعيننا
++            في يوم محدد وموثّق، وبيتجدد دوريًا.
++          </p>
++        </Section>
++
++        <Section title="1. مصادر الأسعار">
++          <p className="mb-2">نجمع الأسعار من مصادر رسمية فقط:</p>
++          <ul className="space-y-2 mr-6 list-disc">
++            <li>المواقع الرسمية للخدمات (صفحات التسعير والاشتراك).</li>
++            <li>متاجر التطبيقات الرسمية للخدمات الرقمية.</li>
++            <li>صفحات الاشتراك داخل التطبيق نفسه عند توفرها.</li>
++          </ul>
++          <p>
++            لا ننشر سعرًا لم نستطع رؤيته من مصدر رسمي، ولا نعتمد أسعار متاجر
++            الطرف الثالث بديلًا عن المصدر الأول.
++          </p>
++        </Section>
++
++        <Section title="2. رادار الأسعار الآلي">
++          <p>
++            نظامنا الداخلي يفحص أسعار الخطط المرصودة يوميًا (08:00 بتوقيت UTC)،
++            ولا يقبل أي رقم جديد إلا بعد اجتيازه قواعد أمان صارمة:
++          </p>
++          <ul className="space-y-2 mr-6 list-disc mt-2">
++            <li>
++              <strong>نطاق العقلانية:</strong> أي قراءة خارج نطاق 30%—300% من آخر سعر
++              مؤكد تُتجاهل فورًا باعتبارها خطأ قراءة مؤقت، ولا تُسجَّل في قاعدة البيانات.
++            </li>
++            <li>
++              <strong>مراجعة إنسانية:</strong> بعد 3 محاولات قراءة فاشلة متتالية تنتقل
++              الخطة إلى حالة «مراجعة يدوية» بدل افتراض أي رقم.
++            </li>
++            <li>
++              <strong>التسجيل عند التأكد فقط:</strong> يُكتب التغيير في السجل التاريخي
++              ويُبثّ تنبيه فقط عندما تكون القراءة مؤكدة وضمن النطاق — لا نبث شكوكًا.
++            </li>
++          </ul>
++        </Section>
++
++        <Section title="3. سجل الأسعار التاريخي">
++          <p>
++            لكل خطة تتغير أسعارها نحتفظ بمسار زمني كامل: السعر القديم، الجديد،
++            وتاريخ التغيير. من هذا السجل نحسب نسبة التغيير المعروضة في صفحة رادار
++            الأسعار، ولا نعرض نسبة لا يسندها سجل موثّق.
++          </p>
++        </Section>
++
++        <Section title="4. التقييمات التحريرية (النجوم)">
++          <p>
++            تقييماتنا تحريرية يضعها الفريق بمعايير معلنة — وليست تصويت زوّار
++            ولا ترتيب مدفوع:
++          </p>
++          <ul className="space-y-2 mr-6 list-disc mt-2">
++            <li>القيمة مقابل السعر في السوق المحلي.</li>
++            <li>دعم اللغة العربية والمحتوى العربي.</li>
++            <li>سهولة الاستخدام وتجربة الدفع المحلية.</li>
++            <li>حجم كتالوج المحتوى أو جودة الخدمة الأساسية.</li>
++            <li>استقرار الخدمة وموثوقيتها في المنطقة.</li>
++          </ul>
++          <p>
++            نراجع التقييمات عندما تتغير الخدمة جذريًا (تغيير سعرها، تغيير محتواها،
++            أو سحب ميزات أساسية).
++          </p>
++        </Section>
++
++        <Section title="5. حدود الدقة (بصراحة تامة)">
++          <ul className="space-y-2 mr-6 list-disc">
++            <li>الأسعار مُعلنة من مقدّمي الخدمة وقابلة للتغيير في أي وقت من غير إشعار.</li>
++            <li>الضرائب والرسوم المحلية وسعر صرف العملة قد تجعل السعر النهائي عند الدفع مختلفًا قليلًا.</li>
++            <li>بعض الخدمات لها أسعار إقليمية مختلفة بين الدول — نعرض سعر كل دولة على حدة قدر الإمكان.</li>
++            <li>التحقق الآلي يلتقط أغلب التغييرات خلال 24 ساعة، وقد تتأخر بعض الصفحات حتى دورة الفحص التالية.</li>
++          </ul>
++        </Section>
++
++        <Section title="6. لقيت رقم غلط؟ صححه معنا">
++          <p>
++            لو وجدت سعرًا تغيّر قبل أن يلتقطه الرادار، أو خطأً في تقييم أو وصف،
++            راسلنا من <Link href="/contact" className="text-brand-600 font-semibold hover:underline">صفحة التواصل</Link> —
++            بنراجع البلاغ يدويًا وبنصحح بأسرع ما يمكن، وبنذكر تاريخ آخر تحديث بوضوح.
++          </p>
++        </Section>
++
++        <div className="rounded-2xl bg-brand-50 p-6 text-sm text-charcoal-600 leading-relaxed">
++          <strong className="text-brand-900">وعدنا:</strong> الصدق قبل السرعة.
++          لو مش متأكدين من رقم، بنقول إننا مش متأكدين — مش بنخمن ونكتب.
++        </div>
++
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/privacy/page.tsx b/src/app/privacy/page.tsx
+index 17cac04..2a61f17 100644
+--- a/src/app/privacy/page.tsx
++++ b/src/app/privacy/page.tsx
+@@ -11,7 +11,7 @@ export default function PrivacyPage() {
+       <div className="rounded-3xl gradient-brand p-10 text-white text-center">
+         <div className="text-6xl mb-3">🔒</div>
+         <h1 className="text-4xl font-extrabold mb-2">سياسة الخصوصية</h1>
+-        <p className="text-white/90">آخر تحديث: يناير 2025</p>
++        <p className="text-white/90">آخر مراجعة: سبتمبر 2026</p>
+       </div>
+ 
+       <div className="rounded-3xl bg-white p-8 md:p-12 shadow-soft space-y-6">
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 29f2c02..9df0b9e 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -25,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/blog`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+     { url: `${baseUrl}/advertise`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
++    { url: `${baseUrl}/methodology`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+     { url: `${baseUrl}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+     { url: `${baseUrl}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+     { url: `${baseUrl}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 }
+diff --git a/src/app/terms/page.tsx b/src/app/terms/page.tsx
+index 92f2329..b3c0fd3 100644
+--- a/src/app/terms/page.tsx
++++ b/src/app/terms/page.tsx
+@@ -11,7 +11,7 @@ export default function TermsPage() {
+       <div className="rounded-3xl gradient-brand p-10 text-white text-center">
+         <div className="text-6xl mb-3">📋</div>
+         <h1 className="text-4xl font-extrabold mb-2">الشروط والأحكام</h1>
+-        <p className="text-white/90">آخر تحديث: يناير 2025</p>
++        <p className="text-white/90">آخر مراجعة: سبتمبر 2026</p>
+       </div>
+ 
+       <div className="rounded-3xl bg-white p-8 md:p-12 shadow-soft space-y-6">
+diff --git a/src/components/footer.tsx b/src/components/footer.tsx
+index f1da3e2..a5e49c7 100644
+--- a/src/components/footer.tsx
++++ b/src/components/footer.tsx
+@@ -177,6 +177,11 @@ export function Footer() {
+                   {t("footer_cookies")}
+                 </Link>
+               </li>
++              <li>
++                <Link href="/methodology" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("footer_methodology")}
++                </Link>
++              </li>
+               <li>
+                 <Link href="/disclaimer" className="text-charcoal-500 hover:text-accent-600 transition">
+                   {t("footer_disclaimer")}
+diff --git a/src/data/blog-posts.ts b/src/data/blog-posts.ts
+index 556bbb4..4d8dd0f 100644
+--- a/src/data/blog-posts.ts
++++ b/src/data/blog-posts.ts
+@@ -1,6 +1,6 @@
+-export type BlogPost = { id:string; slug:string; title:string; excerpt:string; content:string; coverUrl:string; author:string; published:boolean; createdAt:string; tags:string[] };
++export type BlogPost = { id:string; slug:string; title:string; excerpt:string; content:string; coverUrl:string; author:string; published:boolean; createdAt:string; updatedAt?:string; tags:string[] };
+ export const blogPosts: BlogPost[] = [
+-  { id:"1", slug:"best-apps-egypt-2025", title:"أفضل 10 تطبيقات في مصر لعام 2025", excerpt:"قايمة بأفضل التطبيقات اللي بتخدم المصريين كل يوم", content:"## مقدمة\n\nمصر في 2025 سوق تكنولوجي نشيط.\n\n## 1. InstaPay\n\nالتطبيق اللي غيّر طريقة تحويل الفلوس.\n\n**أسباب التميز:**\n- تحويل فوري 24/7\n- بين كل البنوك المصرية\n- مجاني تمامًا\n\n## 2. طلبات\n\nأكبر تطبيق توصيل في المنطقة.\n\n**أسباب التميز:**\n- آلاف المطاعم\n- عروض يومية\n- توصيل سريع", coverUrl:"/covers/best-apps.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-10", tags:["مصر","تطبيقات","2025"] },
+-  { id:"2", slug:"save-on-subscriptions", title:"إزاي توفر 500 جنيه شهريًا من اشتراكاتك", excerpt:"نصايح عملية لتقليل فاتورة الاشتراكات الشهرية", content:"## المشكلة\n\nالواحد بيدفع اشتراكات كتير من غير ما يحس.\n\n## النصايح\n\n### 1. اشترك سنويًا مش شهريًا\n- نتفليكس السنوي أوفر بـ 15%\n- سبوتيفاي السنوي أوفر بـ 17%\n\n### 2. استخدم الباقات العائلية\n- نتفليكس عائلي بـ 4 أشخاص\n- وفّر على الفرد أكتر من 60%\n\n### 3. اشترك من مصر\n- نتفليكس من مصر أرخص 40% من السعودية", coverUrl:"/covers/save-subscriptions.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-15", tags:["توفير","اشتراكات","نصايح"] },
+-  { id:"3", slug:"netflix-vs-shahid-vs-watchit", title:"مقارنة شاملة: نتفليكس vs شاهد vs واتش إت", excerpt:"أي منصة تناسبك؟ مقارنة بالسعر والمحتوى", content:"## نتفليكس\n- السعر: 199 ج/شهر\n- المحتوى: عالمي ضخم\n\n## شاهد\n- السعر: 79 ج/شهر\n- المحتوى: عربي قوي\n\n## واتش إت\n- السعر: 49 ج/شهر\n- المحتوى: مصري بامتياز\n\n## الخلاصة\n\nاختار حسب احتياجك.", coverUrl:"/covers/streaming.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-20", tags:["مقارنة","ستريمنج","نتفليكس"] }
++  { id:"1", slug:"best-apps-egypt-2025", title:"أفضل 10 تطبيقات في مصر لعام 2026", excerpt:"قايمة بأفضل التطبيقات اللي بتخدم المصريين كل يوم", content:"## مقدمة\n\nنسخة منقّحة ومحدّثة — راجعنا القائمة يدويًا لسنة 2026.\n\nمصر في 2026 سوق تكنولوجي نشيط.\n\n## 1. InstaPay\n\nالتطبيق اللي غيّر طريقة تحويل الفلوس.\n\n**أسباب التميز:**\n- تحويل فوري 24/7\n- بين كل البنوك المصرية\n- مجاني تمامًا\n\n## 2. طلبات\n\nأكبر تطبيق توصيل في المنطقة.\n\n**أسباب التميز:**\n- آلاف المطاعم\n- عروض يومية\n- توصيل سريع\n\n## تابع الأسعار\n\nكل سعر مذكور هنا بيتتابع يوميًا على رادار الأسعار الخاص بينا.", coverUrl:"/covers/best-apps.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-10", updatedAt:"2026-09-20", tags:["مصر","تطبيقات","2026"] },
++  { id:"2", slug:"save-on-subscriptions", title:"إزاي توفر 500 جنيه شهريًا من اشتراكاتك", excerpt:"نصايح عملية لتقليل فاتورة الاشتراكات الشهرية", content:"## المشكلة\n\nالواحد بيدفع اشتراكات كتير من غير ما يحس.\n\n## النصايح\n\n### 1. اشترك سنويًا مش شهريًا\n- نتفليكس السنوي أوفر بـ 15%\n- سبوتيفاي السنوي أوفر بـ 17%\n\n### 2. استخدم الباقات العائلية\n- نتفليكس عائلي بـ 4 أشخاص\n- وفّر على الفرد أكتر من 60%\n\n### 3. اشترك من مصر\n- نتفليكس من مصر أرخص 40% من السعودية\n\n## جرّب بنفسك\n\nاحسب فاتورة اشتراكاتك الشهرية بالكامل على حاسبة الاشتراكات الخاصة بينا.", coverUrl:"/covers/save-subscriptions.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-15", updatedAt:"2026-09-20", tags:["توفير","اشتراكات","نصايح"] },
++  { id:"3", slug:"netflix-vs-shahid-vs-watchit", title:"مقارنة شاملة: نتفليكس vs شاهد vs واتش إت", excerpt:"أي منصة تناسبك؟ مقارنة بالسعر والمحتوى", content:"## نتفليكس\n- السعر: 199 ج/شهر\n- المحتوى: عالمي ضخم\n\n## شاهد\n- السعر: 79 ج/شهر\n- المحتوى: عربي قوي\n\n## واتش إت\n- السعر: 49 ج/شهر\n- المحتوى: مصري بامتياز\n\n## الخلاصة\n\nاختار حسب احتياجك.\n\nملحوظة: الأسعار أعلاه حسب آخر تحقق وقت نشر المقال وقابلة للتغيير — تابع رادار الأسعار على المنصة للأرقام اللحظية.", coverUrl:"/covers/streaming.jpg", author:"فريق AppHub", published:true, createdAt:"2025-01-20", updatedAt:"2026-09-20", tags:["مقارنة","ستريمنج","نتفليكس"] }
+ ];
+diff --git a/src/lib/food-delivery-calculator.ts b/src/lib/food-delivery-calculator.ts
+index 3154aae..c9711b4 100644
+--- a/src/lib/food-delivery-calculator.ts
++++ b/src/lib/food-delivery-calculator.ts
+@@ -1,4 +1,4 @@
+-// نظام مقارنة تطبيقات توصيل الأكل - محدّث 2025
++// نظام مقارنة تطبيقات توصيل الأكل - محدّث 2026
+ 
+ export type FoodApp = {
+   id: string;
+diff --git a/src/lib/translations.ts b/src/lib/translations.ts
+index a931a3e..a9972af 100644
+--- a/src/lib/translations.ts
++++ b/src/lib/translations.ts
+@@ -119,6 +119,7 @@ export const translations = {
+     footer_privacy: "سياسة الخصوصية",
+     footer_terms: "الشروط والأحكام",
+     footer_cookies: "سياسة الكوكيز",
++    footer_methodology: "المنهجية",
+     footer_disclaimer: "إخلاء المسؤولية",
+     footer_company: "الشركة",
+     footer_legal: "القانونية",
+@@ -263,6 +264,7 @@ export const translations = {
+     footer_privacy: "Privacy Policy",
+     footer_terms: "Terms & Conditions",
+     footer_cookies: "Cookies Policy",
++    footer_methodology: "Methodology",
+     footer_disclaimer: "Disclaimer",
+     footer_company: "Company",
+     footer_legal: "Legal",
+-- 
+2.47.3
+
+
+From 6509ef37793e18e05977fa55005b72f76e3943c8 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 17:37:36 +0000
+Subject: [PATCH 3/4] =?UTF-8?q?=E2=9A=A1=20v10=20=E2=80=94=20=D8=A7=D9=84?=
+ =?UTF-8?q?=D8=B1=D8=A6=D9=8A=D8=B3=D9=8A=D8=A9=20SSR:=20=D9=86=D9=87?=
+ =?UTF-8?q?=D8=A7=D9=8A=D8=A9=20=D8=B9=D9=87=D8=AF=20use=20client=20=D9=81?=
+ =?UTF-8?q?=D9=8A=20=D8=A7=D9=84=D9=80=20Home?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- page.tsx بقت Server Component (force-dynamic): بتجيب managed_apps من
+  Supabase على السيرفر في كل زيارة، بالتعيين نفسه المنقول من الكلاينت
+- HomeClient جديد (استخراج): الـ UI زي ما هو، بس بيستلم initialDbApps props —
+  شالنا useEffect + createClient من الكلاينت خالص
+- الكوبي والأرقام وكل الأقسام بقت في الـ HTML الأول: LCP أحسن وSEO جاهز
+- metadata مخصصة للرئيسية (كوبي الـ moat) بدل الافتراضي العام
+- try/catch على استعلام السيرفر: بيئة البيلد من غير DB ترجع للداتا الثابتة
+- توثيق: BRAND-GUIDE (v10) + PROJECT-AUDIT (إغلاق بند الـ SSR)
+---
+ docs/BRAND-GUIDE.md            |   1 +
+ docs/PROJECT-AUDIT.md          |   2 +-
+ src/app/page.tsx               | 410 +++++----------------------------
+ src/components/home-client.tsx | 328 ++++++++++++++++++++++++++
+ 4 files changed, 382 insertions(+), 359 deletions(-)
+ create mode 100644 src/components/home-client.tsx
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 7c7f259..de19e81 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v10** ⚡ SSR للرئيسية | 20 سب 2026 | نهاية عهد «الرئيسية كلها use client»: `page.tsx` بقت Server Component ديناميكية بتجيب `managed_apps` من Supabase على السيرفر وتسلّمها props لكون عميل جديد `HomeClient` — مفيش fetch من المتصفح خالص، الكوبي والأرقام (167+/16) والأقسام كلها في الـ HTML الأول (LCP/SEO)، + metadata مخصصة للرئيسية بكوبي الـ moat |
+ | **v9** 🧭 صقافة الثقة (E-E-A-T) + تنشيف المحتوى | 20 سب 2026 | صفحة `/methodology` كاملة (مصادر الأسعار، قواعد أمان الرادار 30%—300% والمراجعة اليدوية، معايير النجوم المعلنة، حدود الدقة بصراحة) + رابطها في الفوتر والـ sitemap — وتنشيف 2025→2026: مقال «أفضل تطبيقات مصر» اتنقّح لعام 2026 مع حقل `updatedAt` جديد بيظهر في صفحة المقال، وروابط داخلية لرادار الأسعار وحاسبة الاشتراكات في المقالات الثلاثة، وتاريخ مراجعة الخصوصية/الشروط بقى سبتمبر 2026 |
+ | **v8** 📡 تنبيهات الرادار (التيليجرام) + تصحيحات التصميم | 18 سب 2026 | استرجاع v3 من العزلة + بث تيليجرام فوري ببديل أوفر من نفس النوع + كارت قناة — وتصحيحات تصميم: خط Almarai للعناوين العربية (Playfair مفيهوش عربي وكان نازل بخط النظام)، خلفية hero مملوكة بدون Unsplash، إحصاءات حية بدل «163+» الثابتة، كوبي الـ hero بقى بيبيع موقعنا («كل اشتراكاتك بسعرها الحقيقي») — ووثيقة `docs/PROJECT-AUDIT.md` |
+ 
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index 8744df6..e2584ea 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -37,7 +37,7 @@
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
+ 1. **الـ hero يشتغل بجد**: نص البحث في أول الشاشة (مكون جاهز `search-bar.tsx` ومو مدموج) + عدّاد «X سعر مرصود النهارده» بدل بطاقة ثانية
+ 2. **سكشن «الأفضل في بلدك»** على الهوم: بطاقات الفئات الـ 16 اللي بتوصل لـ 48 صفحة /best — جسر الماكينة الجديدة
+-3. **⚠️ الرئيسية كلها «use client»**: بتعمل fetch لـ Supabase من المتصفح (ومفتوحة لـ LCP/SEO). النقل لـ SSR shell عند أول تحسين أداء (مع Next 15)
++3. ~~**⚠️ الرئيسية كلها «use client»**: بتعمل fetch لـ Supabase من المتصفح (ومفتوحة لـ LCP/SEO). النقل لـ SSR shell عند أول تحسين أداء (مع Next 15)~~ → ✅ **اتحلّت في v10**: الصفحة بقت Server Component بتجيب managed_apps من السيرفر، والكلاينت بقى `HomeClient` بيستلمها props — مفيش أي fetch من المتصفح (20 سب 2026).
+ 4. صورة OG ديناميكية للصفحات (موجود `/api/og` — يربط)
+ 
+ ---
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 7798098..09f496e 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -1,359 +1,53 @@
+-"use client";
+-
+-import { useEffect, useState } from "react";
+-import Link from "next/link";
+-import { AppCard } from "@/components/app-card";
+-import { apps as staticApps } from "@/data/apps";
+-import { deals } from "@/data/deals";
+-import { getActiveDeals } from "@/lib/deals";
+-import { NewsletterForm } from "@/components/newsletter-form";
+-import { createClient } from "@/lib/supabase/client";
++import type { Metadata } from "next";
++import { createClient } from "@/lib/supabase/server";
++import { HomeClient } from "@/components/home-client";
+ import { AppItem } from "@/lib/types";
+-import { useLanguage } from "@/contexts/language-context";
+-
+-export default function HomePage() {
+-  const { t, lang } = useLanguage();
+-  const [dbApps, setDbApps] = useState<AppItem[]>([]);
+-
+-  useEffect(() => {
+-    async function loadApps() {
+-      const supabase = createClient();
+-      const { data } = await supabase
+-        .from("managed_apps")
+-        .select("*")
+-        .eq("is_active", true);
+-
+-      const mapped: AppItem[] = (data ?? []).map((app: any) => ({
+-        id: `db-${app.id}`,
+-        slug: app.slug,
+-        name: app.name,
+-        icon: app.icon,
+-        category: app.category,
+-        shortDescription: app.short_description || "",
+-        description: app.description || "",
+-        rating: parseFloat(app.rating) || 0,
+-        pros: Array.isArray(app.pros) ? app.pros : [],
+-        cons: Array.isArray(app.cons) ? app.cons : [],
+-        countries: Array.isArray(app.countries) ? app.countries : [],
+-        pricing: Array.isArray(app.pricing) ? app.pricing : [],
+-        tags: Array.isArray(app.tags) ? app.tags : [],
+-        businessUse: Array.isArray(app.business_use) ? app.business_use : []
+-      }));
+-
+-      setDbApps(mapped);
+-    }
+-    loadApps();
+-  }, []);
+-
+-  const dbSlugs = new Set(dbApps.map((a) => a.slug));
+-  const filteredStatic = staticApps.filter((a) => !dbSlugs.has(a.slug));
+-  const allApps = [...dbApps, ...filteredStatic];
+-  // أرقام الحقيقة دايمًا متحسوبة من الداتا — ممنوع أرقام ثابتة بتبقى قديمة
+-  const categoryCount = new Set(allApps.map((a) => a.category)).size;
+-
+-  const topApps = [...allApps].sort((a, b) => b.rating - a.rating).slice(0, 6);
+-  // العروض الصالحة فقط — المنتهية مش هتظهر على الرئيسية
+-  const topDeals = getActiveDeals(deals)
+-    .sort((a, b) => b.discount - a.discount)
+-    .slice(0, 4);
+-
+-  return (
+-    <div className="-mx-4 -mt-8">
+-      {/* HERO SECTION */}
+-{/* HERO SECTION */}
+-<section className="relative hero-bg flex flex-col">
+-  <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-20 sm:py-24 md:py-32 text-center text-white animate-fade-in w-full flex-1 flex flex-col justify-center">
+-    
+-    {/* Badge */}
+-    <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 px-5 py-2 text-sm mb-8 mx-auto animate-slide-up w-fit">
+-      <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse"></span>
+-      <span className="font-medium tracking-wider">{t("hero_badge")}</span>
+-    </div>
+-
+-    {/* Main Heading */}
+-    <h1 className="heading-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-8 text-shadow-strong animate-slide-up">
+-      <span className="block mb-3">{t("hero_title_1")}</span>
+-      <span className="text-accent-400 italic block">{t("hero_title_2")}</span>
+-    </h1>
+-
+-    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-12 leading-relaxed text-shadow-soft animate-slide-up px-4">
+-      {t("hero_description")}
+-    </p>
+-
+-    {/* Buttons */}
+-    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up px-4 mb-16">
+-      <Link 
+-        href="/apps" 
+-        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent-400 text-brand-900 px-8 py-4 rounded-full font-bold hover:bg-accent-500 transition shadow-xl"
+-      >
+-        <span>{t("btn_browse_apps")}</span>
+-        <span>{lang === "ar" ? "←" : "→"}</span>
+-      </Link>
+-      <Link 
+-        href="/compare-hub" 
+-        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-full font-semibold hover:bg-white/20 transition"
+-      >
+-        <span>🔍</span>
+-        <span>{t("btn_smart_compare")}</span>
+-      </Link>
+-    </div>
+-  </div>
+-
+-  {/* Stats Bar - في النهاية */}
+-  <div className="stats-bar w-full">
+-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+-        <div className="text-center">
+-          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">+{allApps.length}</p>
+-          <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_apps")}</p>
+-        </div>
+-        <div className="text-center">
+-          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">{categoryCount}</p>
+-          <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_categories")}</p>
+-        </div>
+-        <div className="text-center">
+-          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">3</p>
+-          <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_countries")}</p>
+-        </div>
+-        <div className="text-center">
+-          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">+{getActiveDeals(deals).length}</p>
+-          <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_deals")}</p>
+-        </div>
+-      </div>
+-    </div>
+-  </div>
+-</section>
+-
+-      {/* ═══════════════════════════════════════ */}
+-      {/* FEATURED APPS SECTION                   */}
+-      {/* ═══════════════════════════════════════ */}
+-      <section className="bg-cream-50 section-padding">
+-        <div className="max-w-7xl mx-auto px-6">
+-          <div className="text-center mb-16">
+-            <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
+-              {lang === "ar" ? "الأكثر شعبية" : "Most Popular"}
+-            </p>
+-            <h2 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
+-              {lang === "ar" ? "تطبيقات مختارة" : "Featured Apps"}
+-            </h2>
+-            <div className="divider-gold"></div>
+-            <p className="text-charcoal-500 max-w-xl mx-auto">
+-              {lang === "ar"
+-                ? "أفضل التطبيقات اللي اختارها المستخدمين بناءً على التقييم والشعبية"
+-                : "Top apps chosen by users based on ratings and popularity"}
+-            </p>
+-          </div>
+-
+-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
+-            {topApps.map((app) => (
+-              <AppCard key={app.id} app={app} />
+-            ))}
+-          </div>
+-
+-          <div className="text-center">
+-            <Link href="/apps" className="btn-outline-dark">
+-              <span>{t("view_all")}</span>
+-              <span>{lang === "ar" ? "←" : "→"}</span>
+-            </Link>
+-          </div>
+-        </div>
+-      </section>
+-
+-      {/* ═══════════════════════════════════════ */}
+-      {/* SPLIT SECTION - Discover                */}
+-      {/* ═══════════════════════════════════════ */}
+-      <section className="bg-cream-100 section-padding">
+-        <div className="max-w-7xl mx-auto px-6">
+-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+-            {/* Image */}
+-            <div className="order-2 lg:order-1">
+-              <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-brand-900 to-charcoal-800">
+-                <div className="absolute inset-0 flex items-center justify-center text-9xl opacity-30">
+-                  📱
+-                </div>
+-                <div className="absolute bottom-6 right-6 left-6 glass-light rounded-2xl p-6">
+-                  <p className="heading-elegant text-2xl text-brand-900 mb-2">
+-                    {lang === "ar" ? `${allApps.length}+ تطبيق` : `${allApps.length}+ Apps`}
+-                  </p>
+-                  <p className="text-sm text-charcoal-500">
+-                    {lang === "ar" ? `في ${categoryCount} فئة مختلفة` : `Across ${categoryCount} categories`}
+-                  </p>
+-                </div>
+-              </div>
+-            </div>
+-
+-            {/* Content */}
+-            <div className="order-1 lg:order-2 space-y-6">
+-              <div className="divider-gold-left"></div>
+-              <p className="text-accent-600 text-sm uppercase tracking-[0.3em]">
+-                {lang === "ar" ? "اكتشف" : "Discover"}
+-              </p>
+-              <h2 className="heading-display text-5xl md:text-6xl text-brand-900">
+-                {lang === "ar" ? "أناقة" : "Elegant"}
+-                <br />
+-                <span className="italic text-accent-600">
+-                  {lang === "ar" ? "في الاختيار" : "Selection"}
+-                </span>
+-              </h2>
+-              <p className="text-lg text-charcoal-500 leading-relaxed">
+-                {lang === "ar"
+-                  ? "تصفّح مكتبة ضخمة من التطبيقات المختارة بعناية. قارن الأسعار، اقرا المراجعات، واختار الأفضل لاحتياجاتك."
+-                  : "Browse a curated library of carefully selected apps. Compare prices, read reviews, and choose what fits your needs."}
+-              </p>
+-              <Link href="/apps" className="btn-primary">
+-                <span>{lang === "ar" ? "ابدأ الاستكشاف" : "Start Exploring"}</span>
+-                <span>{lang === "ar" ? "←" : "→"}</span>
+-              </Link>
+-            </div>
+-          </div>
+-        </div>
+-      </section>
+-
+-      {/* ═══════════════════════════════════════ */}
+-      {/* NEW TOOLS: Price Radar + Calculator     */}
+-      {/* ═══════════════════════════════════════ */}
+-      <section className="bg-white section-padding border-y border-cream-200">
+-        <div className="max-w-7xl mx-auto px-6">
+-          <div className="text-center mb-12">
+-            <p className="text-red-600 text-sm uppercase tracking-[0.3em] mb-3">
+-              {lang === "ar" ? "🚨 أدوات جديدة" : "🚨 New Tools"}
+-            </p>
+-            <h2 className="heading-display text-4xl md:text-5xl text-brand-900 mb-4">
+-              {lang === "ar" ? "وفّر في اشتراكاتك" : "Save on your subscriptions"}
+-            </h2>
+-            <div className="divider-gold"></div>
+-          </div>
+-
+-          <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+-            {/* رادار الأسعار */}
+-            <Link
+-              href="/price-radar"
+-              className="card-elegant group p-8 transition hover:-translate-y-1 hover:shadow-soft border-r-4 border-r-red-400"
+-            >
+-              <span className="text-4xl" aria-hidden>🚨</span>
+-              <h3 className="heading-elegant text-2xl text-brand-900 mt-4">
+-                {lang === "ar" ? "رادار الأسعار" : "Price Radar"}
+-              </h3>
+-              <p className="mt-2 text-charcoal-500 leading-relaxed">
+-                {lang === "ar"
+-                  ? "بنرصد سعر كل اشتراك بالتاريخ. اعرف مين زوّد سعره وامتى — وخلّيك أول من يعرف أي تغيير."
+-                  : "We track every subscription's price over time. Know who raised prices and when — and get alerted first."}
+-              </p>
+-              <span className="mt-4 inline-block font-bold text-red-600 group-hover:translate-x-1 transition">
+-                {lang === "ar" ? "شوف الرصد ←" : "See the radar ←"}
+-              </span>
+-            </Link>
+-
+-            {/* الحاسبة */}
+-            <Link
+-              href="/calculator"
+-              className="card-elegant group p-8 transition hover:-translate-y-1 hover:shadow-soft border-r-4 border-r-accent-400"
+-            >
+-              <span className="text-4xl" aria-hidden>🧮</span>
+-              <h3 className="heading-elegant text-2xl text-brand-900 mt-4">
+-                {lang === "ar" ? "حاسبة المصروف الرقمي" : "Digital Spend Calculator"}
+-              </h3>
+-              <p className="mt-2 text-charcoal-500 leading-relaxed">
+-                {lang === "ar"
+-                  ? "اشتراكاتك كلها بتكلفك كام في الشهر وفي السنة؟ اعرف الرقم المخيف 😅 واكتشف نفس الجودة بسعر أقل."
+-                  : "How much do all your subscriptions cost monthly and yearly? See the scary number 😅 and find cheaper equivalents."}
+-              </p>
+-              <span className="mt-4 inline-block font-bold text-accent-600 group-hover:translate-x-1 transition">
+-                {lang === "ar" ? "احسب دلوقتي ←" : "Calculate now ←"}
+-              </span>
+-            </Link>
+-          </div>
+-        </div>
+-      </section>
+-
+-      {/* ═══════════════════════════════════════ */}
+-      {/* DEALS SECTION                           */}
+-      {/* ═══════════════════════════════════════ */}
+-      {topDeals.length > 0 && (
+-      <section className="bg-cream-50 section-padding">
+-        <div className="max-w-7xl mx-auto px-6">
+-          <div className="text-center mb-16">
+-            <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
+-              {lang === "ar" ? "عروض حصرية" : "Exclusive Deals"}
+-            </p>
+-            <h2 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
+-              {lang === "ar" ? "وفّر أكتر" : "Save More"}
+-            </h2>
+-            <div className="divider-gold"></div>
+-          </div>
+-
+-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+-            {topDeals.map((deal) => (
+-              <div key={deal.id} className="card-elegant p-6">
+-                <div className="flex items-start justify-between mb-4">
+-                  <p className="text-xs text-accent-600 font-bold uppercase tracking-wider">
+-                    {deal.brand}
+-                  </p>
+-                  <span className="rounded-full bg-brand-900 text-white px-3 py-1 text-xs font-bold">
+-                    -{deal.discount}%
+-                  </span>
+-                </div>
+-
+-                <h3 className="heading-elegant text-lg text-brand-900 mb-4 line-clamp-2 min-h-[3rem]">
+-                  {deal.title}
+-                </h3>
+-
+-                {deal.code && (
+-                  <div className="rounded-xl bg-cream-100 px-4 py-3 text-center border border-dashed border-accent-400">
+-                    <p className="text-xs text-charcoal-500 mb-1">
+-                      {lang === "ar" ? "كود الخصم" : "Promo Code"}
+-                    </p>
+-                    <p className="text-base font-bold text-brand-900 tracking-widest">
+-                      {deal.code}
+-                    </p>
+-                  </div>
+-                )}
+-
+-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-cream-200">
+-                  <span className="text-xs text-charcoal-500">
+-                    👁️ {deal.views} {lang === "ar" ? "مشاهدة" : "views"}
+-                  </span>
+-                </div>
+-              </div>
+-            ))}
+-          </div>
+-        </div>
+-      </section>
+-      )}
+-
+-      {/* ═══════════════════════════════════════ */}
+-      {/* CTA SECTION                             */}
+-      {/* ═══════════════════════════════════════ */}
+-      <section className="bg-brand-900 section-padding">
+-        <div className="max-w-4xl mx-auto px-6 text-center text-white">
+-          <div className="divider-gold"></div>
+-          <h2 className="heading-display text-5xl md:text-6xl mb-6">
+-            {lang === "ar" ? "جاهز للبدء؟" : "Ready to Start?"}
+-          </h2>
+-          <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
+-            {lang === "ar"
+-              ? "انضم لآلاف المستخدمين اللي بيستخدموا AppHub لاختيار أفضل التطبيقات"
+-              : "Join thousands of users using AppHub to find the best apps"}
+-          </p>
+-          <div className="flex flex-wrap gap-4 justify-center">
+-            <Link href="/auth" className="btn-gold">
+-              {lang === "ar" ? "سجّل مجانًا" : "Sign Up Free"}
+-            </Link>
+-            <Link href="/apps" className="btn-outline">
+-              {lang === "ar" ? "تصفّح أولاً" : "Browse First"}
+-            </Link>
+-          </div>
+-        </div>
+-      </section>
+-
+-      {/* ═══════════════════════════════════════ */}
+-      {/* NEWSLETTER                              */}
+-      {/* ═══════════════════════════════════════ */}
+-      <section className="bg-cream-50 section-padding">
+-        <div className="max-w-7xl mx-auto px-6">
+-          <NewsletterForm />
+-        </div>
+-      </section>
+-    </div>
+-  );
+-}
+\ No newline at end of file
++import { buildMeta } from "@/lib/seo";
++
++// الصفحة ديناميكية: التطبيقات المُدارة بتتجيب من السيرفر في كل زيارة (SEO + داتا طازة)
++export const dynamic = "force-dynamic";
++
++export const metadata: Metadata = buildMeta({
++  title: "كل اشتراكاتك بسعرها الحقيقي",
++  description:
++    "المرجع العربي لأسعار الاشتراكات: دليل التطبيقات، رادار الأسعار اليومي، البدائل الأوفر، وحاسبة مصروفك الرقمي — بأرقام مُتحقق منها بتاريخها.",
++  url: "https://apphub.eg/",
++  keywords: ["أسعار الاشتراكات", "رادار الأسعار", "بدائل أرخص", "تطبيقات"]
++});
++
++// نفس تعيين أعمدة managed_apps لـ AppItem — منقول من الكلاينت للسيرفر
++function mapManagedApp(app: any): AppItem {
++  return {
++    id: `db-${app.id}`,
++    slug: app.slug,
++    name: app.name,
++    icon: app.icon,
++    category: app.category,
++    shortDescription: app.short_description || "",
++    description: app.description || "",
++    rating: parseFloat(app.rating) || 0,
++    pros: Array.isArray(app.pros) ? app.pros : [],
++    cons: Array.isArray(app.cons) ? app.cons : [],
++    countries: Array.isArray(app.countries) ? app.countries : [],
++    pricing: Array.isArray(app.pricing) ? app.pricing : [],
++    tags: Array.isArray(app.tags) ? app.tags : [],
++    businessUse: Array.isArray(app.business_use) ? app.business_use : []
++  };
++}
++
++export default async function HomePage() {
++  let dbApps: AppItem[] = [];
++  try {
++    const supabase = createClient();
++    const { data } = await supabase
++      .from("managed_apps")
++      .select("*")
++      .eq("is_active", true);
++    dbApps = (data ?? []).map(mapManagedApp);
++  } catch (err) {
++    // بيئة بيلد من غير قاعدة بيانات → الداتا الثابتة تكفي
++    console.error("Home SSR managed_apps error:", err);
++  }
++
++  return <HomeClient initialDbApps={dbApps} />;
++}
+diff --git a/src/components/home-client.tsx b/src/components/home-client.tsx
+new file mode 100644
+index 0000000..1233fe6
+--- /dev/null
++++ b/src/components/home-client.tsx
+@@ -0,0 +1,328 @@
++"use client";
++
++import Link from "next/link";
++import { AppCard } from "@/components/app-card";
++import { apps as staticApps } from "@/data/apps";
++import { deals } from "@/data/deals";
++import { getActiveDeals } from "@/lib/deals";
++import { NewsletterForm } from "@/components/newsletter-form";
++import { AppItem } from "@/lib/types";
++import { useLanguage } from "@/contexts/language-context";
++
++export function HomeClient({ initialDbApps }: { initialDbApps: AppItem[] }) {
++  const { t, lang } = useLanguage();
++  // التطبيقات المُدارة بتيجي جاهزة من السيرفر (SSR) — مفيش fetch من المتصفح
++  const dbApps = initialDbApps;
++
++  const dbSlugs = new Set(dbApps.map((a) => a.slug));
++  const filteredStatic = staticApps.filter((a) => !dbSlugs.has(a.slug));
++  const allApps = [...dbApps, ...filteredStatic];
++  // أرقام الحقيقة دايمًا متحسوبة من الداتا — ممنوع أرقام ثابتة بتبقى قديمة
++  const categoryCount = new Set(allApps.map((a) => a.category)).size;
++
++  const topApps = [...allApps].sort((a, b) => b.rating - a.rating).slice(0, 6);
++  // العروض الصالحة فقط — المنتهية مش هتظهر على الرئيسية
++  const topDeals = getActiveDeals(deals)
++    .sort((a, b) => b.discount - a.discount)
++    .slice(0, 4);
++
++  return (
++    <div className="-mx-4 -mt-8">
++      {/* HERO SECTION */}
++{/* HERO SECTION */}
++<section className="relative hero-bg flex flex-col">
++  <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-20 sm:py-24 md:py-32 text-center text-white animate-fade-in w-full flex-1 flex flex-col justify-center">
++    
++    {/* Badge */}
++    <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 px-5 py-2 text-sm mb-8 mx-auto animate-slide-up w-fit">
++      <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse"></span>
++      <span className="font-medium tracking-wider">{t("hero_badge")}</span>
++    </div>
++
++    {/* Main Heading */}
++    <h1 className="heading-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-8 text-shadow-strong animate-slide-up">
++      <span className="block mb-3">{t("hero_title_1")}</span>
++      <span className="text-accent-400 italic block">{t("hero_title_2")}</span>
++    </h1>
++
++    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-12 leading-relaxed text-shadow-soft animate-slide-up px-4">
++      {t("hero_description")}
++    </p>
++
++    {/* Buttons */}
++    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up px-4 mb-16">
++      <Link 
++        href="/apps" 
++        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent-400 text-brand-900 px-8 py-4 rounded-full font-bold hover:bg-accent-500 transition shadow-xl"
++      >
++        <span>{t("btn_browse_apps")}</span>
++        <span>{lang === "ar" ? "←" : "→"}</span>
++      </Link>
++      <Link 
++        href="/compare-hub" 
++        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-full font-semibold hover:bg-white/20 transition"
++      >
++        <span>🔍</span>
++        <span>{t("btn_smart_compare")}</span>
++      </Link>
++    </div>
++  </div>
++
++  {/* Stats Bar - في النهاية */}
++  <div className="stats-bar w-full">
++    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
++      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
++        <div className="text-center">
++          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">+{allApps.length}</p>
++          <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_apps")}</p>
++        </div>
++        <div className="text-center">
++          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">{categoryCount}</p>
++          <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_categories")}</p>
++        </div>
++        <div className="text-center">
++          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">3</p>
++          <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_countries")}</p>
++        </div>
++        <div className="text-center">
++          <p className="heading-elegant text-3xl md:text-4xl text-accent-400">+{getActiveDeals(deals).length}</p>
++          <p className="text-xs text-white/70 uppercase tracking-widest mt-1">{t("stat_deals")}</p>
++        </div>
++      </div>
++    </div>
++  </div>
++</section>
++
++      {/* ═══════════════════════════════════════ */}
++      {/* FEATURED APPS SECTION                   */}
++      {/* ═══════════════════════════════════════ */}
++      <section className="bg-cream-50 section-padding">
++        <div className="max-w-7xl mx-auto px-6">
++          <div className="text-center mb-16">
++            <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
++              {lang === "ar" ? "الأكثر شعبية" : "Most Popular"}
++            </p>
++            <h2 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
++              {lang === "ar" ? "تطبيقات مختارة" : "Featured Apps"}
++            </h2>
++            <div className="divider-gold"></div>
++            <p className="text-charcoal-500 max-w-xl mx-auto">
++              {lang === "ar"
++                ? "أفضل التطبيقات اللي اختارها المستخدمين بناءً على التقييم والشعبية"
++                : "Top apps chosen by users based on ratings and popularity"}
++            </p>
++          </div>
++
++          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
++            {topApps.map((app) => (
++              <AppCard key={app.id} app={app} />
++            ))}
++          </div>
++
++          <div className="text-center">
++            <Link href="/apps" className="btn-outline-dark">
++              <span>{t("view_all")}</span>
++              <span>{lang === "ar" ? "←" : "→"}</span>
++            </Link>
++          </div>
++        </div>
++      </section>
++
++      {/* ═══════════════════════════════════════ */}
++      {/* SPLIT SECTION - Discover                */}
++      {/* ═══════════════════════════════════════ */}
++      <section className="bg-cream-100 section-padding">
++        <div className="max-w-7xl mx-auto px-6">
++          <div className="grid lg:grid-cols-2 gap-12 items-center">
++            {/* Image */}
++            <div className="order-2 lg:order-1">
++              <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-brand-900 to-charcoal-800">
++                <div className="absolute inset-0 flex items-center justify-center text-9xl opacity-30">
++                  📱
++                </div>
++                <div className="absolute bottom-6 right-6 left-6 glass-light rounded-2xl p-6">
++                  <p className="heading-elegant text-2xl text-brand-900 mb-2">
++                    {lang === "ar" ? `${allApps.length}+ تطبيق` : `${allApps.length}+ Apps`}
++                  </p>
++                  <p className="text-sm text-charcoal-500">
++                    {lang === "ar" ? `في ${categoryCount} فئة مختلفة` : `Across ${categoryCount} categories`}
++                  </p>
++                </div>
++              </div>
++            </div>
++
++            {/* Content */}
++            <div className="order-1 lg:order-2 space-y-6">
++              <div className="divider-gold-left"></div>
++              <p className="text-accent-600 text-sm uppercase tracking-[0.3em]">
++                {lang === "ar" ? "اكتشف" : "Discover"}
++              </p>
++              <h2 className="heading-display text-5xl md:text-6xl text-brand-900">
++                {lang === "ar" ? "أناقة" : "Elegant"}
++                <br />
++                <span className="italic text-accent-600">
++                  {lang === "ar" ? "في الاختيار" : "Selection"}
++                </span>
++              </h2>
++              <p className="text-lg text-charcoal-500 leading-relaxed">
++                {lang === "ar"
++                  ? "تصفّح مكتبة ضخمة من التطبيقات المختارة بعناية. قارن الأسعار، اقرا المراجعات، واختار الأفضل لاحتياجاتك."
++                  : "Browse a curated library of carefully selected apps. Compare prices, read reviews, and choose what fits your needs."}
++              </p>
++              <Link href="/apps" className="btn-primary">
++                <span>{lang === "ar" ? "ابدأ الاستكشاف" : "Start Exploring"}</span>
++                <span>{lang === "ar" ? "←" : "→"}</span>
++              </Link>
++            </div>
++          </div>
++        </div>
++      </section>
++
++      {/* ═══════════════════════════════════════ */}
++      {/* NEW TOOLS: Price Radar + Calculator     */}
++      {/* ═══════════════════════════════════════ */}
++      <section className="bg-white section-padding border-y border-cream-200">
++        <div className="max-w-7xl mx-auto px-6">
++          <div className="text-center mb-12">
++            <p className="text-red-600 text-sm uppercase tracking-[0.3em] mb-3">
++              {lang === "ar" ? "🚨 أدوات جديدة" : "🚨 New Tools"}
++            </p>
++            <h2 className="heading-display text-4xl md:text-5xl text-brand-900 mb-4">
++              {lang === "ar" ? "وفّر في اشتراكاتك" : "Save on your subscriptions"}
++            </h2>
++            <div className="divider-gold"></div>
++          </div>
++
++          <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
++            {/* رادار الأسعار */}
++            <Link
++              href="/price-radar"
++              className="card-elegant group p-8 transition hover:-translate-y-1 hover:shadow-soft border-r-4 border-r-red-400"
++            >
++              <span className="text-4xl" aria-hidden>🚨</span>
++              <h3 className="heading-elegant text-2xl text-brand-900 mt-4">
++                {lang === "ar" ? "رادار الأسعار" : "Price Radar"}
++              </h3>
++              <p className="mt-2 text-charcoal-500 leading-relaxed">
++                {lang === "ar"
++                  ? "بنرصد سعر كل اشتراك بالتاريخ. اعرف مين زوّد سعره وامتى — وخلّيك أول من يعرف أي تغيير."
++                  : "We track every subscription's price over time. Know who raised prices and when — and get alerted first."}
++              </p>
++              <span className="mt-4 inline-block font-bold text-red-600 group-hover:translate-x-1 transition">
++                {lang === "ar" ? "شوف الرصد ←" : "See the radar ←"}
++              </span>
++            </Link>
++
++            {/* الحاسبة */}
++            <Link
++              href="/calculator"
++              className="card-elegant group p-8 transition hover:-translate-y-1 hover:shadow-soft border-r-4 border-r-accent-400"
++            >
++              <span className="text-4xl" aria-hidden>🧮</span>
++              <h3 className="heading-elegant text-2xl text-brand-900 mt-4">
++                {lang === "ar" ? "حاسبة المصروف الرقمي" : "Digital Spend Calculator"}
++              </h3>
++              <p className="mt-2 text-charcoal-500 leading-relaxed">
++                {lang === "ar"
++                  ? "اشتراكاتك كلها بتكلفك كام في الشهر وفي السنة؟ اعرف الرقم المخيف 😅 واكتشف نفس الجودة بسعر أقل."
++                  : "How much do all your subscriptions cost monthly and yearly? See the scary number 😅 and find cheaper equivalents."}
++              </p>
++              <span className="mt-4 inline-block font-bold text-accent-600 group-hover:translate-x-1 transition">
++                {lang === "ar" ? "احسب دلوقتي ←" : "Calculate now ←"}
++              </span>
++            </Link>
++          </div>
++        </div>
++      </section>
++
++      {/* ═══════════════════════════════════════ */}
++      {/* DEALS SECTION                           */}
++      {/* ═══════════════════════════════════════ */}
++      {topDeals.length > 0 && (
++      <section className="bg-cream-50 section-padding">
++        <div className="max-w-7xl mx-auto px-6">
++          <div className="text-center mb-16">
++            <p className="text-accent-600 text-sm uppercase tracking-[0.3em] mb-3">
++              {lang === "ar" ? "عروض حصرية" : "Exclusive Deals"}
++            </p>
++            <h2 className="heading-display text-5xl md:text-6xl text-brand-900 mb-4">
++              {lang === "ar" ? "وفّر أكتر" : "Save More"}
++            </h2>
++            <div className="divider-gold"></div>
++          </div>
++
++          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
++            {topDeals.map((deal) => (
++              <div key={deal.id} className="card-elegant p-6">
++                <div className="flex items-start justify-between mb-4">
++                  <p className="text-xs text-accent-600 font-bold uppercase tracking-wider">
++                    {deal.brand}
++                  </p>
++                  <span className="rounded-full bg-brand-900 text-white px-3 py-1 text-xs font-bold">
++                    -{deal.discount}%
++                  </span>
++                </div>
++
++                <h3 className="heading-elegant text-lg text-brand-900 mb-4 line-clamp-2 min-h-[3rem]">
++                  {deal.title}
++                </h3>
++
++                {deal.code && (
++                  <div className="rounded-xl bg-cream-100 px-4 py-3 text-center border border-dashed border-accent-400">
++                    <p className="text-xs text-charcoal-500 mb-1">
++                      {lang === "ar" ? "كود الخصم" : "Promo Code"}
++                    </p>
++                    <p className="text-base font-bold text-brand-900 tracking-widest">
++                      {deal.code}
++                    </p>
++                  </div>
++                )}
++
++                <div className="flex items-center justify-between mt-4 pt-4 border-t border-cream-200">
++                  <span className="text-xs text-charcoal-500">
++                    👁️ {deal.views} {lang === "ar" ? "مشاهدة" : "views"}
++                  </span>
++                </div>
++              </div>
++            ))}
++          </div>
++        </div>
++      </section>
++      )}
++
++      {/* ═══════════════════════════════════════ */}
++      {/* CTA SECTION                             */}
++      {/* ═══════════════════════════════════════ */}
++      <section className="bg-brand-900 section-padding">
++        <div className="max-w-4xl mx-auto px-6 text-center text-white">
++          <div className="divider-gold"></div>
++          <h2 className="heading-display text-5xl md:text-6xl mb-6">
++            {lang === "ar" ? "جاهز للبدء؟" : "Ready to Start?"}
++          </h2>
++          <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
++            {lang === "ar"
++              ? "انضم لآلاف المستخدمين اللي بيستخدموا AppHub لاختيار أفضل التطبيقات"
++              : "Join thousands of users using AppHub to find the best apps"}
++          </p>
++          <div className="flex flex-wrap gap-4 justify-center">
++            <Link href="/auth" className="btn-gold">
++              {lang === "ar" ? "سجّل مجانًا" : "Sign Up Free"}
++            </Link>
++            <Link href="/apps" className="btn-outline">
++              {lang === "ar" ? "تصفّح أولاً" : "Browse First"}
++            </Link>
++          </div>
++        </div>
++      </section>
++
++      {/* ═══════════════════════════════════════ */}
++      {/* NEWSLETTER                              */}
++      {/* ═══════════════════════════════════════ */}
++      <section className="bg-cream-50 section-padding">
++        <div className="max-w-7xl mx-auto px-6">
++          <NewsletterForm />
++        </div>
++      </section>
++    </div>
++  );
++}
+\ No newline at end of file
+-- 
+2.47.3
+
+
+From e71195e208477d0e7c9a73c1aa94066471e949a2 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Sun, 20 Sep 2026 18:07:57 +0000
+Subject: [PATCH 4/4] =?UTF-8?q?=F0=9F=94=8E=20v11=20=E2=80=94=20=D8=A8?=
+ =?UTF-8?q?=D8=AD=D8=AB=20=D8=A7=D9=84=D9=80=20Hero=20=D8=A7=D9=84=D8=AA?=
+ =?UTF-8?q?=D9=81=D8=A7=D8=B9=D9=84=D9=8A:=20=D8=A7=D9=84=D9=80=20hero=20?=
+ =?UTF-8?q?=D8=A8=D9=82=D9=89=20=D8=A8=D9=8A=D8=B4=D8=AA=D8=BA=D9=84=20?=
+ =?UTF-8?q?=D8=A8=D8=AC=D8=AF?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- HeroSearch جديد: اقتراحات حية (8 نتائج، اسم/وصف/وسوم)، تنقّل بالأسهم
+  وEnter يفتح صفحة التطبيق مباشرة أو /apps?q=…، ECS يقفل، قفل عند الضغط بره
+- شرائح «الأكثر رواجًا» من الداتا نفسها (نتفليكس/سبوتيفاي/شاهد/طلبات)
+- /apps بقى يقبل ?q= سيرفر-سايد: AppsDirectory فيه initialQuery
+- إعادة ترديم الـ Hero: الوصف ← البحث ← الأزرار بمسافات مظبوطة
+- توثيق: BRAND-GUIDE (v11) + PROJECT-AUDIT (إغلاق بند البحث)
+---
+ docs/BRAND-GUIDE.md               |   1 +
+ docs/PROJECT-AUDIT.md             |   2 +-
+ src/app/apps/page.tsx             |   6 +-
+ src/components/apps-directory.tsx |   4 +-
+ src/components/hero-search.tsx    | 163 ++++++++++++++++++++++++++++++
+ src/components/home-client.tsx    |  10 +-
+ 6 files changed, 178 insertions(+), 8 deletions(-)
+ create mode 100644 src/components/hero-search.tsx
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index de19e81..b539f1f 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v11** 🔎 بحث الـ Hero التفاعلي | 20 سب 2026 | مكوّن `HeroSearch` جديد في قلب الـ Hero: اقتراحات حية (8 نتائج: اسم/وصف/وسوم) صفّة بأسهم الكيبورد + Enter يوديك صفحة التطبيق مباشرة أو `/apps?q=…`، + شرائح «الأكثر رواجًا» من الداتا نفسها — و`initialQuery` في دليل التطبيقات بقى يتجهز SSR من الـ URL. الهيرو اتردّم: الوصف mb-8 ← البحث ← الأزرار mb-12 |
+ | **v10** ⚡ SSR للرئيسية | 20 سب 2026 | نهاية عهد «الرئيسية كلها use client»: `page.tsx` بقت Server Component ديناميكية بتجيب `managed_apps` من Supabase على السيرفر وتسلّمها props لكون عميل جديد `HomeClient` — مفيش fetch من المتصفح خالص، الكوبي والأرقام (167+/16) والأقسام كلها في الـ HTML الأول (LCP/SEO)، + metadata مخصصة للرئيسية بكوبي الـ moat |
+ | **v9** 🧭 صقافة الثقة (E-E-A-T) + تنشيف المحتوى | 20 سب 2026 | صفحة `/methodology` كاملة (مصادر الأسعار، قواعد أمان الرادار 30%—300% والمراجعة اليدوية، معايير النجوم المعلنة، حدود الدقة بصراحة) + رابطها في الفوتر والـ sitemap — وتنشيف 2025→2026: مقال «أفضل تطبيقات مصر» اتنقّح لعام 2026 مع حقل `updatedAt` جديد بيظهر في صفحة المقال، وروابط داخلية لرادار الأسعار وحاسبة الاشتراكات في المقالات الثلاثة، وتاريخ مراجعة الخصوصية/الشروط بقى سبتمبر 2026 |
+ | **v8** 📡 تنبيهات الرادار (التيليجرام) + تصحيحات التصميم | 18 سب 2026 | استرجاع v3 من العزلة + بث تيليجرام فوري ببديل أوفر من نفس النوع + كارت قناة — وتصحيحات تصميم: خط Almarai للعناوين العربية (Playfair مفيهوش عربي وكان نازل بخط النظام)، خلفية hero مملوكة بدون Unsplash، إحصاءات حية بدل «163+» الثابتة، كوبي الـ hero بقى بيبيع موقعنا («كل اشتراكاتك بسعرها الحقيقي») — ووثيقة `docs/PROJECT-AUDIT.md` |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index e2584ea..121253a 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,7 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
+-1. **الـ hero يشتغل بجد**: نص البحث في أول الشاشة (مكون جاهز `search-bar.tsx` ومو مدموج) + عدّاد «X سعر مرصود النهارده» بدل بطاقة ثانية
++1. ~~**الـ hero يشتغل بجد**: نص البحث في أول الشاشة (مكون جاهز `search-bar.tsx` ومو مدموج)~~ → ✅ **البحث اتدمج في v11** بمكوّن `HeroSearch` (اقتراحات حية بـ 8 نتايج + Enter على /apps/[slug] أو /apps?q= + أسهم/ECS + شرائح رائجة من الداتا) و`/apps` بقى يستقبل `?q=` SSR. ⏳ المتبقي من البند: عدّاد «X سعر مرصود النهارده» (محتاج query كونت من الرادار — للفة الجاية).
+ 2. **سكشن «الأفضل في بلدك»** على الهوم: بطاقات الفئات الـ 16 اللي بتوصل لـ 48 صفحة /best — جسر الماكينة الجديدة
+ 3. ~~**⚠️ الرئيسية كلها «use client»**: بتعمل fetch لـ Supabase من المتصفح (ومفتوحة لـ LCP/SEO). النقل لـ SSR shell عند أول تحسين أداء (مع Next 15)~~ → ✅ **اتحلّت في v10**: الصفحة بقت Server Component بتجيب managed_apps من السيرفر، والكلاينت بقى `HomeClient` بيستلمها props — مفيش أي fetch من المتصفح (20 سب 2026).
+ 4. صورة OG ديناميكية للصفحات (موجود `/api/og` — يربط)
+diff --git a/src/app/apps/page.tsx b/src/app/apps/page.tsx
+index 78f3039..447a183 100644
+--- a/src/app/apps/page.tsx
++++ b/src/app/apps/page.tsx
+@@ -5,7 +5,7 @@ import { AppItem } from "@/lib/types";
+ 
+ export const revalidate = 0;
+ 
+-export default async function AppsPage() {
++export default async function AppsPage({ searchParams }: { searchParams: { q?: string } }) {
+   const supabase = createClient();
+ 
+   const { data: dbApps } = await supabase
+@@ -52,8 +52,8 @@ export default async function AppsPage() {
+           </p>
+         </div>
+ 
+-        {/* Apps Directory */}
+-        <AppsDirectory apps={allApps} />
++        {/* Apps Directory — ?q= بيجهز البحث من الـ Hero */}
++        <AppsDirectory apps={allApps} initialQuery={typeof searchParams.q === "string" ? searchParams.q : ""} />
+       </div>
+     </div>
+   );
+diff --git a/src/components/apps-directory.tsx b/src/components/apps-directory.tsx
+index 95c9082..1467747 100644
+--- a/src/components/apps-directory.tsx
++++ b/src/components/apps-directory.tsx
+@@ -6,8 +6,8 @@ import { groupAppsBySubcategory, subcategoryOf } from "@/data/subcategories";
+ import { AppItem, CountryCode, AppCategory } from "@/lib/types";
+ import { categoryLabels, countryLabels, categoryIcons } from "@/lib/constants";
+ 
+-export function AppsDirectory({ apps }: { apps: AppItem[] }) {
+-  const [query, setQuery] = useState("");
++export function AppsDirectory({ apps, initialQuery = "" }: { apps: AppItem[]; initialQuery?: string }) {
++  const [query, setQuery] = useState(initialQuery);
+   const [country, setCountry] = useState<CountryCode | "all">("all");
+   const [viewMode, setViewMode] = useState<"categories" | "all">("categories");
+ 
+diff --git a/src/components/hero-search.tsx b/src/components/hero-search.tsx
+new file mode 100644
+index 0000000..0da345d
+--- /dev/null
++++ b/src/components/hero-search.tsx
+@@ -0,0 +1,163 @@
++"use client";
++
++import { useEffect, useMemo, useRef, useState } from "react";
++import Link from "next/link";
++import { useRouter } from "next/navigation";
++import { AppItem } from "@/lib/types";
++import { categoryLabels } from "@/lib/constants";
++import { useLanguage } from "@/contexts/language-context";
++
++// بحث تفاعلي في الـ Hero: اقتراحات حية + Enter يوديك /apps?q=... أو صفحة التطبيق مباشرة
++export function HeroSearch({ apps }: { apps: AppItem[] }) {
++  const { lang } = useLanguage();
++  const router = useRouter();
++  const [q, setQ] = useState("");
++  const [open, setOpen] = useState(false);
++  const [hi, setHi] = useState(-1);
++  const boxRef = useRef<HTMLDivElement>(null);
++
++  const ql = q.trim().toLowerCase();
++
++  const results = useMemo(() => {
++    if (!ql) return [];
++    return apps
++      .filter(
++        (a) =>
++          a.name.toLowerCase().includes(ql) ||
++          a.shortDescription.toLowerCase().includes(ql) ||
++          a.tags.join(" ").toLowerCase().includes(ql)
++      )
++      .slice(0, 8);
++  }, [apps, ql]);
++
++  // قفل القايمة لما تضغط بره
++  useEffect(() => {
++    function onDocClick(e: MouseEvent) {
++      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
++    }
++    document.addEventListener("click", onDocClick);
++    return () => document.removeEventListener("click", onDocClick);
++  }, []);
++
++  function go() {
++    if (hi >= 0 && results[hi]) {
++      router.push(`/apps/${results[hi].slug}`);
++      return;
++    }
++    if (ql) router.push(`/apps?q=${encodeURIComponent(q.trim())}`);
++    else router.push("/apps");
++  }
++
++  function onKeyDown(e: React.KeyboardEvent) {
++    if (e.key === "Enter") {
++      e.preventDefault();
++      go();
++    } else if (e.key === "ArrowDown") {
++      e.preventDefault();
++      setHi((h) => Math.min(h + 1, results.length - 1));
++      setOpen(true);
++    } else if (e.key === "ArrowUp") {
++      e.preventDefault();
++      setHi((h) => Math.max(h - 1, -1));
++    } else if (e.key === "Escape") {
++      setOpen(false);
++    }
++  }
++
++  // شرائح الرائج — أسماء حقيقية من الداتا نفسها (مفيش ترجمة ملفوظة)
++  const trendingSlugs = ["netflix", "spotify", "shahid", "talabat"];
++  const trending = trendingSlugs
++    .map((slug) => apps.find((a) => a.slug === slug))
++    .filter((a): a is AppItem => Boolean(a));
++
++  const placeholder =
++    lang === "ar"
++      ? "دوّر على تطبيق أو اشتراك… (مثلًا: نتفليكس، سبوتيفاي، شاهد)"
++      : "Search an app or subscription… (e.g. Netflix, Spotify, Shahid)";
++  const searchLabel = lang === "ar" ? "بحث" : "Search";
++  const trendingLabel = lang === "ar" ? "الأكثر رواجًا:" : "Trending:";
++  const emptyText =
++    lang === "ar"
++      ? "مفيش نتائج مطابقة — جرّب اسم تاني"
++      : "No matching results — try another name";
++
++  return (
++    <div ref={boxRef} className="relative w-full max-w-2xl mx-auto text-right">
++      {/* صندوق البحث */}
++      <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-2xl ring-1 ring-black/10">
++        <span className="text-xl" aria-hidden>🔍</span>
++        <input
++          value={q}
++          onChange={(e) => {
++            setQ(e.target.value);
++            setHi(-1);
++            setOpen(true);
++          }}
++          onFocus={() => setOpen(true)}
++          onKeyDown={onKeyDown}
++          placeholder={placeholder}
++          autoComplete="off"
++          aria-label={lang === "ar" ? "بحث في التطبيقات" : "Search apps"}
++          className="w-full bg-transparent py-3 text-base sm:text-lg text-brand-900 placeholder:text-charcoal-400 focus:outline-none"
++        />
++        <button
++          onClick={go}
++          className="shrink-0 bg-accent-400 text-brand-900 px-6 py-3 rounded-full font-bold hover:bg-accent-500 transition"
++        >
++          {searchLabel}
++        </button>
++      </div>
++
++      {/* الاقتراحات الحية */}
++      {open && ql.length > 0 && (
++        <div
++          role="listbox"
++          className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-cream-200 overflow-hidden z-30"
++        >
++          {results.map((a, i) => (
++            <Link
++              key={a.id}
++              href={`/apps/${a.slug}`}
++              role="option"
++              aria-selected={hi === i}
++              onMouseEnter={() => setHi(i)}
++              className={`flex items-center gap-3 px-5 py-3 transition ${
++                hi === i ? "bg-cream-100" : "bg-white"
++              }`}
++            >
++              <span className="text-2xl" aria-hidden>{a.icon}</span>
++              <span className="flex-1 min-w-0">
++                <span className="block font-bold text-brand-900 truncate">{a.name}</span>
++                <span className="block text-xs text-charcoal-500 truncate">
++                  {categoryLabels[a.category] ?? a.category}
++                </span>
++              </span>
++              <span className="text-sm text-amber-600 font-bold shrink-0">
++                ★ {a.rating.toFixed(1)}
++              </span>
++            </Link>
++          ))}
++          {results.length === 0 && (
++            <p className="px-5 py-4 text-sm text-charcoal-500">{emptyText}</p>
++          )}
++        </div>
++      )}
++
++      {/* شرائح الرائج */}
++      {trending.length > 0 && (
++        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
++          <span className="text-white/70 ml-1">{trendingLabel}</span>
++          {trending.map((a) => (
++            <Link
++              key={a.id}
++              href={`/apps/${a.slug}`}
++              className="rounded-full bg-white/10 backdrop-blur border border-white/20 text-white px-4 py-1.5 hover:bg-white/20 transition"
++            >
++              {a.icon} {a.name}
++            </Link>
++          ))}
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/src/components/home-client.tsx b/src/components/home-client.tsx
+index 1233fe6..9179c8d 100644
+--- a/src/components/home-client.tsx
++++ b/src/components/home-client.tsx
+@@ -6,6 +6,7 @@ import { apps as staticApps } from "@/data/apps";
+ import { deals } from "@/data/deals";
+ import { getActiveDeals } from "@/lib/deals";
+ import { NewsletterForm } from "@/components/newsletter-form";
++import { HeroSearch } from "@/components/hero-search";
+ import { AppItem } from "@/lib/types";
+ import { useLanguage } from "@/contexts/language-context";
+ 
+@@ -45,12 +46,17 @@ export function HomeClient({ initialDbApps }: { initialDbApps: AppItem[] }) {
+       <span className="text-accent-400 italic block">{t("hero_title_2")}</span>
+     </h1>
+ 
+-    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-12 leading-relaxed text-shadow-soft animate-slide-up px-4">
++    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 leading-relaxed text-shadow-soft animate-slide-up px-4">
+       {t("hero_description")}
+     </p>
+ 
++    {/* بحث الـ Hero التفاعلي */}
++    <div className="animate-slide-up px-4 mb-8 w-full">
++      <HeroSearch apps={allApps} />
++    </div>
++
+     {/* Buttons */}
+-    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up px-4 mb-16">
++    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up px-4 mb-12">
+       <Link 
+         href="/apps" 
+         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent-400 text-brand-900 px-8 py-4 rounded-full font-bold hover:bg-accent-500 transition shadow-xl"
+-- 
+2.47.3
+

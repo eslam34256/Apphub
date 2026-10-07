@@ -1,0 +1,117 @@
+From a4ca9615359fe91a31e003d0154cec337a738747 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Wed, 23 Sep 2026 19:54:17 +0000
+Subject: [PATCH] =?UTF-8?q?v34:=20=F0=9F=8C=90=20canonical=20=D9=85=D9=86?=
+ =?UTF-8?q?=20=D8=A7=D9=84=D9=80=20env=20=D9=81=D9=82=D8=B7=20+=20=D8=AE?=
+ =?UTF-8?q?=D8=B7=D8=A9=20=D8=AA=D8=B3=D9=88=D9=8A=D9=82=2090=20=D9=8A?=
+ =?UTF-8?q?=D9=88=D9=85?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- buildMeta بيلعب عليه PATH فقط ويكتب canonical من NEXT_PUBLIC_SITE_URL (نفس الكود يشتغل على vercel subdomain أو دومينك المخصص)
+- MARKETING-90DAYS.md: ٣ مراحل بميزانية صفرية + مقاييس + خطايا ممنوعة
+---
+ docs/MARKETING-90DAYS.md | 59 ++++++++++++++++++++++++++++++++++++++++
+ src/lib/seo.ts           | 16 ++++++++---
+ 2 files changed, 71 insertions(+), 4 deletions(-)
+ create mode 100644 docs/MARKETING-90DAYS.md
+
+diff --git a/docs/MARKETING-90DAYS.md b/docs/MARKETING-90DAYS.md
+new file mode 100644
+index 0000000..bdb8e5c
+--- /dev/null
++++ b/docs/MARKETING-90DAYS.md
+@@ -0,0 +1,59 @@
++# 📣 خطة تسويق AppHub — أول ٩٠ يوم (٣ مراحل | ميزانية صفرية + مسار مدفوع اختياري)
++
++## 🎯 الفلسفة
++**المنتج = التسويق.** عندنا رادارات + مؤشر + تقرير ربع سنوي — والتلاتة بيكتبوا محتوى محتاج وقت كتابته وتشاركه:
++- كل زيادة سعر مؤكدة (من المؤشر) = مقال SEO + ريل قصيرة
++- كل تقرير ربعي = مادة PR جاهزة للصحافة العربية
++- كل بطاقة رادار = صورة قابلة للمشاركة (OG images جاهزة من v13)
++
++---
++
++## المرحلة ١ (الأسبوع ١-٢) — «الانطلاقة المُحكمة» 🟢
++
++### يوم ١-٣ (جاهزية القواعد)
++- [ ] `SETUP-HUB.sql` + الباتشات + `git push` (موقع شغال بلا أخطاء)
++- [ ] **Search Console + Bing**: التحقق بالـ env + submit `sitemap.xml`
++- [ ] URL Inspection ← اطلب إرشفة عن الهوم + ٤ رادارات + `/data`
++- [ ] منشور الانطلاقة على LinkedIn + فيسبوك: «الجايمر عرف يفرق بين الرسمي والسوق؟ رادار يجاوب بالدليل»
++
++### الأسبوع ٢ (أول رصيد بحثي — سلاحنا الحقيقي)
++- [ ] **٣ مقالات SEO/أسبوع** (كلمات تبعنا: «سعر UC رسمي» · «أرخص باقة نت» · «سعر ChatGPT في مصر»)
++- [ ] **٢ ريلز قصيرة (١٥-٣٠ ثانية)**: hook = «الرسمي أرخص من السوق؟» ← الرقم ← CTA «ابحث: apphub»
++- [ ] انشر تقرير Q3 2026 كأول داتا-artifact للنشر العام
++
++## المرحلة ٢ (الأسبوع ٣-٦) — «الروافد المجانية» 🟡
++
++| الروافد | التنفيذ | الهدف |
++|---|---|---|
++| **مجتمع الجايمنج** | ٢٠ جروب FB/TG لببجي وفري فاير في مصر — لما حد يسأل عن سعر الشحن، جاوب بالداتا مش بسبكاتل | ٥٠٠ زائر/أسبوع |
++| **الصحافة العربية** | CC تقريرك لـ ٥-٧ صحفيين (مصراوي · اتش تك · وايت جيت · تك انسايدر) — الـ Press Kit بيديهم اقتباسات جاهزة (v24) | مقال واحد = ١٠ ألف زائر |
++| **Long-tail سيو** | كل باقة/خطة جديدة = صفحة ديناميكية تضاف للـ sitemap تلقائيًا | تضاعف impressions شهريًا |
++| **قناة TG مباشرة** | «رادار AppHub»: منشور واحد/يوم (فكس + رائد الجيوب + خبرة رقمية) | ٢٠٠ مشترك نوعي |
++| **الإحالة (Referral)** | نظام النقاط الموجود: «ادعُ صديق — اكسب points» | حلقة viral طبيعية |
++
++## المرحلة ٣ (الأسبوع ٧-١٢) — «التوسّع المدروس» 🔵
++
++- [ ] **ميزانية اختيارية ٥٠٠-١٠٠٠ج/شهر** — وده بعد التأكد من جودة الوافد العضوي; cost-per-interested-visitor لو أحسن من المنافسة نكثر
++- [ ] **Google Ads بحثي فقط** على كلمات دقيقة («شحن شدات رسمي» · «باقة فودافون 2026») — ده يتضمن نية شراء مش ناي علاقات
++- [ ] **أول عقد B2B** (قيمته في الشهادة مش الأرباح): أي شركة بعتت تعديلات سعر لـ `brand_updates` من v25 يتنشر كقصة نجاح
++- [ ] **Play Store عبر PWABuilder من v32** — سرعة الرمز في متجر رسمي (٢٥$ مرة واحدة) عشان الناس تتخرج «عايزة تثبّتك من المتجر»
++- [ ] **راسلو الـ waitlist بـ interest=data-lead** شخصيًا بعد أول ٥ تسجيلات — وبعد كل جديد
++
++## 📊 مقاييس النجاح عند يوم ٩٠
++| نوع | مستهدف | القياس |
++|---|---|---|
++| Impressions GSC/شهر | ٥٠ ألف | Search Console |
++| زوار/شهر | ٥ آلاف | Vercel/GA4 |
++| طلبات تنفيذ (shop_orders) | ٥٠ طلب | Supabase |
++| leads B2B (data-lead) | ٥ شركات | نفس نظام الـ waitlist |
++| مقال اقتباس صحافة | ١+ | ابحث «AppHub» |
++| مشتركو TG | ٥٠٠ | قناة |
++
++## 🔴 ٣ أخطاء ممنوع تقع فيها
++1. **متصرفش على إعلانات قبل ما الزائر الأول يشوف «واو» للداتا** — الفلوس بتدفع ثانيوم من يومها أول؛ لكن المنتج اللي بيحرقها
++2. **ما تتساهلش في صدق الأرقام أبدًا** — دي ميزتك الوحيدة اللي مش كل حد بيعملها
++3. **ما تفتحش قناة جديدة من غير ما الأولى تدخلها** — تركيز مش انتشار سطحي
++
++---
++
++**بعد يوم ٩٠:** لو المؤشرات مرضية — المرحلة الجاية بقى بنودها: تقرير Q1 ٢٠٢٧ + دومين خاص + إضافة رادار فري فاير + الترجمة الإنجليزية الكاملة للصفحات (جمهور الخليج). الخطة عندها BHAG واحد: تبقى AppHub المصدر اللي الصحفي المصري بيكتبه في أي خبر أسعار رقمية بحلول نهاية ٢٠٢٦.
+diff --git a/src/lib/seo.ts b/src/lib/seo.ts
+index a93fa28..556881a 100644
+--- a/src/lib/seo.ts
++++ b/src/lib/seo.ts
+@@ -1,13 +1,21 @@
+ import type { Metadata } from "next";
++
++/** v34: الدومين بييجي من الـ env — نفس الكود يشتغل على apphub-eight.vercel.app وأي دومين مخصص من غير تعديل ٢٩ ملف */
++const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app").replace(/\/+$/, "");
++
+ type SEOProps = { title: string; description: string; url?: string; image?: string; keywords?: string[] };
+-export function buildMeta({ title, description, url = "https://apphub.eg", image = "https://apphub.eg/og.png", keywords = [] }: SEOProps): Metadata {
++
++export function buildMeta({ title, description, url = "/", image = "/og.png", keywords = [] }: SEOProps): Metadata {
++  const path = url.replace(/^https?:\/\/[^/]+\/?/, "/").replace(/^\/+$/, "") || "";
++  const imgPath = image.replace(/^https?:\/\/[^/]+/, "");
++  const canonical = `${SITE}${path}`;
+   const fullTitle = `${title} | AppHub`;
+   return {
+     title: fullTitle, description,
+     keywords: ["تطبيقات", "عروض", "خصومات", "مصر", "السعودية", ...keywords].join(", "),
+-    openGraph: { title: fullTitle, description, url, siteName: "AppHub", images: [{ url: image, width: 1200, height: 630 }], locale: "ar_EG", type: "website" },
+-    twitter: { card: "summary_large_image", title: fullTitle, description, images: [image] },
+-    alternates: { canonical: url },
++    openGraph: { title: fullTitle, description, url: canonical, siteName: "AppHub", images: [{ url: `${SITE}${imgPath}`, width: 1200, height: 630 }], locale: "ar_EG", type: "website" },
++    twitter: { card: "summary_large_image", title: fullTitle, description, images: [`${SITE}${imgPath}`] },
++    alternates: { canonical },
+     robots: { index: true, follow: true }
+   };
+ }
+-- 
+2.47.3
+

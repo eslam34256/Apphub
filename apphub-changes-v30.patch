@@ -1,0 +1,125 @@
+From a8af7dc564698360fcacc5b9d515849f182a6b82 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Wed, 23 Sep 2026 18:24:44 +0000
+Subject: [PATCH] =?UTF-8?q?v30:=20=F0=9F=94=90=20Google=20OAuth=20=D8=A8?=
+ =?UTF-8?q?=D8=A8=D9=88=D8=A7=D8=A8=D8=A9=20=D8=A2=D9=85=D9=86=D8=A9?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- زرار «متابعة بـ Google» ما بيظهرش إلا لو NEXT_PUBLIC_GOOGLE_AUTH=1 — مفيش تنقّل لصفحة JSON قاسية زي Unsupported provider
+- رسالة عربية مهذّبة لو الـ provider اترفض + خطوات التفعيل الإدارية الكاملة في DEPLOY-CHECKLIST (Google Cloud + Supabase Providers + URL config + Vercel envs)
+- .env.example: موثق
+---
+ .env.example             |  4 ++++
+ docs/BRAND-GUIDE.md      |  1 +
+ docs/DEPLOY-CHECKLIST.md |  8 ++++++++
+ src/app/auth/page.tsx    | 30 +++++++++++++++++++++---------
+ 4 files changed, 34 insertions(+), 9 deletions(-)
+
+diff --git a/.env.example b/.env.example
+index 735bd2a..f419f6c 100644
+--- a/.env.example
++++ b/.env.example
+@@ -12,3 +12,7 @@ CRON_SECRET=your-random-secret-32-chars
+ TELEGRAM_BOT_TOKEN=123456:ABC-your-bot-token-from-botfather
+ TELEGRAM_CHANNEL_ID=@YourChannel
+ NEXT_PUBLIC_TELEGRAM_CHANNEL=YourChannel
++
++# Google OAuth للدخول — 1 بس بعد ما تفعّل Google provider في Supabase
++# (Authentication → Sign In/Providers → Google → Enable + Client ID/Secret من Google Cloud)
++NEXT_PUBLIC_GOOGLE_AUTH=0
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index a81399f..2f58038 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v30** 🔐 Google OAuth آمن-بوابة | ٢٣ سب ٢٠٢٦ | بلاغ المستخدم: زرار جوجل بيرمي `Unsupported provider` كخام JSON — السبب: المزود مش متفعّل في Supabase (خطوات تفعيل إدارية مكتوبة كاملة في DEPLOY-CHECKLIST: Google Cloud + Supabase Providers + URL config + envs). الإصلاح الكودي: زرار جوجل ما بيظهرش إلا لو `NEXT_PUBLIC_GOOGLE_AUTH=1` (قاعدة الثقة: مفيش زرار يوعد بميزة مش شغالة) + رسالة عربية مهذّبة لو حصل خطأ provider |
+ | **v29** 🖱️ تدقيق أزرار شامل + إصلاح SignOut | ٢٣ سب ٢٠٢٦ | بلاغ المستخدم «مبيخرجش» = server action كانت بتنده browser client (فشل صامت) → أُصلح للسيرفر client + feedback مرئي على الزر · الأوديت: ٧٢ ملف TSX مسح أزرار ميتة (١ مرشح → mailto واضح) + زحف ٥٦ لينك (١ ديد /developers → اتصلح لـ /press) + ٦/٦ GET APIs = 200 + ٦/٦ POSTs بـ 400 عربي للمداخل الفاضية + rate limit 429 متحقق. ملف `FUNCTIONS-AUDIT.md` |
+ | **v28** 📊 التقرير الربع سنوي التلقائي | ٢٣ سب ٢٠٢٦ | `/reports` + `/reports/q3-2026`: أول منتج معرفة **يخلف نفسه من الداتا** — ٤ أقسام (مؤشر عام بقيمته وبنوده + جدول فجوة UC رسمي/سوق بخانات محسوبة لكل باك + أرخص جيجا + تثبيث AI) كلها computed من نفس lib اللي بتشغل الرادارات في اللحظة (`buildQuarterlyReport` — صفر أرقام مكتوبة بإيد) · Article JSON-LD بـ safeJsonLd · شروط استخدام داخل المنتج (إشارة إلزامية) · linked من /press + sitemap. منهجية: تقرير جديد ربع سنوي = إضافة دخيلة واحدة في PUBLISHED_REPORTS |
+ | **v27** 🛡️ تدقيق أمان Pre-Launch | 21 سب 2026 | سكان شامل + إصلاح (ليس فحصًا): `safeJsonLd()` ضد XSS في structured data (٤ صفحات) · rate limiter في الذاكرة على ٨ POSTs عامة (٥/دقيقة أوامر — اختبار حي 429 ✓) · `next 14.2.15→14.2.35` (أغلق ٥ فجوات) · الباقيان documented (DoS Image Optimizer خاص self-host — Vercel غير متأثر / postcss build-time). راجع `docs/SECURITY-AUDIT.md` للتفاصيل الكاملة |
+diff --git a/docs/DEPLOY-CHECKLIST.md b/docs/DEPLOY-CHECKLIST.md
+index e89cf76..3924000 100644
+--- a/docs/DEPLOY-CHECKLIST.md
++++ b/docs/DEPLOY-CHECKLIST.md
+@@ -43,6 +43,14 @@
+ ## ⚠️ لو حاجة ظهرت 503
+ معناها ترحيل ناقص — راجع خطوة ① (تشغّلت SETUP-HUB؟) والـ env vars خطوة ②.
+ 
++## 🔐 (اختياري) تفعيل دخول Google — خطوات إدارية بره الكود
++لو عايز زرار «متابعة بـ Google» يشتغل في الإنتاج:
++1. [ ] **Google Cloud Console** (console.cloud.google.com): مشروع جديد → OAuth consent screen (External) → APIs & Services → Credentials → **Create OAuth Client ID (Web)** → في **Authorized redirect URIs** حط: `https://ujtjoedbspspspmuxjee.supabase.co/auth/v1/callback` (نفس مشروعك اللي في الـ URL) → خد الـ Client ID والـ Secret
++2. [ ] **Supabase** → Authentication → **Sign In / Providers** → Google → **Enable** → الصق Client ID + Secret → Save
++3. [ ] **Supabase** → Authentication → **URL Configuration**: Site URL = `https://apphub-eight.vercel.app` و Redirect URLs = `https://apphub-eight.vercel.app/auth/callback` (+ `http://localhost:3000/auth/callback` للتطوير لو حابب)
++4. [ ] **Vercel envs**: `NEXT_PUBLIC_GOOGLE_AUTH=1` + `NEXT_PUBLIC_SITE_URL=https://apphub-eight.vercel.app` → Redeploy
++5. [ ] عاامة: من غير الخطوات دي الزرار بيختفي لوحده (v30) — مفيش خطأ عديم المعنى زي `Unsupported provider`
++
+ ## 🧭 بعد الـ Go-Live مباشرة (باقي الخطة)
+ - v27: التقرير الربع سنوي الأول (الاستخراج تلقائي من السلاسل)
+ - رادار فري فاير (الداتا جاهزة)
+diff --git a/src/app/auth/page.tsx b/src/app/auth/page.tsx
+index 4b4ba63..eac878b 100644
+--- a/src/app/auth/page.tsx
++++ b/src/app/auth/page.tsx
+@@ -6,6 +6,9 @@ import { signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/auth";
+ 
+ type Mode = "login" | "signup";
+ 
++// بيظهر زرار جوجل بس لما المزود متفعّل في Supabase — ممنوع وعد بميزة مش شغالة (v30)
++const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_AUTH === "1";
++
+ export default function AuthPage() {
+   const router = useRouter();
+   const [mode, setMode] = useState<Mode>("login");
+@@ -59,13 +62,20 @@ export default function AuthPage() {
+   }
+ 
+   async function handleGoogle() {
+-    setLoading(true);
+     setError(null);
++    // بوابة آمنة: لو المزود مش متفعّل لسه → مفيش تنقّل أصلًا (v30)
++    if (!GOOGLE_ENABLED) {
++      setError("دخول جوجل مش متفعّل لسه — سجّل بالإيميل دلوقتي وبيمثلوا نفس الحساب.");
++      return;
++    }
++    setLoading(true);
+     try {
+       const { error } = await signInWithGoogle();
+       if (error) throw error;
+     } catch (err: any) {
+-      setError(err.message ?? "حصل خطأ");
++      setError(err.message?.includes("provider")
++        ? "مزود دخول جوجل لسه بيتظبط — جرّب الإيميل"
++        : err.message ?? "حصل خطأ");
+       setLoading(false);
+     }
+   }
+@@ -115,13 +125,15 @@ export default function AuthPage() {
+           {loading ? "جاري..." : mode === "login" ? "دخول" : "تسجيل"}
+         </button>
+ 
+-        <button
+-          disabled={loading}
+-          onClick={handleGoogle}
+-          className="w-full rounded-2xl border px-4 py-3 font-bold disabled:opacity-60"
+-        >
+-          متابعة بـ Google
+-        </button>
++        {GOOGLE_ENABLED && (
++          <button
++            disabled={loading}
++            onClick={handleGoogle}
++            className="w-full rounded-2xl border px-4 py-3 font-bold disabled:opacity-60"
++          >
++            متابعة بـ Google
++          </button>
++        )}
+ 
+         {error && (
+           <p className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-rose-700">
+-- 
+2.47.3
+

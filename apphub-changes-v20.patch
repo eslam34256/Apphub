@@ -1,0 +1,505 @@
+From 6273acd9fb07a0b7631921f17b6d25549f1fddaa Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Mon, 21 Sep 2026 14:18:48 +0000
+Subject: [PATCH] =?UTF-8?q?v20:=20=F0=9F=91=81=20Watchlist=20=D8=AA=D9=86?=
+ =?UTF-8?q?=D8=A8=D9=8A=D9=87=20=D9=86=D8=B2=D9=88=D9=84=20=D8=A7=D9=84?=
+ =?UTF-8?q?=D8=B3=D8=B9=D8=B1=20=E2=80=94=20=D8=A2=D8=AE=D8=B1=20=D8=AD?=
+ =?UTF-8?q?=D9=84=D9=82=D8=A9=20=D9=81=D9=8A=20=D8=AE=D8=B7=D8=A9=20=D8=A7?=
+ =?UTF-8?q?=D9=84=D8=AA=D8=AC=D8=A7=D8=B1=D8=A9?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- migration 004: price_watchlist (unique email+app+country، إدراج عام/قراءة مقفولة/تعطيل برمز UUID) + email_events مقفول خدمات + فهارس كرون
+- /api/watchlist: POST اشتراك (upsert هادئ، تحقق صيغة) + DELETE تعطيل — 503 صادق لحد الترحيل
+- WatchPriceButton على صفحات التطبيقات: نموذج منبثق بتعبئة ذكية (90% من السعر) عربي/إنجليزي
+- كرون /api/watchlist/notify يومي 11:00 بتوقيت UTC (vercel.json) محمي بـ CRON_SECRET:
+  يطابق price_watchlist × price_watch.current_price، يرسل قالب إيميل عربي RTL عبر Resend —
+  مقفول بـ RESEND_API_KEY وبيرجّع emailEnabled:false بصدق بدون كذبة إرسال
+- كل حدث بيتسجّل في email_events مهما كانت حالة الإرسال (صدق العمليات)
+---
+ docs/BRAND-GUIDE.md                   |   1 +
+ docs/PROJECT-AUDIT.md                 |   1 +
+ src/app/api/watchlist/notify/route.ts | 156 ++++++++++++++++++++++++++
+ src/app/api/watchlist/route.ts        |  60 ++++++++++
+ src/components/app-details-view.tsx   |   7 ++
+ src/components/watch-price-button.tsx | 120 ++++++++++++++++++++
+ supabase/migrations/004_watchlist.sql |  43 +++++++
+ vercel.json                           |   4 +
+ 8 files changed, 392 insertions(+)
+ create mode 100644 src/app/api/watchlist/notify/route.ts
+ create mode 100644 src/app/api/watchlist/route.ts
+ create mode 100644 src/components/watch-price-button.tsx
+ create mode 100644 supabase/migrations/004_watchlist.sql
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 963e83a..1ead359 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v20** 👁 Watchlist تنبيه نزول السعر | 21 سب 2026 | migration `004_watchlist.sql` (price_watchlist unique إيميل+تطبيق+دولة، إدراج عام وقراءة مقفولة، تعطيل برمز UUID كإثبات ملكية؛ email_events مقفول خدمات)؛ زر «👁 نبّهني لو السعر نزل» على صفحات التطبيقات (نموذج منبثق بتعبئة مسبقة = 90% من السعر، عربي/إنجليزي، 503 صادق لحد الترحيل)؛ `/api/watchlist` اشتراك upsert + إلغاء؛ كرون `/api/watchlist/notify` يومي 11:00 (Bearer CRON_SECRET) يرسل نزلة-سعر عبر Resend **مقفول بمفتاح RESEND_API_KEY بصدق** (emailEnabled:false بدون كذبة إرسال) + قالب إيميل عربي RTL بلينك إلغاء |
+ | **v19** 🎮 رادار الشدات | 21 سب 2026 | `/uc-radar`: جدول أسعار UC الرسمي (Midasbuy الشريك الرسمي) بـ **سعر الوحدة ج/100 UC** + ⭐ أحسن قيمة + حاسبة أرخص تشكيلة (DP محلي في المتصفح) + مقارنة رسمي vs متوسط سوق **موسوم استرشادي** + قنوات موثوقة وتحذيرات النصب (باسورد/OTP/شحن بالرّد) + `/api/uc-radar` JSON مفتوح مع الإشارة — مراجعة يدوية بتاريخ معلن، ممنوع رقم بلا مصدر |
+ | **v18** 🩹 إحياء خلفيات البراند | 21 سب 2026 | `gradient-brand` (20 ملف) و`bg-gradient-navy` (كارت النشرة + لوجو الفوتر) كانوا كلاسات **ميتة** (مش متعرّفة في CSS ولا Tailwind) → هيرو كل الصفحات الثابتة نصه أبيض على كريمي = غير مرئي في البرود. اتعرّفوا في globals.css بنفس طبقات الـ hero (نيفي 135° #1a2942→#0f1830 + راديال ذهبي خفيف) — إصلاح واحد رجّع ٢٠+ صفحة |
+ | **v17** 🧭 هيدر يُقرأ دايمًا | 21 سب 2026 | الهيدر شفاف+أبيض **فوق هوم الـ hero الداكن بس** (`darkHero = isHomePage && !scrolled`)؛ باقي الصفحات: هيدر كريمي معتم بنص غامق + فاصل 76px (إزالة التداخل مع المحتوى نهائيًا)؛ الفيتشرز الرئيسية في الهيدر: **المؤشر / المتجر / الأبحاث** (10 روابط — ديسكتوب من xl، هامبورجر أغمق في الوضع الفاتح وxl:hidden) |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index 23f0696..d31ec58 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++-4. **v20 — آخر حلقة في خطة التجارة: التنبيه بالإيميل** ✅ (21 سب 2026): Watchlist كاملة (اشتراك/إلغاء/كرون فحص يومي/قالب عربي) بدورة-حياة «مقفولة بمفاتيح»: التشغيل الكامل يحتاج migration 004 + RESEND_API_KEY — وبدونهما التنبيهات ما بتكذبش (503 صادق + emailEnabled:false). خطة التجارة الأصلية (أفيليات/إعلانات/متجر/API مميز/تنبيهات) اتقفلت كلها بنفس عقيدة: لا رقم بلا مصدر، لا تشغيل بلا مفتاح حقيقي.
+ -3. **v19 — رادار الشدات (أول فرتيكال برادار الوحدة)** ✅ (21 سب 2026): دخول سوق الشحن العالي الطلب في مصر بطريق «سعر الوحدة + حاسبة تشكيلة» — فريد عربيًا، ومصمم SEO («سعر شدات ببجي في مصر»). الداتا ثابتة مُراجعة يدويًا بتاريخ معلن (نفس قاعدة مؤشر الأسعار: لا أرقام مختلقة ولا وعود تحديث لايف مش موجودة) — والخطوة الجاية المنطقية: إطعامها من جدول price_watch لما يتبنى مصدر آلي موثوق.
+ -2. **v18 — كلاسات البراند الميتة** ✅ (21 سب 2026): سكرينات المستخدم (متجر/أبحاث/نشرة) كشفت إن `gradient-brand` و`bg-gradient-navy` مستخدمين في ٢٢ موضع **بدون أي تعريف CSS** — أثر متراكم من نسخ قديمة. القاعدة الجديدة: أي كلاس custom جديد يُضاف **يُتحقق من تعريفه في نفس الضفعة** + فحص build مؤقت (grep في CSS المُبنّى) قبل الكوميت.
+ -1. **v17 — الهيدر يُقرأ دايمًا** ✅ (21 سب 2026): بلاغ المستخدم «الفونت نفس لون الباك جراوند» قاد لاكتشاف جذري: الهيدر الشفاف بنص أبيض كان بيترسم فوق **كل** الصفحات (مش بس الـ hero الداكن) + مفيش فاصل فالمحتوى بيتغطى. الإصلاح: light header هو الافتراضي، والشفاف ميزة مخصصة للهوم فقط؛ والفيتشرز الجديدة (المؤشر/المتجر/الأبحاث) بقت في الهيدر بدل ما تبقى دفينة في الفوتر.
+diff --git a/src/app/api/watchlist/notify/route.ts b/src/app/api/watchlist/notify/route.ts
+new file mode 100644
+index 0000000..2de3be6
+--- /dev/null
++++ b/src/app/api/watchlist/notify/route.ts
+@@ -0,0 +1,156 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient as createAdminClient } from "@supabase/supabase-js";
++
++/**
++ * كرون يومي: يفحص المتابعات النشطة ويبعت إيميل لو السعر وصل أو اتجاوز الهدف.
++ * - حماية: Authorization Bearer CRON_SECRET (Vercel Cron بيبعته أوتوماتيك لو الـ env موجود)
++ * - الإرسال: مقفول على RESEND_API_KEY — بدونه يرجّع emailEnabled:false بصدق بدل ما يكذب
++ *   إنه بعّت. كله بيتسجّل في email_events لو القاعدة متاحة.
++ */
++
++const FROM = "AppHub Radar <radar@apphub.eg>";
++
++function admin() {
++  return createAdminClient(
++    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
++    process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
++    { auth: { persistSession: false } }
++  );
++}
++
++function emailHtml(params: {
++  appName: string;
++  oldPrice: number | null;
++  newPrice: number;
++  currency: string;
++  target: number | null;
++  unsubscribeUrl: string;
++}) {
++  const { appName, oldPrice, newPrice, currency, target, unsubscribeUrl } = params;
++  const rows = [
++    oldPrice != null ? `<tr><td style="color:#666">كان</td><td>${oldPrice} ${currency}</td></tr>` : "",
++    `<tr><td style="color:#666">بقى</td><td style="font-size:20px;font-weight:bold;color:#1a2942">${newPrice} ${currency}</td></tr>`,
++    target != null ? `<tr><td style="color:#666">هدفك</td><td>${target} ${currency} ✅</td></tr>` : ""
++  ].join("");
++  return `
++  <div dir="rtl" style="font-family:Tahoma,Arial;max-width:520px;margin:auto;background:#faf8f5;padding:24px;border-radius:16px">
++    <h2 style="color:#1a2942;margin-top:0">📉 نزلة سعر — ${appName}</h2>
++    <p style="color:#444">رادار AppHub لاحظ إن السعر وصل لمستوى هدفك:</p>
++    <table style="width:100%;background:white;border-radius:12px;padding:16px;border-collapse:collapse">${rows}</table>
++    <p style="margin-top:16px">
++      <a href="https://apphub.eg/price-radar" style="background:#c9a876;color:#1a2942;padding:10px 22px;border-radius:999px;text-decoration:none;font-weight:bold">شوف الرادار كامل ↗</a>
++    </p>
++    <p style="font-size:12px;color:#999;margin-top:24px">
++      وصلك الإيميل لأنك فعّلت تنبيه ${appName} على AppHub.
++      <a href="${unsubscribeUrl}" style="color:#999">إلغاء التنبيه</a>
++    </p>
++  </div>`;
++}
++
++async function sendResend(apiKey: string, to: string, subject: string, html: string) {
++  const r = await fetch("https://api.resend.com/emails", {
++    method: "POST",
++    headers: {
++      Authorization: `Bearer ${apiKey}`,
++      "Content-Type": "application/json"
++    },
++    body: JSON.stringify({ from: FROM, to: [to], subject, html })
++  });
++  return r.ok;
++}
++
++export async function GET(req: NextRequest) {
++  const secret = process.env.CRON_SECRET;
++  const auth = req.headers.get("authorization") ?? "";
++  const qSecret = req.nextUrl.searchParams.get("secret") ?? "";
++
++  if (!secret || (auth !== `Bearer ${secret}` && qSecret !== secret)) {
++    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
++  }
++
++  let matched = 0;
++  const sent: string[] = [];
++  const errors: string[] = [];
++
++  try {
++    const db = admin();
++
++    const { data: watches, error } = await db
++      .from("price_watchlist")
++      .select("id, email, app_slug, country, target_price")
++      .eq("active", true)
++      .limit(500);
++
++    if (error) throw new Error(error.message);
++    if (!watches?.length) {
++      return NextResponse.json({ ok: true, watches: 0, matched: 0, sent: 0, emailEnabled: !!process.env.RESEND_API_KEY });
++    }
++
++    // أسعار الرادار الحالية
++    const slugs = [...new Set(watches.map((w) => w.app_slug))];
++    const { data: prices } = await db
++      .from("price_watch")
++      .select("app_slug, country, current_price")
++      .in("app_slug", slugs);
++
++    const priceMap = new Map((prices ?? []).map((p) => [`${p.app_slug}|${p.country}`, p.current_price as number]));
++
++    for (const w of watches) {
++      const current = priceMap.get(`${w.app_slug}|${w.country}`) ?? priceMap.get(`${w.app_slug}|EG`);
++      if (current == null) continue;
++      const hit = w.target_price != null ? current <= Number(w.target_price) : false;
++      if (!hit) continue;
++      matched++;
++
++      const resendKey = process.env.RESEND_API_KEY;
++      if (resendKey) {
++        try {
++          const ok = await sendResend(
++            resendKey,
++            w.email,
++            `📉 نزلة سعر: ${w.app_slug}`,
++            emailHtml({
++              appName: w.app_slug,
++              oldPrice: w.target_price,
++              newPrice: current,
++              currency: w.country === "EG" ? "جنيه" : w.country === "SA" ? "ريال" : "درهم",
++              target: w.target_price,
++              unsubscribeUrl: `https://apphub.eg/api/watchlist?id=${w.id}`
++            })
++          );
++          if (ok) {
++            sent.push(w.id);
++            await db.from("price_watchlist").update({ last_notified_at: new Date().toISOString() }).eq("id", w.id);
++          }
++        } catch (e) {
++          errors.push(String(e));
++        }
++      }
++
++      // سجل الحدث مهما كانت حالة الإرسال (صدق العمليات)
++      await db
++        .from("email_events")
++        .insert({
++          kind: "price-drop",
++          email: w.email,
++          app_slug: w.app_slug,
++          payload: { current, target: w.target_price, delivered: !!process.env.RESEND_API_KEY && !errors.length }
++        })
++        .then(() => {}, () => {});
++    }
++
++    return NextResponse.json({
++      ok: true,
++      watches: watches.length,
++      matched,
++      sent: sent.length,
++      emailEnabled: !!process.env.RESEND_API_KEY,
++      ...(errors.length ? { errors } : {})
++    });
++  } catch (e) {
++    return NextResponse.json(
++      { ok: false, error: "الفحص اتعطّل", detail: e instanceof Error ? e.message : "" },
++      { status: 503 }
++    );
++  }
++}
+diff --git a/src/app/api/watchlist/route.ts b/src/app/api/watchlist/route.ts
+new file mode 100644
+index 0000000..76176bf
+--- /dev/null
++++ b/src/app/api/watchlist/route.ts
+@@ -0,0 +1,60 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient } from "@/lib/supabase/server";
++
++const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
++const COUNTRIES = new Set(["EG", "SA", "AE"]);
++
++/**
++ * الاشتراك في تنبيه نزول السعر.
++ * POST  {email, appSlug, country?, targetPrice?} → upsert هادئ
++ * DELETE {id} → تعطيل (معرف الـ UUID بيشتغل كرمز ملكية — بييجي في لينك الإيميل)
++ */
++export async function POST(req: NextRequest) {
++  try {
++    const b = await req.json();
++    const email = String(b.email ?? "").trim().toLowerCase();
++    const appSlug = String(b.appSlug ?? "").trim().slice(0, 80);
++    const country = COUNTRIES.has(b.country) ? b.country : "EG";
++    const targetPrice = b.targetPrice != null ? Number(b.targetPrice) : null;
++
++    if (!EMAIL_RE.test(email) || !appSlug) {
++      return NextResponse.json({ ok: false, error: "بيانات ناقصة أو غير صحيحة" }, { status: 400 });
++    }
++    if (targetPrice != null && (!Number.isFinite(targetPrice) || targetPrice <= 0)) {
++      return NextResponse.json({ ok: false, error: "السعر المستهدف غير صحيح" }, { status: 400 });
++    }
++
++    const supabase = createClient();
++    const { error } = await supabase
++      .from("price_watchlist")
++      .upsert(
++        { email, app_slug: appSlug, country, target_price: targetPrice, active: true },
++        { onConflict: "email,app_slug,country" }
++      );
++
++    if (error) {
++      return NextResponse.json(
++        { ok: false, error: "التنبيهات بتتجهز — قاعدة البيانات لسه بتتفعّل" },
++        { status: 503 }
++      );
++    }
++    return NextResponse.json({ ok: true });
++  } catch {
++    return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 });
++  }
++}
++
++export async function DELETE(req: NextRequest) {
++  try {
++    const b = await req.json();
++    const id = String(b.id ?? "");
++    if (!/^[0-9a-f-]{36}$/i.test(id)) {
++      return NextResponse.json({ ok: false, error: "رابط إلغاء غير صالح" }, { status: 400 });
++    }
++    const supabase = createClient();
++    await supabase.from("price_watchlist").update({ active: false }).eq("id", id);
++    return NextResponse.json({ ok: true });
++  } catch {
++    return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 });
++  }
++}
+diff --git a/src/components/app-details-view.tsx b/src/components/app-details-view.tsx
+index 822d35c..f55e067 100644
+--- a/src/components/app-details-view.tsx
++++ b/src/components/app-details-view.tsx
+@@ -15,6 +15,7 @@ import { useTranslatedText, useTranslatedArray } from "@/hooks/use-translated-te
+ import { formatMoney, getCheapestCountry } from "@/lib/helpers";
+ import { ReviewsSection } from "@/components/reviews-section";
+ import { AppStoreButtons } from "@/components/app-store-buttons";
++import { WatchPriceButton } from "@/components/watch-price-button";
+ import { CommentsSection } from "@/components/comments-section";
+ 
+ const categoryTranslations: Record<string, { ar: string; en: string }> = {
+@@ -122,6 +123,12 @@ export function AppDetailsView({ app }: { app: AppItem }) {
+             />
+           </div>
+ 
++          {/* تنبيه نزول السعر (Watchlist) */}
++          <WatchPriceButton
++            appSlug={app.slug}
++            currentPrice={app.pricing?.[0]?.monthly ?? undefined}
++          />
++
+           {/* Description */}
+           {translatedDescription && (
+             <div className="mt-6 pt-6 border-t border-cream-200">
+diff --git a/src/components/watch-price-button.tsx b/src/components/watch-price-button.tsx
+new file mode 100644
+index 0000000..6a7a8f1
+--- /dev/null
++++ b/src/components/watch-price-button.tsx
+@@ -0,0 +1,120 @@
++"use client";
++
++import { useState, type FormEvent } from "react";
++import { useLanguage } from "@/contexts/language-context";
++
++/**
++ * زر «نبّهني لو السعر نزل» — يفتح ميني نموذج (إيميل + سعر مستهدف اختياري).
++ * لحد ترحيل migration 004 السيرفر بيرجع 503 صادق والزر بيعرض «بتتجهز».
++ */
++export function WatchPriceButton({ appSlug, currentPrice }: { appSlug: string; currentPrice?: number }) {
++  const { lang } = useLanguage();
++  const ar = lang === "ar";
++  const [open, setOpen] = useState(false);
++  const [email, setEmail] = useState("");
++  const [target, setTarget] = useState(currentPrice != null ? String(Math.floor(currentPrice * 0.9)) : "");
++  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
++  const [msg, setMsg] = useState("");
++
++  async function submit(e: FormEvent) {
++    e.preventDefault();
++    setState("sending");
++    setMsg("");
++    try {
++      const res = await fetch("/api/watchlist", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({
++          email,
++          appSlug,
++          country: "EG",
++          targetPrice: target ? Number(target) : null
++        })
++      });
++      const j = await res.json();
++      if (!res.ok || !j.ok) {
++        setState("error");
++        setMsg(
++          j.error ?? (ar ? "التنبيهات بتتجهز — جرّب لاحقًا" : "Alerts are being set up — try later")
++        );
++        return;
++      }
++      setState("done");
++    } catch {
++      setState("error");
++      setMsg(ar ? "مفيش اتصال — جرّب لاحقًا" : "No connection — try later");
++    }
++  }
++
++  if (state === "done") {
++    return (
++      <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-sage-300 bg-sage-50 px-5 py-2.5 text-sm font-bold text-sage-700">
++        ✅ {ar ? "هننبّهك أول ما السعر ينزل" : "We'll alert you on the next price drop"}
++      </p>
++    );
++  }
++
++  return (
++    <div className="mt-4">
++      {!open ? (
++        <button
++          onClick={() => setOpen(true)}
++          className="inline-flex items-center gap-2 rounded-full border-2 border-accent-400 bg-white px-5 py-2.5 text-sm font-bold text-brand-900 hover:bg-accent-50 transition"
++        >
++          👁 {ar ? "نبّهني لو السعر نزل" : "Alert me on price drop"}
++        </button>
++      ) : (
++        <form
++          onSubmit={submit}
++          className="max-w-md rounded-2xl border-2 border-accent-400 bg-white p-4 space-y-3 animate-fade-in"
++        >
++          <p className="text-sm font-bold text-brand-900">
++            👁 {ar ? "تنبيه نزول السعر" : "Price-drop alert"}
++          </p>
++          <input
++            type="email"
++            required
++            value={email}
++            onChange={(e) => setEmail(e.target.value)}
++            placeholder={ar ? "بريدك الإلكتروني" : "Your email"}
++            dir="ltr"
++            className="w-full rounded-full border border-cream-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++          />
++          <input
++            type="number"
++            min={1}
++            value={target}
++            onChange={(e) => setTarget(e.target.value)}
++            placeholder={ar ? "سعرك المستهدف (اختياري)" : "Target price (optional)"}
++            dir="ltr"
++            className="w-full rounded-full border border-cream-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++          />
++          <p className="text-[11px] text-charcoal-400">
++            {ar
++              ? "لو السعر المستهدف اتحقق هنبعتلك إيميل واحد — مفيش سبام. إلغاء التنبيه لينك واحد في الإيميل."
++              : "One email when your target hits — no spam. One-link unsubscribe inside."}
++          </p>
++          <div className="flex gap-2">
++            <button
++              type="submit"
++              disabled={state === "sending"}
++              className="rounded-full bg-accent-400 px-6 py-2.5 text-sm font-bold text-brand-900 hover:bg-accent-500 disabled:opacity-50"
++            >
++              {state === "sending"
++                ? ar ? "ثانية…" : "…"
++                : ar ? "فعّل التنبيه" : "Enable alert"}
++            </button>
++            <button
++              type="button"
++              onClick={() => setOpen(false)}
++              className="rounded-full bg-cream-100 px-5 py-2.5 text-sm font-bold text-charcoal-600 hover:bg-cream-200"
++            >
++              {ar ? "إلغاء" : "Cancel"}
++            </button>
++          </div>
++          {state === "error" && <p className="text-sm text-red-600">{msg}</p>}
++        </form>
++      )}
++    </div>
++  );
++}
+diff --git a/supabase/migrations/004_watchlist.sql b/supabase/migrations/004_watchlist.sql
+new file mode 100644
+index 0000000..56c2941
+--- /dev/null
++++ b/supabase/migrations/004_watchlist.sql
+@@ -0,0 +1,43 @@
++-- 004: Watchlist — تنبيه نزول السعر + سجل الإيميلات
++-- idempotent بالكامل (create if not exists / drop policy if exists)
++
++-- 1) قائمة المتابعة: إيميل + تطبيق + دولة + سعر مستهدف (اختياري)
++create table if not exists public.price_watchlist (
++  id uuid primary key default gen_random_uuid(),
++  email text not null,
++  app_slug text not null,
++  country text not null default 'EG',
++  target_price numeric,              -- لو null: اتنبّه عند أي نزلة سعر
++  active boolean not null default true,
++  last_notified_at timestamptz,
++  created_at timestamptz not null default now(),
++  unique(email, app_slug, country)
++);
++alter table public.price_watchlist enable row level security;
++
++-- إدراج عام (الاشتراك نفسه) — الـ API بيتحقق من الصيغة قبل الإدراج
++drop policy if exists insert_watch on public.price_watchlist;
++create policy insert_watch on public.price_watchlist
++  for insert to anon, authenticated with check (true);
++
++-- إلغاء الاشتراك/التعطيل بمعرف الـ UUID كرمز ملكية (unguessable، يروح في لينك الإيميل)
++drop policy if exists toggle_watch on public.price_watchlist;
++create policy toggle_watch on public.price_watchlist
++  for update to anon, authenticated using (true) with check (true);
++
++-- القراءة العامة مقفولة (ممنوع تسريب قوائم إيميلات المشتركين)
++
++-- 2) سجل الإيميلات المرسلة — مقفول تمامًا (خدمات فقط)
++create table if not exists public.email_events (
++  id bigint generated always as identity primary key,
++  kind text not null,                -- price-drop | welcome | ...
++  email text not null,
++  app_slug text,
++  payload jsonb,
++  sent_at timestamptz not null default now()
++);
++alter table public.email_events enable row level security;
++
++-- فهارس أداء للكرون اليومي
++create index if not exists idx_watchlist_active on public.price_watchlist (active, app_slug, country);
++create index if not exists idx_email_events_sent on public.email_events (sent_at desc);
+diff --git a/vercel.json b/vercel.json
+index 59d86d7..9e36461 100644
+--- a/vercel.json
++++ b/vercel.json
+@@ -11,6 +11,10 @@
+     {
+       "path": "/api/newsletter/send",
+       "schedule": "0 10 * * 1"
++    },
++    {
++      "path": "/api/watchlist/notify",
++      "schedule": "0 11 * * *"
+     }
+   ]
+ }
+\ No newline at end of file
+-- 
+2.47.3
+

@@ -1,0 +1,501 @@
+From 0052ebe39b1ed35dd53613d39b5778a966d922a0 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Tue, 22 Sep 2026 18:23:30 +0000
+Subject: [PATCH] =?UTF-8?q?v24:=20=F0=9F=93=B0=20Press=20Kit=20+=20=D8=AA?=
+ =?UTF-8?q?=D8=B1=D9=82=D9=8A=D8=A9=20B2B=20=E2=80=94=20=D9=88=D8=A7=D8=AC?=
+ =?UTF-8?q?=D9=87=D8=A9=20=D8=B4=D8=B1=D9=83=D8=A9=20=D8=A7=D9=84=D8=A8?=
+ =?UTF-8?q?=D9=8A=D8=A7=D9=86=D8=A7=D8=AA?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- /press: ٦ أرقام جاهزة للاقتباس + ٤ اقتباسات كوبي-باست بأرقام حقيقية + قنوات API المفتوحة + تواصل صحفي
+- /api/reports/index.csv: أول منتج B2B ملموس يُوزَّع مجانًا —CSV من سلسلة المؤشر بترخيص الإشارة (content-type مضبوط)
+- /data: بطاقة جرّب المنتج (تحميل + رابط /press) + فورم اطلب عرضك (WaitlistForm interest=data-lead)
+- INVESTMENT-THESIS.md: مذكرة الفجوات الاستراتيجية (٤ فجوات + توصية A «نيلسن الاقتصاد الرقمي»)
+- فوتر شركة + sitemap + ترجمة nav_press عربي/إنجليزي
+---
+ docs/BRAND-GUIDE.md                    |   1 +
+ docs/INVESTMENT-THESIS.md              |  71 ++++++++++++
+ docs/PROJECT-AUDIT.md                  |   1 +
+ src/app/api/reports/index.csv/route.ts |  56 ++++++++++
+ src/app/data/page.tsx                  |  36 +++++++
+ src/app/press/page.tsx                 | 144 +++++++++++++++++++++++++
+ src/app/sitemap.ts                     |   1 +
+ src/components/footer.tsx              |   5 +
+ src/components/press-quote-card.tsx    |  37 +++++++
+ src/lib/translations.ts                |   2 +
+ 10 files changed, 354 insertions(+)
+ create mode 100644 docs/INVESTMENT-THESIS.md
+ create mode 100644 src/app/api/reports/index.csv/route.ts
+ create mode 100644 src/app/press/page.tsx
+ create mode 100644 src/components/press-quote-card.tsx
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index afccf57..78e198c 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v24** 📰 Press Kit + ترقية B2B | 21 سب 2026 | `/press`: هوية المصدر (٦ أرقام جاهزة للاقتباس)، عينة تقرير قابلة للتحميل (**`/api/reports/index.csv` — CSV حقيقي من سلسلة المؤشر بترخيص الإشارة**)، ٤ اقتباسات جاهزة كوبي-باست بأرقام حقيقية (٤١٩٫٩٩ ج للـ ٦٦٠ UC، ٣٫١٨ ج/جيجا، $4.99 أرخص AI)، قنوات API المفتوحة، وتواصل press@apphub.eg. `/data`: بطاقة «جرّب المنتج» بتحميل العينة + فورم «اطلب عرضك» (WaitlistForm interest=data-lead — leads في الجدول نفسه). فوتر + sitemap + ترجمة nav_press |
+ | **v23** 📡 مركز الرادارات | 21 سب 2026 | `/price-radar` بقى **هاب موحّد**: توبات كلاينت (اشتراكات 💳 · شدات 🎮 · باقات 📶 · AI 🤖) فوق محتوى مستخرج لمكونات `components/radars/*-content.tsx` — تبديل محلي بلا fetch، والصفحات المستقلة `/uc-radar /telecom-radar /ai-radar` **فضلت شغالة** بهيروها ورابط رجع للمركز (SEO ومشاركة مباشرة محفوظة)؛ رادار الاشتراكات الأصلي محفوظ ١٠٠٪ (فلتر الدول/تيليجرام/المنهجية)؛ سعر الصرف للـ AI بيتجيب في سيرفر المركز نفسه |
+ | **v21** 📶 رادار الباقات | 21 سب 2026 | `/telecom-radar`: 22 باقة موثّقة (هوائي مشترك فودافون×WE×أورنج من مصراوي مايو ٢٠٢٦ + Go Super + فليكس وبريميوم منشور) بمقياس **ج/جيجا** زي سعر اللتر؛ حاسبة «أحسن هوائي لاستخدامك» (أرخص باقة تغطي الاستخدام في كل شبكة جنب بعض)؛ تحذيرات صادقة (زيادات/فليكس=ميجا/عروض الولاء برّه)؛ `/api/telecom-radar` |
+ | **v22** 🤖 رادار اشتراكات AI | 21 سب 2026 | `/ai-radar`: 7 أدوات (ChatGPT/Claude/Gemini/Copilot/Grok/Perplexity/DeepSeek مجاني) بأسعار $ الرسمية متقاطعة من 5 مصادر ٢٠٢٦ + **تحويل للجنيه بسعر صرف حقيقي لايف** (er-api، ومع الفشل يعرض الدولار بس بصدق)؛ الرقم الكبير (أرخص AI: Gemini AI Plus $4.99) + فخ «كلهم مع بعض ≈$100» + أجندة الاختيار الـ 3 قواعد؛ `/api/ai-radar` |
+diff --git a/docs/INVESTMENT-THESIS.md b/docs/INVESTMENT-THESIS.md
+new file mode 100644
+index 0000000..ce0d119
+--- /dev/null
++++ b/docs/INVESTMENT-THESIS.md
+@@ -0,0 +1,71 @@
++# 📈 مذكرة الاستثمار — تحليل الفجوات (Gap Analysis)
++**التاريخ: 21 سبتمبر 2026 · الحالة: مراجعة استراتيجية**
++
++---
++
++## 🎯 السؤال
++«فين **الفجوة** اللي الناس بتدور عليها أو الشركات محتاجاها — ونقدر نكون أول من يملاها، فتبقى فرصة استثمارية حقيقية؟»
++
++المحصلة من البحث: **٤ فجوات مثبتة بالدليل**، واحدة منهم أصل جاهز عندنا فعلًا.
++
++---
++
++## 🔬 الدليل الميداني (المصادر متوثقة)
++
++### ١. التضخم في مصر واقع يومي — و«الاقتصاد الرقمي» مش مُقاس
++- تضخم مصر ٢٠٢٦: **13–14.5%** سنويًا (TradingEconomics، أغسطس ٢٠٢٦).
++- CAPMAS: شريحة **الاتصالات +10.5%** سنويًا (مايو ٢٠٢٦) — بس دي سلال كلية (أكل/سكن)؛ **مفيش أي جهة رسمية بتقيس تضخم الاقتصاد الرقمي** (اشتراكات، شدات، باقات، أدوات AI) بجرعة تفصيلية أو بتاريخ تفصيلي.
++
++### ٢. مقارنات الأسعار موجودة… للمنتجات الفيزيائية فقط
++- yaoota ($2.7M تمويل، ٢٠١٣) + pricena + bkam — **كلهم إلكترونيات ومنتجات**.
++- **مفيش منافس عربي واحد في أسعار الخدمات الرقمية** — اللي إحنا بنرصدها أصلًا بقالة ٧ سنين تاريخ + ٤ رادارات.
++
++### ٣. برامج مراقبة أسعار المنافسين B2B — أجنبي بالكامل وبالدولار والإنجليزي
++- Pricefy: $49–499/شهر · Priceva: $99–499 · Aqute CI: من $2k/شهر.
++- **مفيش ولا واحد عربي**، ومفيش فيهم داتا مصر/الخليج (نتفليكس مصر، فودافون، Midasbuy…).
++- المتاجر الصغيرة في مصر والسعودية مش قادرة تدفع الأجنبية ولا تستخدم الإنجليزية.
++
++### ٤. مفيش «واير كاتر عربي»
++- المراجعات الصادقة المُحكّمة بالعربي (تجربة ← قياس ← توصية ← عمولة معلنة) شبه معدومة — غالبية المحتوى SEO مُعاد أو مدفوع خفية.
++
++---
++
++## 🗺️ الفجوات الأربع — مصنّفة
++
++| الفجوة | حجم الطلب | أصلنا الحالي | جهد الدخول | المخاطر | التقييم |
++|---|---|---|---|---|---|
++| **A. «نيلسن الاقتصاد الرقمي»: بيانات أسعار للشركات** | 🔥🔥🔥 (بنوك/فينتك/اتصالات/استشارات/صحافة/VCs) | 🟢 **موجود فعلًا**: price_history ٧ سنين + مؤشر الأسعار + ٤ رادارات + /data + بنية api_keys جاهزة | صغير (تغليف المنتج) | منخفضة | 🏆 **التوصية الأولى** |
++| **B. «أسعار اليوم» للحياة اليومية (بقالة/أدوية/هايبرات)** | 🔥🔥🔥 ضخم | 🔴 صفر (سكرابن+قانوني+منافسة yaoota) | ضخم | عالية (سجلات أسعار يومية + رمادية قانونية) | ⏳ بعد A |
++| **C. «واير كاتر عربي»: مراجعات صادقة بالفلوس** | 🔥🔥 عالي | 🟡 عندنا كور «الأفضل» بس مش بمراجعات دستورية | متوسط (محتوى) | منخفضة | 🥈 ثانية — محرك ظهور لـ A |
++| **D. SaaS عربي لمراقبة أسعار المنافسين** | 🔥🔥 معتمد على التوعية | 🟡 بنية تحتية جاهزة (رصد + تخزين + API) | كبير (منتج SaaS كامل) | متوسطة (سوق لسه بيتوعى) | 🥉 تالتة |
++
++---
++
++## 🏆 التوصية: الاستثمار في A — الشركة المصدر لبيانات أسعار الاقتصاد الرقمي
++
++### ليه دي فرصة استثمارية حقيقية
++1. **الأصل unreplicable رجعيًا**: الداتا المتجمعة شهريًا مش بتتعوّض — منافس جديد هيبدأ من صفر تاريخ.
++2. **المنتجات جاهزة هندسيًا**: مؤشر الأسعار، الـ API المميز بمفاتيح، /data بباقات، api_usage رصد استخدام — كله اتبنى في v14-v16.
++3. **الناس بتدفع فعلًا في المقابل الأجنبي**: الشركات بتدفع $2k/شهر لـ CI أجنبي مش شايف مصر — فجوة تسعيرية ولغوية مزدوجة.
++4. **التضخم بيخدمنا**: كل زيادة سعر = تريند بحث + حاجة شركات للتفسير — احنا مرجع التفسير.
++
++### خطة التفعيل (٣ خطوات صغيرة، كلها reuses)
++1. **«تقرير التضخم الرقمي الربع سنوي»** — صفحة/تقرير اتلقائي من نفس بيانات price-index (نزل مجاني → مبيعات API Enterprise).
++2. **Press Kit + قائمة بريد B2B** — موقع خبراء، مصدر الاقتباسات الصحفية (زرار "اطلب التقرير" جاهز في /data).
++3. **٢-٣ مراجعات «واير كاتر» شهرية** (C) — بناء المصداقية اللي بتبيع الاشتراكات.
++
++### مؤشرات النجاح (نقيسها كل ربع سنة)
++- عدد مفاتيح API Pro النشطة
++- عدد الاقتباسات الصحفية للمؤشر (روابط عكسية)
++- إيراد الـ API/التقارير الشهري
++- تغطية الرادارات (عدد الخطط المرصودة × دقة التواريخ)
++
++---
++
++## ⏸️ القرارات المؤجلة عن قصد
++- **B (الحياة اليومية)**: سوق ضخم بس محتاج رأس مال حقيقي (سكرابن + قانوني + فريق تسويق) — نرجعله بعد ثيمين ثمار A.
++- **D (مراقبة المنافسين عربي)**: نبنيها كـ premium feature فوق A لو طلبت الشركات نفسها.
++
++---
++
++*«القاعدة الصلبة اللي المشروع اتبنى عليها: لا رقم بلا مصدر، لا تشغيل بلا مفتاح حقيقي» — هي نفسها سند الثقة اللي بيبيع البيانات.*
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index c252943..d165761 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++-7. **v24 — من المحتوى لشركة بيانات: واجهة الصحافة** ✅ (21 سب 2026): قرار المستخدم الاستثمار في فجوة «نيلسن الاقتصاد الرقمي» (مذكرة INVESTMENT-THESIS.md) ترجم لواجهات الثقة: عينة التقرير CSV القابلة للتحميل هي **أول منتج مدفوع ملموس يُوزَّع مجانًا** (freemium صادق)، والاقتباسات الجاهزة تخلي AppHub مصدر صحفة من غير شيك تسويق. القاعدة الجديدة: أي رقم يُعرض للشركات **يجب أن يكون قابلًا للتحميل كأونر** — مش مجرد ادعاء في صفحة.
+ -6. **v23 — المراجعة الملاحية قبل الانتشار** ✅ (21 سب 2026): لما الفرتيكالز زادت، المستخدم طلب تنظيمها قبل ما الناس تتوه — النتيجة: استخراج محتوى الرادارات لمكونات قابلة للتشارك بدل التكرار، ومركز توبات واحد، والحفاظ على الروابط المستقلة للسيو. القاعدة: **كل فرتيكال جديد يضاف محتواه كمكوّن مشترك** والمركز يرثه تلقائيًا — مش نقصّه في صفحة لوحدها.
+ -5. **v21/v22 — استراتيجية الفرتيكالز: رادار الوحدة** ✅ (21 سب 2026): اندماج سؤال المستخدم «إيه أكتر خدمة الناس بتدور عليها» قرر التليكوم + AI (وبعدهم fري فاير في الطابور). القاعدة الصلبة الجديدة لفرتيكال الرادار: **وحدة مقارنة واحدة صادقة** (ج/100 UC، ج/جيجا، $→ج لايف) + جدول واحد كبير بتاريخ مراجعة + حاسبة محلية + API مفتوح بالإشارة — فورمولا واحدة متكررة بدل صفحات متراكبة.
+ -4. **v20 — آخر حلقة في خطة التجارة: التنبيه بالإيميل** ✅ (21 سب 2026): Watchlist كاملة (اشتراك/إلغاء/كرون فحص يومي/قالب عربي) بدورة-حياة «مقفولة بمفاتيح»: التشغيل الكامل يحتاج migration 004 + RESEND_API_KEY — وبدونهما التنبيهات ما بتكذبش (503 صادق + emailEnabled:false). خطة التجارة الأصلية (أفيليات/إعلانات/متجر/API مميز/تنبيهات) اتقفلت كلها بنفس عقيدة: لا رقم بلا مصدر، لا تشغيل بلا مفتاح حقيقي.
+diff --git a/src/app/api/reports/index.csv/route.ts b/src/app/api/reports/index.csv/route.ts
+new file mode 100644
+index 0000000..ce8116d
+--- /dev/null
++++ b/src/app/api/reports/index.csv/route.ts
+@@ -0,0 +1,56 @@
++import { NextResponse } from "next/server";
++import { computePriceIndex } from "@/lib/price-index";
++import { loadPlanSeries } from "@/lib/price-index-data";
++
++// عينة تقرير مؤشر AppHub للأسعار — CSV مجاني للصحافة والباحثين مع الإشارة
++// نفس الحساب اللي بيشغّل /price-index و /api/price-index (مصدر واحد للحقيقة)
++export const revalidate = 3600;
++
++function csvEscape(v: string) {
++  return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
++}
++
++export async function GET() {
++  const { plans, source } = await loadPlanSeries();
++  const result = computePriceIndex(plans);
++
++  const lines: string[] = [
++    "# تقرير مؤشر AppHub للأسعار — عينة مجانية للصحافة والبحث",
++    `# مؤشر AppHub للأسعار | https://apphub.eg/price-index | الإشارة إلزامية عند الاستخدام`,
++    `# مصدر البيانات: ${source === "db" ? "رصد الرادار (قاعدة البيانات)" : "الداتا الثابتة"} | التوليد: ${new Date().toISOString()}`,
++    ""
++  ];
++
++  if (!result) {
++    lines.push("الحالة,collecting — المؤشر لسه بيجمع بيانات مؤكدة");
++  } else {
++    lines.push("# ملخص الرقم");
++    lines.push("الحقل,القيمة");
++    lines.push(`القيمة الحالية,${result.current}`);
++    lines.push(`نسبة التغيير %,${result.changePct}`);
++    lines.push(`تاريخ الأساس,${result.baseDate}`);
++    lines.push(`عدد الخطط,${result.plansCount}`);
++    lines.push(`زادت,${result.upCount}`);
++    lines.push(`نقصت,${result.downCount}`);
++    lines.push(`ثابتة,${result.unchangedCount}`);
++    lines.push("");
++    lines.push("# أكبر التحركات (خطة — نسبة التغيير %)");
++    lines.push("الخطة,التغيير %,من,إلى,العملة");
++    for (const m of result.movers.slice(0, 20)) {
++      lines.push([csvEscape(m.label), m.pct, m.from, m.to, m.currency].join(","));
++    }
++    lines.push("");
++    lines.push("# السلسلة الشهرية (تاريخ — قيمة المؤشر)");
++    lines.push("الشهر,قيمة المؤشر");
++    for (const p of result.series) {
++      lines.push(`${p.date},${p.value}`);
++    }
++  }
++
++  return new NextResponse(lines.join("\n"), {
++    headers: {
++      "Content-Type": "text/csv; charset=utf-8",
++      "Content-Disposition": `attachment; filename="apphub-price-index.csv"`
++    }
++  });
++}
+diff --git a/src/app/data/page.tsx b/src/app/data/page.tsx
+index f7cd72e..f82563a 100644
+--- a/src/app/data/page.tsx
++++ b/src/app/data/page.tsx
+@@ -1,6 +1,7 @@
+ import type { Metadata } from "next";
+ import Link from "next/link";
+ import { buildMeta } from "@/lib/seo";
++import { WaitlistForm } from "@/components/waitlist-form";
+ 
+ export const metadata: Metadata = buildMeta({
+   title: "بيانات وأبحاث — بيع تقارير السوق والـ API المدفوعة",
+@@ -82,6 +83,32 @@ export default function DataPage() {
+         </div>
+       </div>
+ 
++      {/* عينة التقرير — جرّب قبل ما تشتري */}
++      <div className="rounded-3xl border-2 border-accent-300 bg-accent-50 p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5">
++        <div className="text-5xl" aria-hidden>📄</div>
++        <div className="flex-1 text-center sm:text-start space-y-1">
++          <h2 className="heading-elegant text-2xl text-brand-900">جرّب المنتج قبل ما تدفع</h2>
++          <p className="text-sm text-charcoal-600">
++            حمّل عينة مجانية من تقرير مؤشر الأسعار (CSV بصيغة Excel) — نفس جودة البيانات اللي بتوصل لعملاء Enterprise، مع شرط الإشارة للمصدر.
++          </p>
++        </div>
++        <div className="shrink-0 flex flex-col gap-2">
++          <a
++            href="/api/reports/index.csv"
++            download
++            className="rounded-full bg-brand-900 px-7 py-3 text-sm font-bold text-white hover:bg-brand-800 transition text-center"
++          >
++            ⬇️ عينة CSV مجانية
++          </a>
++          <Link
++            href="/press"
++            className="rounded-full bg-white border border-accent-300 px-7 py-3 text-sm font-bold text-brand-900 hover:bg-accent-50 transition text-center"
++          >
++            📰 مركز الصحافة
++          </Link>
++        </div>
++      </div>
++
+       {/* الباقات */}
+       <div>
+         <h2 className="heading-elegant text-3xl text-brand-900 mb-6 text-center">اختر الوصول المناسب</h2>
+@@ -139,6 +166,15 @@ export default function DataPage() {
+           — Enterprise بيقيفل العقد ويخصم تقرير الشهر اتوماتيك من حسابه.
+         </p>
+       </div>
++
++      {/* فورم طلب العرض — بيسجّل في قائمة الانتظار نفسها */}
++      <div className="rounded-3xl bg-white p-8 shadow-soft text-center space-y-4">
++        <h2 className="heading-elegant text-3xl text-brand-900">📋 اطلب عرضك المخصص</h2>
++        <p className="text-charcoal-500 max-w-xl mx-auto">
++          سيب بريدك وفريق المبيعات هيرجعلك بعرض سعر مخصص لحجم استخدامك — من غير أي التزام.
++        </p>
++        <WaitlistForm interest="data-lead" />
++      </div>
+     </div>
+   );
+ }
+diff --git a/src/app/press/page.tsx b/src/app/press/page.tsx
+new file mode 100644
+index 0000000..4b5648a
+--- /dev/null
++++ b/src/app/press/page.tsx
+@@ -0,0 +1,144 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { buildMeta } from "@/lib/seo";
++import { PressQuoteCard } from "@/components/press-quote-card";
++
++export const metadata: Metadata = buildMeta({
++  title: "مركز الصحافة — بيانات واقتباسات جاهزة عن أسعار الاقتصاد الرقمي",
++  description:
++    "Press Kit AppHub: من إحنا كمصدر بيانات، أرقام جاهزة للاقتباس، عينة تقرير CSV قابلة للتحميل، وقنوات البيانات المفتوحة مع الإشارة — للصحافة والباحثين في أسعار الاقتصاد الرقمي بالمنطقة.",
++  url: "https://apphub.eg/press",
++  keywords: ["press kit", "مركز صحافة", "بيانات أسعار", "مؤشر أسعار الاشتراكات"]
++});
++
++const FACTS = [
++  { icon: "📈", num: "مؤشر واحد", label: "أول مؤشر أسعار اشتراكات عربي — أساسه ١٠٠ منذ مايو ٢٠٢٥", href: "/price-index" },
++  { icon: "📡", num: "٤ رادارات", label: "اشتراكات · شدات UC · باقات الإنترنت · اشتراكات AI — بمقياس وحدة واحد صادق لكل", href: "/price-radar" },
++  { icon: "🎮", num: "10 باقات UC", label: "أسعار Midasbuy الرسمية بالجنيه بسعر الوحدة (ج/١٠٠ شدة)", href: "/uc-radar" },
++  { icon: "📶", num: "22 باقة إنترنت", label: "فودافون/أورنج/WE بسعر الجيجا (أرخصها هوائي ٤٠٠: ٣٫١٨ ج)", href: "/telecom-radar" },
++  { icon: "🤖", num: "٧ أدوات AI", label: "أسعار بالدولار + تحويل جنيه بسعر صرف حقيقي لايف", href: "/ai-radar" },
++  { icon: "🗓️", num: "٧ سنين تاريخ", label: "سلسلة أسعار متصلة لأشهر الاشتراكات في مصر والخليج", href: "/methodology" }
++];
++
++const QUOTES = [
++  {
++    quote: "باقة ٦٦٠ شدة ببجي رسميًا بتكلف ٤١٩٫٩٩ جنيه من Midasbuy الشريك الرسمي — يعني ٦٣٫٦٤ جنيه لكل ١٠٠ شدة، أرخص من متوسط السوق الموازي بحوالي ٢٢٪ على نفس الباقة.",
++    source: "رادار شدات AppHub — سبتمبر ٢٠٢٦"
++  },
++  {
++    quote: "أرخص جيجابايت هوائي في مصر حاليًا بتتحاسب بـ ٣٫١٨ جنيه للجيجا في باقة فودافون ٤٠٠ جيجا — بينما نفس الخدمة في أصغر الباقات تصل لـ ٧٫٢٥ جنيه، فارق يفوق الضعفين على نفس الكلمة: «إنترنت».",
++    source: "رادار الباقات AppHub — سبتمبر ٢٠٢٦"
++  },
++  {
++    quote: "أرخص اشتراك AI مدفوع رسمي في ٢٠٢٦ هو Google AI Plus بـ ٤٫٩٩ دولار شهريًا، بينما يقف المعيار السوقي عند ٢٠ دولار لدى ChatGPT Plus وClaude Pro وGemini AI Pro بالتطابق التقريبي.",
++    source: "رادار اشتراكات AI AppHub — مراجعة سبتمبر ٢٠٢٦"
++  },
++  {
++    quote: "مؤشر AppHub للأسعار مبني على ١٦ خطة مرصودة بتاريخها منذ مايو ٢٠٢٥، وما بينشرش رقمًا قبل أول حركة سعر مؤكدة — لأن أصلنا هو الثقة في الرقم، مش ضجيجه.",
++    source: "منهجية مؤشر AppHub للأسعار"
++  }
++];
++
++const APIS = [
++  { name: "مؤشر الأسعار", url: "/api/price-index", desc: "قيمة المؤشر + السلسلة الشهرية + أكبر التحركات" },
++  { name: "رادار الشدات", url: "/api/uc-radar", desc: "١٠ باقات رسمية بسعر الوحدة + قنوات موثوقة" },
++  { name: "رادار الباقات", url: "/api/telecom-radar", desc: "٢٢ باقة بج/جيجا عبر ٣ شبكات" },
++  { name: "اشتراكات AI", url: "/api/ai-radar", desc: "٧ أدوات بالدولار + تحويل جنيه لايف" }
++];
++
++export default function PressPage() {
++  return (
++    <div className="mx-auto max-w-5xl space-y-10 animate-fade-in">
++      {/* Hero */}
++      <div className="rounded-3xl gradient-brand p-8 sm:p-10 text-white text-center">
++        <div className="text-6xl mb-3">📰</div>
++        <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">مركز الصحافة</h1>
++        <p className="text-white/90 max-w-2xl mx-auto">
++          كل اللي تحتاجه تكتب عن أسعار الاقتصاد الرقمي في مصر والمنطقة — أرقام موثقة بتاريخها،
++          اقتباسات جاهزة، وبيانات مفتوحة بشرط الإشارة.
++        </p>
++      </div>
++
++      {/* Fact sheet */}
++      <section className="space-y-4">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🧾 الأرقام الجاهزة</h2>
++        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
++          {FACTS.map((f) => (
++            <Link key={f.num} href={f.href} className="rounded-2xl bg-white p-5 shadow-soft hover:shadow-elegant transition space-y-1">
++              <div className="flex items-center gap-2">
++                <span className="text-2xl" aria-hidden>{f.icon}</span>
++                <span className="font-extrabold text-brand-900">{f.num}</span>
++              </div>
++              <p className="text-xs text-charcoal-500 leading-5">{f.label}</p>
++            </Link>
++          ))}
++        </div>
++      </section>
++
++      {/* عينة التقرير */}
++      <section className="rounded-3xl border-2 border-accent-300 bg-accent-50 p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5">
++        <div className="text-5xl" aria-hidden>📄</div>
++        <div className="flex-1 text-center sm:text-start space-y-1">
++          <h2 className="heading-elegant text-2xl text-brand-900">عينة تقرير مجانية — حمّلها وجرّبها</h2>
++          <p className="text-sm text-charcoal-600">
++            ملف CSV من قلب مؤشر الأسعار: الملخص + أكبر التحركات + السلسلة الشهرية — نفس الداتا بصيغة
++            تنفتح في Excel/Google Sheets مباشرة. مع الإشارة لـ AppHub عند النشر.
++          </p>
++        </div>
++        <a
++          href="/api/reports/index.csv"
++          download
++          className="shrink-0 rounded-full bg-brand-900 px-7 py-3 text-sm font-bold text-white hover:bg-brand-800 transition"
++        >
++          ⬇️ حمّل CSV
++        </a>
++      </section>
++
++      {/* اقتباسات جاهزة */}
++      <section className="space-y-4">
++        <div>
++          <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">💬 اقتباسات جاهزة للنشر</h2>
++          <p className="text-sm text-charcoal-500 mt-1">كوبي-باست مباشرة — منسوبة بالفعل لمصدرها وتاريخ مراجعتها.</p>
++        </div>
++        <div className="grid gap-4 md:grid-cols-2">
++          {QUOTES.map((q, i) => (
++            <PressQuoteCard key={i} quote={q.quote} source={q.source} />
++          ))}
++        </div>
++      </section>
++
++      {/* البيانات المفتوحة */}
++      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-4">
++        <h2 className="heading-elegant text-2xl text-brand-900">📡 قنوات البيانات المفتوحة</h2>
++        <p className="text-sm text-charcoal-500">
++          كل رادار له API JSON عمومي — للصحافة والباحثين مجانًا مع الإشارة. للحجم التجاري: <Link href="/data" className="font-bold text-brand-700 underline">باقات API المميزة</Link>.
++        </p>
++        <ul className="grid gap-2 sm:grid-cols-2">
++          {APIS.map((a) => (
++            <li key={a.url} className="rounded-2xl border border-cream-200 p-4">
++              <div className="flex items-center justify-between gap-2">
++                <span className="font-bold text-brand-900 text-sm">{a.name}</span>
++                <code className="rounded bg-cream-50 px-2 py-0.5 text-[11px]" dir="ltr">{a.url}</code>
++              </div>
++              <p className="text-xs text-charcoal-500 mt-1">{a.desc}</p>
++            </li>
++          ))}
++        </ul>
++      </section>
++
++      {/* تواصل */}
++      <section className="rounded-3xl gradient-brand p-8 text-white text-center space-y-3">
++        <h2 className="heading-elegant text-2xl">📬 للتواصل الصحفي</h2>
++        <p className="text-white/85 text-sm max-w-xl mx-auto">
++          عايز رقم محدد، زاوية قصة، أو تعليق خبير على زيادة أسعار؟ ابعتلنا — الرد خلال يوم عمل.
++        </p>
++        <a
++          href="mailto:press@apphub.eg?subject=استفسار صحفي — AppHub"
++          className="inline-block rounded-full bg-accent-400 px-8 py-3 text-sm font-bold text-brand-900 hover:bg-accent-500 transition"
++        >
++          press@apphub.eg
++        </a>
++      </section>
++    </div>
++  );
++}
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index da6bbb7..23ab354 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -24,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/uc-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+     { url: `${baseUrl}/telecom-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+     { url: `${baseUrl}/ai-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
++    { url: `${baseUrl}/press`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+     { url: `${baseUrl}/calculator`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/best`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+diff --git a/src/components/footer.tsx b/src/components/footer.tsx
+index 9a38ea7..22adacf 100644
+--- a/src/components/footer.tsx
++++ b/src/components/footer.tsx
+@@ -183,6 +183,11 @@ export function Footer() {
+                   {t("footer_careers")}
+                 </Link>
+               </li>
++              <li>
++                <Link href="/press" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("nav_press")}
++                </Link>
++              </li>
+             </ul>
+           </div>
+ 
+diff --git a/src/components/press-quote-card.tsx b/src/components/press-quote-card.tsx
+new file mode 100644
+index 0000000..7343c66
+--- /dev/null
++++ b/src/components/press-quote-card.tsx
+@@ -0,0 +1,37 @@
++"use client";
++
++import { useState } from "react";
++
++/** كارت اقتباس جاهز للصحافة — زر نسخ بلمسة واحدة */
++export function PressQuoteCard({ quote, source }: { quote: string; source: string }) {
++  const [copied, setCopied] = useState(false);
++
++  async function copy() {
++    try {
++      await navigator.clipboard.writeText(`${quote}\n— ${source}`);
++      setCopied(true);
++      setTimeout(() => setCopied(false), 1800);
++    } catch {
++      // النسخ اليدوي متاح تحديدًا
++    }
++  }
++
++  return (
++    <div className="rounded-2xl border border-cream-200 bg-white p-5 space-y-3">
++      <p className="text-sm leading-7 text-charcoal-800">“{quote}”</p>
++      <div className="flex items-center justify-between gap-3">
++        <span className="text-[11px] text-charcoal-400">— {source}</span>
++        <button
++          onClick={copy}
++          className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
++            copied
++              ? "bg-sage-500 text-white"
++              : "bg-cream-100 text-brand-900 hover:bg-cream-200"
++          }`}
++        >
++          {copied ? "اتنسخ ✅" : "انسخ الاقتباس"}
++        </button>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/lib/translations.ts b/src/lib/translations.ts
+index 21781e3..e54e986 100644
+--- a/src/lib/translations.ts
++++ b/src/lib/translations.ts
+@@ -127,6 +127,7 @@ export const translations = {
+     nav_uc: "رادار الشدات",
+     nav_telecom: "رادار الباقات",
+     nav_ai_radar: "رادار AI",
++    nav_press: "الصحافة",
+     nav_disclosure: "الإفصاح والشفافية",
+     nav_shop: "المتجر الرقمي",
+     nav_data: "البيانات والأبحاث",
+@@ -282,6 +283,7 @@ export const translations = {
+     nav_uc: "UC Radar",
+     nav_telecom: "Bundles Radar",
+     nav_ai_radar: "AI Radar",
++    nav_press: "Press",
+     nav_disclosure: "Disclosure & Transparency",
+     nav_shop: "Digital Store",
+     nav_data: "Data & Research",
+-- 
+2.47.3
+

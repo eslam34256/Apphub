@@ -1,0 +1,187 @@
+From dab97645188b1adb7ba8f8f300f20bf5fbd68b7f Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Wed, 23 Sep 2026 19:10:22 +0000
+Subject: [PATCH] =?UTF-8?q?v32:=20=F0=9F=8F=AA=20=D8=AC=D8=B3=D8=B1=20?=
+ =?UTF-8?q?=D8=A7=D9=84=D9=85=D8=AA=D8=A7=D8=AC=D8=B1=20+=20=D8=AD=D8=B6?=
+ =?UTF-8?q?=D9=88=D8=B1=20=D8=A7=D9=84=D8=A8=D8=AD=D8=AB?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- assetlinks.json في /.well-known بـ CT مضبوط: جاهز لاستقبال SHA256 fingerprint من PWABuilder لـ TWA
+- meta التحقق (Google/Bing) عبر envs — 0 عند الفراغ يعني سلوك صحيح
+- STORES-AND-SEARCH.md: Play TWA بـ $٢٥+٢٥ دقيقة user-steps / Apple بقرار documented / سرش Console + باينج user-steps
+- DEPLOY-CHECKLIST + BRAND-GUIDE محدّثين
+---
+ .env.example                       |  4 ++
+ docs/BRAND-GUIDE.md                |  1 +
+ docs/DEPLOY-CHECKLIST.md           |  6 +++
+ docs/STORES-AND-SEARCH.md          | 60 ++++++++++++++++++++++++++++++
+ next.config.mjs                    |  7 ++++
+ public/.well-known/assetlinks.json | 12 ++++++
+ src/app/layout.tsx                 |  4 ++
+ 7 files changed, 94 insertions(+)
+ create mode 100644 docs/STORES-AND-SEARCH.md
+ create mode 100644 public/.well-known/assetlinks.json
+
+diff --git a/.env.example b/.env.example
+index f419f6c..5173724 100644
+--- a/.env.example
++++ b/.env.example
+@@ -16,3 +16,7 @@ NEXT_PUBLIC_TELEGRAM_CHANNEL=YourChannel
+ # Google OAuth للدخول — 1 بس بعد ما تفعّل Google provider في Supabase
+ # (Authentication → Sign In/Providers → Google → Enable + Client ID/Secret من Google Cloud)
+ NEXT_PUBLIC_GOOGLE_AUTH=0
++
++# SEO: Verify your site in Search Console / Bing Webmaster
++NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=
++NEXT_PUBLIC_BING_VERIFICATION=
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index fd4abde..43baa90 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v32** 🏪 تجهيز المتاجر + محركات البحث | ٢٣ سب ٢٠٢٦ | Google Play: جسر متبنى الآن — `public/.well-known/assetlinks.json` (الوصل بين الـ APK والداتا: ضع SHA256 fingerprint من PWABuilder) + محتوى `/.well-known` بـ Content-Type مضبوط في next.config. Apple: قرار موثق بشجاعة (تأجيل لغاية ما تكون فيه ميزات native — Guideline 4.2 بيرفض web-shell بسيط). البحث: meta التحقق للسيراتتنين (Google/Bing) عبر envs `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`/`NEXT_PUBLIC_BING_VERIFICATION` + robots × sitemap × OG schemas كلهم موجودين — والـدليل الكامل في `docs/STORES-AND-SEARCH.md` |
+ | **v31** 📲 PWA حقيقي (weكتاب + أنيق) | ٢٣ سب ٢٠٢٦ | أيقونات PNG حقيقية مولّدة بـ PIL براندية (نيفي متدرج + A ذهبي serif) بمقاسات 192/512/maskable/apple-180 · manifest كامل (id/scope/shortcuts: رادار+عروض · lang=ar dir=rtl · theme الأصلي #1a2942 لا بديله الملف之隔ше الأحمر) · `sw.js` app-shell (صفحات network-first + أوفلاين هوم + statics cache-first + ممنوع كاشتنغ /api نهائيًا) · `PwaRegister` + بطاقة `InstallPrompt` (Android: beforeinstallprompt حقيقي / iOS: تلميح «مشاركة ← إضافة للشاشة الرئيسية» / فلاج dismiss محترم + إخفاء لو standalone أصلًا) — يتثبت تطبيق على الموبايل بدون ستور |
+ | **v30** 🔐 Google OAuth آمن-بوابة | ٢٣ سب ٢٠٢٦ | بلاغ المستخدم: زرار جوجل بيرمي `Unsupported provider` كخام JSON — السبب: المزود مش متفعّل في Supabase (خطوات تفعيل إدارية مكتوبة كاملة في DEPLOY-CHECKLIST: Google Cloud + Supabase Providers + URL config + envs). الإصلاح الكودي: زرار جوجل ما بيظهرش إلا لو `NEXT_PUBLIC_GOOGLE_AUTH=1` (قاعدة الثقة: مفيش زرار يوعد بميزة مش شغالة) + رسالة عربية مهذّبة لو حصل خطأ provider |
+ | **v29** 🖱️ تدقيق أزرار شامل + إصلاح SignOut | ٢٣ سب ٢٠٢٦ | بلاغ المستخدم «مبيخرجش» = server action كانت بتنده browser client (فشل صامت) → أُصلح للسيرفر client + feedback مرئي على الزر · الأوديت: ٧٢ ملف TSX مسح أزرار ميتة (١ مرشح → mailto واضح) + زحف ٥٦ لينك (١ ديد /developers → اتصلح لـ /press) + ٦/٦ GET APIs = 200 + ٦/٦ POSTs بـ 400 عربي للمداخل الفاضية + rate limit 429 متحقق. ملف `FUNCTIONS-AUDIT.md` |
+diff --git a/docs/DEPLOY-CHECKLIST.md b/docs/DEPLOY-CHECKLIST.md
+index 4e05f7c..ee2ea9b 100644
+--- a/docs/DEPLOY-CHECKLIST.md
++++ b/docs/DEPLOY-CHECKLIST.md
+@@ -51,6 +51,12 @@
+ 4. [ ] **Vercel envs**: `NEXT_PUBLIC_GOOGLE_AUTH=1` + `NEXT_PUBLIC_SITE_URL=https://apphub-eight.vercel.app` → Redeploy
+ 5. [ ] عاامة: من غير الخطوات دي الزرار بيختفي لوحده (v30) — مفيش خطأ عديم المعنى زي `Unsupported provider`
+ 
++## ④ بعد النشر مباشرة — ظهور في البحث (٥ دقايق)
++1. [ ] Search Console: verification meta (الـ env `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`) ثم Submit `sitemap.xml`
++2. [ ] Bing Webmaster بنفس env
++3. [ ] URL Inspection ← طلب إرشفة للصفحات الأهم (الهوم + رادارات + مراجعات+نصبات)
++4. [ ] لو عملت دومين خاص (apphub.eg في Vercel Domains): gbتّر env `NEXT_PUBLIC_SITE_URL` عشان canonical tags تبقى برضه إلى الدومين — التفاصيل كلها موجودة في `docs/STORES-AND-SEARCH.md`
++
+ ## 📲 (جاهز من v31) تثبيت كتطبيق — PWA
+ - اندرويد/كروم: بطاقة «نزّل AppHub كتطبيق» تظهر تلقائيًا → «ثبّته دلوقتي» أو من قائمة متصفح «تثبيت التطبيق»
+ - iOS: «مشاركة» ← «إضافة إلى الشاشة الرئيسية» (والبطاقة بتقوله كده لوحده)
+diff --git a/docs/STORES-AND-SEARCH.md b/docs/STORES-AND-SEARCH.md
+new file mode 100644
+index 0000000..0af5eaf
+--- /dev/null
++++ b/docs/STORES-AND-SEARCH.md
+@@ -0,0 +1,60 @@
++# 🏪 الدليل الكامل: المتاجر + الظهور في البحث — v32 (٢٣ سبت ٢٠٢٦)
++
++## 🟢 الجزء الأول: Google Play (الأقرب للتحقيق — بدون كود native)
++
++**السر:** Google Play ليه جسر رسمي يسمى **TWA (Trusted Web Activity)** — تطبيقك مهما لائق فيه PWA، وكل الأساس اتعمل في v31. الأداة المعتمدة هي **PWABuilder** (من Microsoft رسميًا).
++
++### خطواتك (١٥-٣٠ دقيقة بعد الـ live):
++1. **اتنشر (تطبق الباتشات)** → الموقع يكون على https الخاص بك
++2. روح **pwabuilder.com** → الصق رابط موقعك → «Package for Stores»
++   - بيسحب manifest الـ v31 لوحده (الأيقونة/الـ name/الـ shortcuts)
++3. اختار **Android** → حمل ZIP (بيحتوي: AAB + مفتاح توقيع + SHA256 fingerprint)
++4. **استبدل fingerprint** في `public/.well-known/assetlinks.json`:
++   ```json
++   "sha256_cert_fingerprints": ["XX:YY:ZZ..."]
++   ```
++   `(الـ package_name عندنا eg.apphub.twa — نفس اللي في الملف)`
++5. اعمل hot-patch (commit بسيط) والموقع يupdate — PWABuilder عليه statذا الربط
++6. **Google Play Console (play.google.com/console)**: $٢٥ لمرة واحدة → Create app → ارفع الـ AAB → صفحات listing (سكرينات من موقعك) → Publish
++
++✅ **المستخدم اللي ينزّل التطبيق**: يفتح في شاشة كاملة، مش متصفح — وكل حاجة في التطبيق نفس كل اللي شفته في الموقع (نفس الكود).
++
++## 🍏 الجزء الثاني: Apple Store (بصراحة وشجاعة)
++
++| الخيار | حكمنا |
++|---|---|
++| PWABuilder iOS package | محتاج Mac + حساب Apple Developer ($99/سنة) + غالبًا يرفض (Guideline 4.2: ممنوع تطبيقات «web shell فقط» من غير ميزات native) |
++| Capacitor + ميزات native (push الإشعارات مثلا) | ممكن لاحقًا بعد ما native IDs وgranted perms |
++| **الآن: iOS بتلميح PWA** ✅ | جاهز في v31 (بطاقة «مشاركة ← إضافة للشاشة الرئيسية» تلقائي لكل آيفون جنوبي) — و80% من سوقنا أندرويد |
++
++**الحكم:** ادخل Play الآن بتكلفة ٢٥$ دفعة، و خد Apple بعد بلوغ أول ميزات native فعلية (دفعات داخلية / إشعارات).
++
++## 🔍 الجزء الثالث: الظهور في البحث (الشغل تحت v32)
++
++### ✅ العناصر المُكتملة في الكود فعلاً
++- `sitemap.xml` (١٣٧ بتعثر PUBLISHED_REPORTS) ديناميكي — facet كل الصفحات الجديدة تلقائي
++- `robots.txt` — بيسمح السرش وبيحجب /admin /api /auth
++- Open Graph + Twitter cards + Article JSON-LD (v28) + FAQ/Breadcrumb schemas
++- ١٤٥ صفحة ثابتة (ultra fast — Core Web Vitals خفيفة)
++- Content عربي حي كل أسبوع (رادارات/مقالات/blog-posts)
++
++### ⚙️ خطوات إدارية علىيك (٥-١٠ دقيقة)
++1. **Google Search Console** (search.google.com/search-console)
++   - Add property: `https://apphub-eight.vercel.app` (أو دومينك الخاص لو وصلته)
++   - Verify by "meta tag" → خد السطر:
++     `<meta name="google-site-verification" content="XXXX" />`
++   - حط الـ XXXX في **Vercel env**: `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=XXXX` → Redeploy
++2. **Bing Webmaster Tools** — نفس الفكرة بالـ env `NEXT_PUBLIC_BING_VERIFICATION=XXXX` (بيلعبوا Bing + Yahoo + DuckDuckGo في زاما)
++3. في Sift Search Console → Sitemaps → submit: `https://apphub-eight.vercel.app/sitemap.xml`
++4. **URL Inspection** → اطلب Indexing على الـ ٥-٦ أولى صفحات:
++   `/`·`/price-radar`·`/deals`·`/reports/q3-2026`·`/uc-radar`·`/telecom-radar`
++   (احتياطٍ Google ولكن احتياطكم في حدود الحصة اليومية ـ برفش)
++
++### ⚠️ 3 سلوكيات مشكلات معيّرة لاتنساها
++- **دومين مخصص يفتح بشكل أفضل**: كل الـ OG/canonical في الكود بتقول `apphub.eg`، فلو هاتணشر بدومين vercel sub بدون تغيير السيت للـ prop `NEXT_PUBLIC_SITE_URL` → الروبوتات هتلّاقي canonical صفاح في دومين تاني → مع كا瑩ات أسوة بشكل خفيف جدًا. أحسن: روح Vercel → Domains → ضيف apphub.eg بعد ما تشتغل الـ A record عند لوحة التحكم بتاعتك (اYWZ/NY غالباً Namecheap أو GoDaddy)
++- الأرشفة بتاخد من **أيام لأسبوعين** — مفيش «سوالبة محرز لليوم التاني»
++- أفضل وقت للإرشفة: Sabbamواجهة الـ HI لو انتهيتها ابعت الرابط لصحفة واحد بس ليها الداتا تفي لأن رابط واحد صفي خبري من مصدر مألوف بيضاعف السرعة التعاونية
++
++---
++
++**الخلاصة:** Play = معبدًا جاهز (٢٥$+٢٥ دقيقة). Apple = بعد ميزات native. البحث = معرفات الضبط الصحيحة الواحدة مرة، والكود بيشحن نفسه ذاتي كل صفحة جديدة.
+diff --git a/next.config.mjs b/next.config.mjs
+index e38a08c..faace65 100644
+--- a/next.config.mjs
++++ b/next.config.mjs
+@@ -31,6 +31,13 @@ const nextConfig = {
+           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
+         ]
+       },
++      {
++        source: '/.well-known/:path*',
++        headers: [
++          { key: 'Content-Type', value: 'application/json; charset=utf-8' },
++          { key: 'Cache-Control', value: 'public, max-age=3600' }
++        ]
++      },
+       {
+         source: '/manifest.json',
+         headers: [
+diff --git a/public/.well-known/assetlinks.json b/public/.well-known/assetlinks.json
+new file mode 100644
+index 0000000..92291ae
+--- /dev/null
++++ b/public/.well-known/assetlinks.json
+@@ -0,0 +1,12 @@
++[
++  {
++    "relation": ["delegate_permission/common.handle_all_urls"],
++    "target": {
++      "namespace": "android_app",
++      "package_name": "eg.apphub.twa",
++      "sha256_cert_fingerprints": [
++        "REPLACE_WITH_SHA256_FROM_PWABUILDER_AAB_TOKEN"
++      ]
++    }
++  }
++]
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 25b47e9..a8513ac 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -50,6 +50,10 @@ export async function generateMetadata(): Promise<Metadata> {
+       description: settings.site_description
+     },
+     robots: { index: true, follow: true },
++    verification: {
++      ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : {}),
++      ...(process.env.NEXT_PUBLIC_BING_VERIFICATION ? { other: { "msvalidate.01": process.env.NEXT_PUBLIC_BING_VERIFICATION } } : {})
++    },
+     manifest: "/manifest.json",
+     appleWebApp: {
+       capable: true,
+-- 
+2.47.3
+

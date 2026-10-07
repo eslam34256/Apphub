@@ -1,0 +1,648 @@
+From 007c05f6174f63f3d3a43181aedf276081d45050 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Mon, 21 Sep 2026 13:59:05 +0000
+Subject: [PATCH] =?UTF-8?q?v19:=20=F0=9F=8E=AE=20=D8=B1=D8=A7=D8=AF=D8=A7?=
+ =?UTF-8?q?=D8=B1=20=D8=A7=D9=84=D8=B4=D8=AF=D8=A7=D8=AA=20=E2=80=94=20?=
+ =?UTF-8?q?=D8=AC=D8=AF=D9=88=D9=84=20UC=20=D8=A7=D9=84=D8=B1=D8=B3=D9=85?=
+ =?UTF-8?q?=D9=8A=20=D8=A8=D8=B3=D8=B9=D8=B1=20=D8=A7=D9=84=D9=88=D8=AD?=
+ =?UTF-8?q?=D8=AF=D8=A9=20+=20=D8=AD=D8=A7=D8=B3=D8=A8=D8=A9=20=D8=A3?=
+ =?UTF-8?q?=D8=B1=D8=AE=D8=B5=20=D8=AA=D8=B4=D9=83=D9=8A=D9=84=D8=A9=20+?=
+ =?UTF-8?q?=20=D9=85=D9=82=D8=A7=D8=B1=D9=86=D8=A9=20=D8=B3=D9=88=D9=82=20?=
+ =?UTF-8?q?=D9=85=D9=88=D8=B3=D9=88=D9=85=D8=A9=20=D8=A7=D8=B3=D8=AA=D8=B1?=
+ =?UTF-8?q?=D8=B4=D8=A7=D8=AF=D9=8A?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- src/lib/uc-data.ts: جدول Midasbuy الرسمي (10 باقات EGP) + متوسطات سوق استرشادية + قنوات موثوقة + DP لأرخص تشكيلة (1..30000 UC)
+- /uc-radar: hero بخلفية البراند، الرقم الكبير (توفير الرسمي ≈٢٢٪ على 660)، جدول سعر الوحدة بـ ⭐ أحسن قيمة، شريط مقارنة بصري، تحذيرات أمان النصب، بيانات مفتوحة JSON
+- /api/uc-radar: نفس الداتا مع reviewDate + attribution + methodology
+- فوتر + sitemap + ترجمة nav_uc عربي/إنجليزي
+---
+ docs/BRAND-GUIDE.md              |   1 +
+ docs/PROJECT-AUDIT.md            |   1 +
+ src/app/api/uc-radar/route.ts    |  44 ++++++
+ src/app/sitemap.ts               |   1 +
+ src/app/uc-radar/page.tsx        | 228 +++++++++++++++++++++++++++++++
+ src/components/footer.tsx        |   5 +
+ src/components/uc-calculator.tsx | 103 ++++++++++++++
+ src/lib/translations.ts          |   2 +
+ src/lib/uc-data.ts               | 138 +++++++++++++++++++
+ 9 files changed, 523 insertions(+)
+ create mode 100644 src/app/api/uc-radar/route.ts
+ create mode 100644 src/app/uc-radar/page.tsx
+ create mode 100644 src/components/uc-calculator.tsx
+ create mode 100644 src/lib/uc-data.ts
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 0a0a4b6..963e83a 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v19** 🎮 رادار الشدات | 21 سب 2026 | `/uc-radar`: جدول أسعار UC الرسمي (Midasbuy الشريك الرسمي) بـ **سعر الوحدة ج/100 UC** + ⭐ أحسن قيمة + حاسبة أرخص تشكيلة (DP محلي في المتصفح) + مقارنة رسمي vs متوسط سوق **موسوم استرشادي** + قنوات موثوقة وتحذيرات النصب (باسورد/OTP/شحن بالرّد) + `/api/uc-radar` JSON مفتوح مع الإشارة — مراجعة يدوية بتاريخ معلن، ممنوع رقم بلا مصدر |
+ | **v18** 🩹 إحياء خلفيات البراند | 21 سب 2026 | `gradient-brand` (20 ملف) و`bg-gradient-navy` (كارت النشرة + لوجو الفوتر) كانوا كلاسات **ميتة** (مش متعرّفة في CSS ولا Tailwind) → هيرو كل الصفحات الثابتة نصه أبيض على كريمي = غير مرئي في البرود. اتعرّفوا في globals.css بنفس طبقات الـ hero (نيفي 135° #1a2942→#0f1830 + راديال ذهبي خفيف) — إصلاح واحد رجّع ٢٠+ صفحة |
+ | **v17** 🧭 هيدر يُقرأ دايمًا | 21 سب 2026 | الهيدر شفاف+أبيض **فوق هوم الـ hero الداكن بس** (`darkHero = isHomePage && !scrolled`)؛ باقي الصفحات: هيدر كريمي معتم بنص غامق + فاصل 76px (إزالة التداخل مع المحتوى نهائيًا)؛ الفيتشرز الرئيسية في الهيدر: **المؤشر / المتجر / الأبحاث** (10 روابط — ديسكتوب من xl، هامبورجر أغمق في الوضع الفاتح وxl:hidden) |
+ | **v15** 💼 نواة التجارة بالثقة | 21 سب 2026 | migration `003_commerce.sql` (خانات رعاية + أحداث تتبع + منتجات متجر + قائمة انتظار + طلبات + مفاتيح API مغلقة RLS — idempotent)؛ `/api/track` best-effort مش بيفشل أبدًا؛ `TrackedAffiliateLink` بشارة «رابط بعمولة→/disclosure» وrel sponsored nofollow (بذور الداتا **بلا روابط مختلقة**)؛ `SponsoredSlot` بشارة «إعلان» على صفحات /best (اختيار بالأولوية، يختفي بلا خانات)؛ صفحة `/disclosure` الكاملة: الترتيب والرادار والنجوم **مش للبيع** |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index 1641d9c..23f0696 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++-3. **v19 — رادار الشدات (أول فرتيكال برادار الوحدة)** ✅ (21 سب 2026): دخول سوق الشحن العالي الطلب في مصر بطريق «سعر الوحدة + حاسبة تشكيلة» — فريد عربيًا، ومصمم SEO («سعر شدات ببجي في مصر»). الداتا ثابتة مُراجعة يدويًا بتاريخ معلن (نفس قاعدة مؤشر الأسعار: لا أرقام مختلقة ولا وعود تحديث لايف مش موجودة) — والخطوة الجاية المنطقية: إطعامها من جدول price_watch لما يتبنى مصدر آلي موثوق.
+ -2. **v18 — كلاسات البراند الميتة** ✅ (21 سب 2026): سكرينات المستخدم (متجر/أبحاث/نشرة) كشفت إن `gradient-brand` و`bg-gradient-navy` مستخدمين في ٢٢ موضع **بدون أي تعريف CSS** — أثر متراكم من نسخ قديمة. القاعدة الجديدة: أي كلاس custom جديد يُضاف **يُتحقق من تعريفه في نفس الضفعة** + فحص build مؤقت (grep في CSS المُبنّى) قبل الكوميت.
+ -1. **v17 — الهيدر يُقرأ دايمًا** ✅ (21 سب 2026): بلاغ المستخدم «الفونت نفس لون الباك جراوند» قاد لاكتشاف جذري: الهيدر الشفاف بنص أبيض كان بيترسم فوق **كل** الصفحات (مش بس الـ hero الداكن) + مفيش فاصل فالمحتوى بيتغطى. الإصلاح: light header هو الافتراضي، والشفاف ميزة مخصصة للهوم فقط؛ والفيتشرز الجديدة (المؤشر/المتجر/الأبحاث) بقت في الهيدر بدل ما تبقى دفينة في الفوتر.
+ 00. **v15/v16 — محرك التجارة كاملًا** ✅ (21 سب 2026): أفيليات متتبع بإفصاح إجباري + إعلانات برعاية موسومة + صفحة شفافية (الحرم التحريري غير قابل للشراء) + متجر رقمي بوضع قائمة انتظار بلا أرقام مختلقة + بوابة Paymob مقفولة حتى المفاتيح + بيع البيانات (3 باقات + API مميز بمفاتيح وتسجيل استخدام). القاعدة الذهبية: **أي جنيه مُعلن جاي بشارة — والترتيب مش للبيع**.
+diff --git a/src/app/api/uc-radar/route.ts b/src/app/api/uc-radar/route.ts
+new file mode 100644
+index 0000000..5a50dc9
+--- /dev/null
++++ b/src/app/api/uc-radar/route.ts
+@@ -0,0 +1,44 @@
++import { NextResponse } from "next/server";
++import {
++  OFFICIAL_PACKS,
++  MARKET_AVERAGE,
++  TRUSTED_CHANNELS,
++  UC_REVIEW_DATE,
++  packTotal,
++  pricePer100,
++  bestValuePackIndex
++} from "@/lib/uc-data";
++
++// رادار شدات ببجي — بيانات مفتوحة مع الإشارة (مراجعة يدوية بتاريخ معلن)
++// كاش ساعة الدنيا — الداتا ثابتة هادية لكن الكاش بيخفف التكرار
++export const revalidate = 3600;
++
++export async function GET() {
++  return NextResponse.json({
++    reviewDate: UC_REVIEW_DATE,
++    currency: "EGP",
++    source: "Midasbuy (الشريك الرسمي لببجي) — مراجعة يدوية",
++    marketAverageNote: "متوسطات سوق استرشادية — ليست عروض بيع",
++    unit: "EGP per 100 UC",
++    packs: OFFICIAL_PACKS.map((p, i) => ({
++      uc: p.uc,
++      bonus: p.bonus,
++      totalUc: packTotal(p),
++      priceEgp: p.priceEgp,
++      pricePer100Uc: Math.round(pricePer100(p) * 100) / 100,
++      bestValue: i === bestValuePackIndex()
++    })),
++    marketAverage: Object.entries(MARKET_AVERAGE).map(([k, v]) => ({
++      key: k,
++      ucTotal: v.ucTotal,
++      avgEgp: v.avgEgp
++    })),
++    trustedChannels: TRUSTED_CHANNELS.map((c) => ({
++      name: c.name,
++      url: c.url,
++      official: c.official
++    })),
++    attribution: "رادار شدات AppHub — https://apphub.eg/uc-radar",
++    methodology: "https://apphub.eg/methodology"
++  });
++}
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index be6dbf0..c89e3b3 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -21,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/shop`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+     { url: `${baseUrl}/data`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+     { url: `${baseUrl}/disclosure`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
++    { url: `${baseUrl}/uc-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+     { url: `${baseUrl}/calculator`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/best`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+diff --git a/src/app/uc-radar/page.tsx b/src/app/uc-radar/page.tsx
+new file mode 100644
+index 0000000..4da2fd7
+--- /dev/null
++++ b/src/app/uc-radar/page.tsx
+@@ -0,0 +1,228 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { buildMeta } from "@/lib/seo";
++import {
++  OFFICIAL_PACKS,
++  MARKET_AVERAGE,
++  TRUSTED_CHANNELS,
++  UC_REVIEW_DATE_AR,
++  packTotal,
++  pricePer100,
++  bestValuePackIndex
++} from "@/lib/uc-data";
++import { UcCalculator } from "@/components/uc-calculator";
++
++export const metadata: Metadata = buildMeta({
++  title: "رادار شدات ببجي — سعر UC في مصر بالجنيه (رسمي vs سوق)",
++  description:
++    "جدول أسعار شدات ببجي UC في مصر من Midasbuy الرسمي + سعر الوحدة لكل باقة + حاسبة أرخص تشكيلة شحن — مراجعة بتاريخ معلن، مفيش أرقام مختلقة.",
++  url: "https://apphub.eg/uc-radar",
++  keywords: ["سعر شدات ببجي", "UC price Egypt", "شدات ببجي بالجنيه", "Midasbuy", "شحن UC"]
++});
++
++const fmt = (n: number) => n.toLocaleString("ar-EG");
++
++export default function UcRadarPage() {
++  const bestIdx = bestValuePackIndex();
++  const p660 = OFFICIAL_PACKS.find((p) => p.uc === 600)!;
++  const market660 = MARKET_AVERAGE.p660;
++  const officialPer100 = pricePer100(p660);
++  const marketPer100 = (market660.avgEgp / market660.ucTotal) * 100;
++  const savePct = Math.round((1 - officialPer100 / marketPer100) * 100);
++
++  return (
++    <div className="mx-auto max-w-6xl space-y-10 animate-fade-in">
++      {/* Hero */}
++      <div className="rounded-3xl gradient-brand p-8 sm:p-10 text-white text-center">
++        <div className="text-6xl mb-3">🎮</div>
++        <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">رادار شدات ببجي</h1>
++        <p className="text-white/90 max-w-2xl mx-auto">
++          سعر UC في مصر <strong>بسعر الوحدة</strong> (جنيه لكل 100 شدة) — عشان تعرف أي باقة أرخص فعلًا،
++          وأي «عرض» في السوق بيوفّر فلوس ولا مجرد شكل.
++        </p>
++        <p className="mt-3 text-xs text-white/60">
++          المراجعة: {UC_REVIEW_DATE_AR} · المصدر الرسمي: Midasbuy (الشريك الرسمي لببجي)
++        </p>
++      </div>
++
++      {/* الرقم الكبير */}
++      <div className="grid gap-4 md:grid-cols-3 text-center">
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">باقة 660 UC رسمي</div>
++          <div className="text-3xl font-extrabold text-brand-900">{fmt(p660.priceEgp)} ج</div>
++          <div className="text-xs text-charcoal-400 mt-1">{officialPer100.toFixed(2)} ج / 100 UC</div>
++        </div>
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">متوسط السوق (استرشادي)</div>
++          <div className="text-3xl font-extrabold text-charcoal-700">{fmt(market660.avgEgp)} ج</div>
++          <div className="text-xs text-charcoal-400 mt-1">{marketPer100.toFixed(2)} ج / 100 UC</div>
++        </div>
++        <div className="rounded-3xl border-2 border-sage-300 bg-sage-50 p-6 shadow-soft">
++          <div className="text-sm text-sage-700 mb-1">التوفير من الرسمي</div>
++          <div className="text-3xl font-extrabold text-sage-700">≈ {fmt(savePct)}%</div>
++          <div className="text-xs text-sage-600 mt-1">على نفس الـ 660 شدة</div>
++        </div>
++      </div>
++
++      {/* جدول سعر الوحدة */}
++      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900 mb-1">
++          📊 جدول الأسعار الرسمية — مين أرخص وحدة؟
++        </h2>
++        <p className="text-sm text-charcoal-500 mb-5">
++          الترتيب بالسعر لكل 100 UC — كل ما الرقم أقل، الباقة أحسن في قيمة الفلوس.
++        </p>
++        <div className="overflow-x-auto -mx-2 px-2">
++          <table className="w-full min-w-[560px] text-sm">
++            <thead>
++              <tr className="border-b-2 border-cream-200 text-charcoal-500">
++                <th className="py-3 text-start font-bold">الباقة</th>
++                <th className="py-3 text-start font-bold">الإجمالي</th>
++                <th className="py-3 text-start font-bold">السعر الرسمي</th>
++                <th className="py-3 text-start font-bold">ج / 100 UC</th>
++                <th className="py-3 text-start font-bold">تقييم القيمة</th>
++              </tr>
++            </thead>
++            <tbody>
++              {OFFICIAL_PACKS.map((p, i) => {
++                const per = pricePer100(p);
++                const isBest = i === bestIdx;
++                return (
++                  <tr
++                    key={p.uc}
++                    className={`border-b border-cream-100 ${isBest ? "bg-sage-50" : ""}`}
++                  >
++                    <td className="py-3 font-bold text-brand-900">
++                      {fmt(p.uc)} UC
++                      {p.bonus > 0 && (
++                        <span className="text-sage-600 font-semibold"> +{fmt(p.bonus)} هدية</span>
++                      )}
++                    </td>
++                    <td className="py-3 text-charcoal-600">{fmt(packTotal(p))}</td>
++                    <td className="py-3 font-bold">{fmt(p.priceEgp)} ج</td>
++                    <td className="py-3">
++                      <span className={`font-extrabold ${isBest ? "text-sage-700" : "text-charcoal-700"}`}>
++                        {per.toFixed(2)}
++                      </span>
++                    </td>
++                    <td className="py-3">
++                      {isBest ? (
++                        <span className="rounded-full bg-sage-500 px-3 py-1 text-xs font-bold text-white">
++                          ⭐ أحسن قيمة
++                        </span>
++                      ) : per < 70 ? (
++                        <span className="text-xs text-sage-600 font-semibold">قيمة كويسة</span>
++                      ) : (
++                        <span className="text-xs text-charcoal-400">أعلى من المتوسط</span>
++                      )}
++                    </td>
++                  </tr>
++                );
++              })}
++            </tbody>
++          </table>
++        </div>
++        <p className="mt-4 rounded-xl bg-brand-50 p-3 text-xs text-charcoal-600 border-r-4 border-accent-400">
++          💡 الدرس الجدول بيقوله: الباقات الصغيرة وحدة السعر فيها أغلى ~٢٠٪ من الكبيرة — الطالب اللي بيشحن 60 كل أسبوع
++          بيدفع أزيد من اللي جمع وشحن باقة كبيرة في الإجمالي.
++        </p>
++      </div>
++
++      {/* حاسبة الشدات */}
++      <UcCalculator />
++
++      {/* مقارنة السوق */}
++      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900 mb-1">⚖️ الرسمي vs متوسط السوق</h2>
++        <p className="text-sm text-charcoal-500 mb-5">
++          متوسط الأسعار المعروضة في السوق المصري (بائعين تالت طرف) — <strong>استرشادي مش عرض بيع</strong>،
++          وبيشمل مكونين خطر معروفين: تأخير الشحن على حسابك بدل كود رسمي، أو مصادر غير موثقة.
++        </p>
++        <div className="space-y-3">
++          {[
++            { label: "60 UC", pack: OFFICIAL_PACKS[1], market: MARKET_AVERAGE.p60 },
++            { label: "325 UC", pack: OFFICIAL_PACKS[2], market: MARKET_AVERAGE.p325 },
++            { label: "660 UC", pack: p660, market: MARKET_AVERAGE.p660 },
++            { label: "1800 UC", pack: OFFICIAL_PACKS[4], market: MARKET_AVERAGE.p1800 },
++            { label: "8100 UC", pack: OFFICIAL_PACKS[6], market: MARKET_AVERAGE.p8100 }
++          ].map(({ label, pack, market }) => {
++            const off = pack.priceEgp;
++            const mkt = market.avgEgp;
++            const pctOff = Math.min(100, (off / Math.max(mkt, off)) * 100);
++            const pctMkt = Math.min(100, (mkt / Math.max(mkt, off)) * 100);
++            const cheaper = off < mkt;
++            return (
++              <div key={label} className="space-y-1">
++                <div className="flex justify-between text-sm font-bold text-brand-900">
++                  <span>{label}</span>
++                  <span>
++                    {cheaper
++                      ? `الرسمي أرخص بـ ${fmt(Math.round(mkt - off))} ج`
++                      : `السوق أرخص بـ ${fmt(Math.round(off - mkt))} ج`}
++                  </span>
++                </div>
++                <div className="flex items-center gap-2 text-xs">
++                  <span className="w-16 text-charcoal-500">رسمي {fmt(off)}ج</span>
++                  <div className="flex-1 h-2.5 rounded-full bg-cream-100 overflow-hidden">
++                    <div className="h-full rounded-full bg-accent-400" style={{ width: `${pctOff}%` }} />
++                  </div>
++                </div>
++                <div className="flex items-center gap-2 text-xs">
++                  <span className="w-16 text-charcoal-500">السوق {fmt(mkt)}ج</span>
++                  <div className="flex-1 h-2.5 rounded-full bg-cream-100 overflow-hidden">
++                    <div className="h-full rounded-full bg-charcoal-300" style={{ width: `${pctMkt}%` }} />
++                  </div>
++                </div>
++              </div>
++            );
++          })}
++        </div>
++      </div>
++
++      {/* قنوات موثوقة + أمان */}
++      <div className="grid gap-5 md:grid-cols-2">
++        <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
++          <h2 className="heading-elegant text-2xl text-brand-900 mb-4">🛡️ قنوات شحن موثوقة</h2>
++          <ul className="space-y-3">
++            {TRUSTED_CHANNELS.map((c) => (
++              <li key={c.name} className="flex items-start gap-3">
++                <span className="mt-0.5 text-lg" aria-hidden>{c.official ? "✅" : "🟢"}</span>
++                <div className="flex-1">
++                  <a
++                    href={c.url}
++                    target="_blank"
++                    rel="nofollow noopener"
++                    className="font-bold text-brand-700 hover:underline"
++                  >
++                    {c.name} ↗
++                  </a>
++                  <p className="text-xs text-charcoal-500">{c.note}</p>
++                </div>
++              </li>
++            ))}
++          </ul>
++        </div>
++        <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-6 sm:p-8">
++          <h2 className="heading-elegant text-2xl text-red-800 mb-4">⚠️ حذار من دي</h2>
++          <ul className="space-y-2 text-sm text-red-900">
++            <li>• «سعر أقل من الرسمي بكتير» — الشدات الرسمية تكلفتها معروفة؛ الخصم الكبير غالبًا سرقة كروت أو تلاعب برد فأموال.</li>
++            <li>• طلب الـ Player ID <strong>مع الباسورد</strong> — الشحن الرسمي يحتاج الـ ID بس.</li>
++            <li>• صفحات تعمل شحن «عبر بنظام الرّد» تأخذ الفلوس وبعدين الببجي بيسحب الشدات لما تتسرّق المدفوعات.</li>
++            <li>• مطالبة بـ OTP أو لقطة شاشة لحسابك — ده فتح لسرقة الحساب مش شحن.</li>
++          </ul>
++          <p className="mt-4 text-xs text-red-700">
++            دليل كامل: <Link href="/disclosure" className="font-bold underline">فلسفة الأرقام عندنا</Link> ·
++            <Link href="/apps" className="font-bold underline"> تطبيقات شحن وبطاقات ثانية 🔋</Link>
++          </p>
++        </div>
++      </div>
++
++      {/* بيانات مفتوحة */}
++      <div className="rounded-2xl bg-brand-50 p-5 text-sm text-charcoal-600 text-center">
++        📡 نفس الجدول متاح JSON للصحافة والباحثين:{" "}
++        <code className="rounded bg-white px-2 py-0.5 text-xs" dir="ltr">/api/uc-radar</code>
++        {" — "}بشرط الإشارة لـ AppHub كمصدر.
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/footer.tsx b/src/components/footer.tsx
+index a2ff93a..32f164c 100644
+--- a/src/components/footer.tsx
++++ b/src/components/footer.tsx
+@@ -124,6 +124,11 @@ export function Footer() {
+                   {t("nav_data")}
+                 </Link>
+               </li>
++              <li>
++                <Link href="/uc-radar" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("nav_uc")}
++                </Link>
++              </li>
+               <li>
+                 <Link href="/blog" className="text-charcoal-500 hover:text-accent-600 transition">
+                   {t("nav_blog")}
+diff --git a/src/components/uc-calculator.tsx b/src/components/uc-calculator.tsx
+new file mode 100644
+index 0000000..d724ba1
+--- /dev/null
++++ b/src/components/uc-calculator.tsx
+@@ -0,0 +1,103 @@
++"use client";
++
++import { useState } from "react";
++import { cheaperCombo, type UcComboResult } from "@/lib/uc-data";
++
++/**
++ * حاسبة الشدات: «عايز تشحن قد إيه؟» → أرخص تشكيلة رسمية (Midasbuy).
++ * كل الحساب محلي في المتصفح — مفيش fetch ومفيش أرقام غير الجدول المعلن.
++ */
++export function UcCalculator() {
++  const [input, setInput] = useState("");
++  const [result, setResult] = useState<UcComboResult | null>(null);
++  const [error, setError] = useState("");
++
++  function compute() {
++    const n = Number(input);
++    if (!Number.isFinite(n) || n <= 0) {
++      setError("اكتب رقم شدات صحيح");
++      setResult(null);
++      return;
++    }
++    const r = cheaperCombo(n);
++    if (!r) {
++      setError("الرقم كبير أوي — جرّب حتى 30,000 UC");
++      setResult(null);
++      return;
++    }
++    setError("");
++    setResult(r);
++  }
++
++  return (
++    <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-5">
++      <div>
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🧮 حاسبة الشدات</h2>
++        <p className="mt-1 text-sm text-charcoal-500">
++          اكتب عدد الشدات اللي محتاجها — وهنجيب لك <strong>أرخص تشكيلة من الجدول الرسمي</strong> توصّلها أو أكتر.
++        </p>
++      </div>
++
++      <div className="flex flex-col sm:flex-row gap-2">
++        <input
++          type="number"
++          min={1}
++          max={30000}
++          value={input}
++          onChange={(e) => setInput(e.target.value)}
++          onKeyDown={(e) => e.key === "Enter" && compute()}
++          placeholder="مثال: 660"
++          dir="ltr"
++          className="flex-1 rounded-full border border-cream-200 px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++        />
++        <button
++          onClick={compute}
++          className="rounded-full bg-accent-400 px-8 py-3 text-sm font-bold text-brand-900 hover:bg-accent-500 transition"
++        >
++          احسبها لي
++        </button>
++      </div>
++      {error && <p className="text-sm text-red-600">{error}</p>}
++
++      {result && (
++        <div className="space-y-4 animate-fade-in">
++          <div className="rounded-2xl bg-brand-50 p-5 text-center">
++            <p className="text-sm text-charcoal-500">التشكيلة الرسمية الأرخص</p>
++            <p className="mt-1 text-3xl font-extrabold text-brand-900">
++              {result.totalUc.toLocaleString("ar-EG")} UC
++              <span className="mx-2 text-lg text-charcoal-400">=</span>
++              <span className="text-accent-600">{result.totalPrice.toLocaleString("ar-EG")} جنيه</span>
++            </p>
++            <p className="mt-1 text-xs text-charcoal-500">
++              {result.exact
++                ? "بالظبط زي ما طلبت ✅"
++                : `أقرب تشكيلة أكبر من هدفك (${(result.totalUc - result.target).toLocaleString("ar-EG")} UC زيادة)`}
++              {" — "}
++              {((result.totalPrice / result.totalUc) * 100).toFixed(2)} جنيه لكل 100 UC
++            </p>
++          </div>
++
++          <ul className="grid gap-2 sm:grid-cols-2">
++            {result.items.map(({ pack, count }, i) => (
++              <li
++                key={i}
++                className="flex items-center justify-between rounded-2xl border border-cream-200 bg-white px-5 py-3"
++              >
++                <span className="text-sm font-bold text-brand-900">
++                  {count > 1 ? `${count}× ` : ""}
++                  باقة {pack.uc.toLocaleString("ar-EG")}
++                  {pack.bonus > 0 && (
++                    <span className="text-sage-600 font-semibold"> +{pack.bonus.toLocaleString("ar-EG")} هدية</span>
++                  )}
++                </span>
++                <span className="text-sm text-charcoal-600">
++                  {(pack.priceEgp * count).toLocaleString("ar-EG")} ج
++                </span>
++              </li>
++            ))}
++          </ul>
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/src/lib/translations.ts b/src/lib/translations.ts
+index 4871236..8c8ccb8 100644
+--- a/src/lib/translations.ts
++++ b/src/lib/translations.ts
+@@ -124,6 +124,7 @@ export const translations = {
+     nav_index: "المؤشر",
+     nav_store: "المتجر",
+     nav_research: "الأبحاث",
++    nav_uc: "رادار الشدات",
+     nav_disclosure: "الإفصاح والشفافية",
+     nav_shop: "المتجر الرقمي",
+     nav_data: "البيانات والأبحاث",
+@@ -276,6 +277,7 @@ export const translations = {
+     nav_index: "Index",
+     nav_store: "Store",
+     nav_research: "Research",
++    nav_uc: "UC Radar",
+     nav_disclosure: "Disclosure & Transparency",
+     nav_shop: "Digital Store",
+     nav_data: "Data & Research",
+diff --git a/src/lib/uc-data.ts b/src/lib/uc-data.ts
+new file mode 100644
+index 0000000..a7363fe
+--- /dev/null
++++ b/src/lib/uc-data.ts
+@@ -0,0 +1,138 @@
++/**
++ * رادار شدات ببجي (UC) — داتا مُراجعة يدويًا بتاريخ معلن.
++ * القاعدة: ممنوع رقم بلا مصدر — الرسمي من Midasbuy (الشريك الرسمي لببجي)،
++ * ومتوسط السوق موسوم صراحة «استرشادي». الأسعار لحظية التغيّر — بنحدّث التاريخ مع كل مراجعة.
++ */
++
++export const UC_REVIEW_DATE = "2026-09-21";
++export const UC_REVIEW_DATE_AR = "سبتمبر ٢٠٢٦";
++
++export type UcPack = {
++  uc: number;        // الشدات الأساسية
++  bonus: number;     // الهدية ضمن الباقة
++  priceEgp: number;  // السعر الرسمي Midasbuy بالجنيه
++};
++
++/** جدول Midasbuy الرسمي (الشريك الرسمي لببجي) — مصر */
++export const OFFICIAL_PACKS: UcPack[] = [
++  { uc: 30, bonus: 0, priceEgp: 20.99 },
++  { uc: 60, bonus: 0, priceEgp: 41.99 },
++  { uc: 300, bonus: 25, priceEgp: 209.99 },
++  { uc: 600, bonus: 60, priceEgp: 419.99 },
++  { uc: 1500, bonus: 300, priceEgp: 1049.99 },
++  { uc: 3000, bonus: 850, priceEgp: 2099.99 },
++  { uc: 6000, bonus: 2100, priceEgp: 4199.99 },
++  { uc: 12000, bonus: 4200, priceEgp: 8399.99 },
++  { uc: 18000, bonus: 6300, priceEgp: 12599.99 },
++  { uc: 24000, bonus: 0, priceEgp: 16799.99 }
++];
++
++/** متوسطات سوق استرشادية (رصد يدوي — مش عرض بيع)، بالجنيه للباقات الشهيرة */
++export const MARKET_AVERAGE: Record<string, { ucTotal: number; avgEgp: number }> = {
++  p60: { ucTotal: 60, avgEgp: 55 },
++  p325: { ucTotal: 325, avgEgp: 280 },
++  p660: { ucTotal: 660, avgEgp: 540 },
++  p1800: { ucTotal: 1800, avgEgp: 1380 },
++  p8100: { ucTotal: 8100, avgEgp: 5500 }
++};
++
++/** قنوات موثوقة (بناءً على توفرها الرسمي في مصر) */
++export const TRUSTED_CHANNELS = [
++  {
++    name: "Midasbuy",
++    note: "الشريك الرسمي لببجي — أسعاره هي المرجع هنا",
++    url: "https://www.midasbuy.com",
++    official: true
++  },
++  {
++    name: "Codashop مصر",
++    note: "شحن رسمي بوسائل دفع محلية",
++    url: "https://www.codashop.com/ar-eg",
++    official: false
++  },
++  {
++    name: "Carry1st Shop",
++    note: "موزّع رسمي في أفريقيا والشرق الأوسط",
++    url: "https://carry1st.com",
++    official: false
++  },
++  {
++    name: "UniPin مصر",
++    note: "شحن ألعاب معروف إقليميًا",
++    url: "https://www.unipin.com/eg",
++    official: false
++  }
++];
++
++export const packTotal = (p: UcPack) => p.uc + p.bonus;
++
++/** سعر الوحدة: جنيه لكل 100 UC — وحدة المقارنة الذكية بين الباقات */
++export const pricePer100 = (p: UcPack) => (p.priceEgp / packTotal(p)) * 100;
++
++export function bestValuePackIndex(): number {
++  let best = 0;
++  OFFICIAL_PACKS.forEach((p, i) => {
++    if (pricePer100(p) < pricePer100(OFFICIAL_PACKS[best])) best = i;
++  });
++  return best;
++}
++
++export type UcComboResult = {
++  target: number;
++  totalUc: number;
++  totalPrice: number;
++  items: { pack: UcPack; count: number }[];
++  exact: boolean;
++};
++
++/**
++ * أرخص تشكيلة رسمية توصّلك على الأقل للهدف — DP على المبالغ.
++ * الهدف المتقبّل: 1..30000 UC — فوق كده نرفض بلطف.
++ */
++export function cheaperCombo(target: number): UcComboResult | null {
++  if (!Number.isFinite(target) || target <= 0 || target > 30000) return null;
++  const t = Math.ceil(target);
++  // DP[a] = أرخص تكلفة توصّل a UC بالظبط (a حتى t..t+آخر باقة)
++  const maxPack = Math.max(...OFFICIAL_PACKS.map(packTotal));
++  const N = t + maxPack;
++  const dp: number[] = new Array(N + 1).fill(Infinity);
++  const from: { a: number; pi: number }[] = new Array(N + 1);
++  dp[0] = 0;
++  for (let a = 0; a <= N; a++) {
++    if (!Number.isFinite(dp[a])) continue;
++    OFFICIAL_PACKS.forEach((p, pi) => {
++      const na = a + packTotal(p);
++      const nc = dp[a] + p.priceEgp;
++      if (na <= N && nc < dp[na] - 1e-9) {
++        dp[na] = nc;
++        from[na] = { a, pi };
++      }
++    });
++  }
++  // أرخص a >= t
++  let bestA = -1;
++  for (let a = t; a <= N; a++) {
++    if (Number.isFinite(dp[a]) && (bestA === -1 || dp[a] < dp[bestA])) bestA = a;
++  }
++  if (bestA === -1) return null;
++
++  // فك المسار
++  const counts = new Map<number, number>();
++  let a = bestA;
++  while (a > 0 && from[a]) {
++    const pi = from[a].pi;
++    counts.set(pi, (counts.get(pi) ?? 0) + 1);
++    a = from[a].a;
++  }
++  const items = [...counts.entries()]
++    .sort((x, y) => packTotal(OFFICIAL_PACKS[y[0]]) - packTotal(OFFICIAL_PACKS[x[0]]))
++    .map(([pi, count]) => ({ pack: OFFICIAL_PACKS[pi], count }));
++
++  return {
++    target: t,
++    totalUc: bestA,
++    totalPrice: Math.round(dp[bestA] * 100) / 100,
++    items,
++    exact: bestA === t
++  };
++}
+-- 
+2.47.3
+

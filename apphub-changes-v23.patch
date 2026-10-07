@@ -1,0 +1,1518 @@
+From 32880804c2fa26ed1df460bbc4eadd0932f976a9 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Tue, 22 Sep 2026 18:03:43 +0000
+Subject: [PATCH] =?UTF-8?q?v23:=20=F0=9F=93=A1=20=D9=85=D8=B1=D9=83=D8=B2?=
+ =?UTF-8?q?=20=D8=A7=D9=84=D8=B1=D8=A7=D8=AF=D8=A7=D8=B1=D8=A7=D8=AA=20?=
+ =?UTF-8?q?=E2=80=94=20=D8=AA=D9=88=D8=A8=D8=A7=D8=AA=20=D9=85=D9=88=D8=AD?=
+ =?UTF-8?q?=D9=91=D8=AF=D8=A9=20=D9=81=D9=88=D9=82=20=D8=A7=D9=84=D8=B1?=
+ =?UTF-8?q?=D8=A7=D8=AF=D8=A7=D8=B1=D8=A7=D8=AA=20=D8=A7=D9=84=D8=A3=D8=B1?=
+ =?UTF-8?q?=D8=A8=D8=B9=20=D8=AC=D9=88=D9=87=20/price-radar?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- استخراج المحتوى: components/radars/{uc,telecom,ai}-content.tsx (مصدر واحد للحقيقة)
+- RadarHub كلاينت: ٤ توبات بعناوين ووصف، تبديل محلي بلا fetch، وRSC props من السيرفر
+- /price-radar: محتوى الاشتراكات الأصلي محفوظ بالكامل (الهيدر/تيليجرام/المنهجية/فلتر الدول)
+- سعر صرف الـ AI بيتجيب في سيرفر المركز (نفس مصدر /api/fx)
+- الصفحات المستقلة /uc-radar /telecom-radar /ai-radar فضلت شغالة بهيروها ورابط رجوع للمركز (SEO ومشاركة محفوظة)
+---
+ docs/BRAND-GUIDE.md                       |   1 +
+ docs/PROJECT-AUDIT.md                     |   1 +
+ src/app/ai-radar/page.tsx                 | 127 +--------
+ src/app/price-radar/page.tsx              | 315 +++++++++++-----------
+ src/app/telecom-radar/page.tsx            | 127 +--------
+ src/app/uc-radar/page.tsx                 | 209 +-------------
+ src/components/radar-hub.tsx              |  69 +++++
+ src/components/radars/ai-content.tsx      | 118 ++++++++
+ src/components/radars/telecom-content.tsx | 124 +++++++++
+ src/components/radars/uc-content.tsx      | 202 ++++++++++++++
+ 10 files changed, 698 insertions(+), 595 deletions(-)
+ create mode 100644 src/components/radar-hub.tsx
+ create mode 100644 src/components/radars/ai-content.tsx
+ create mode 100644 src/components/radars/telecom-content.tsx
+ create mode 100644 src/components/radars/uc-content.tsx
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index f6bb59b..afccf57 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v23** 📡 مركز الرادارات | 21 سب 2026 | `/price-radar` بقى **هاب موحّد**: توبات كلاينت (اشتراكات 💳 · شدات 🎮 · باقات 📶 · AI 🤖) فوق محتوى مستخرج لمكونات `components/radars/*-content.tsx` — تبديل محلي بلا fetch، والصفحات المستقلة `/uc-radar /telecom-radar /ai-radar` **فضلت شغالة** بهيروها ورابط رجع للمركز (SEO ومشاركة مباشرة محفوظة)؛ رادار الاشتراكات الأصلي محفوظ ١٠٠٪ (فلتر الدول/تيليجرام/المنهجية)؛ سعر الصرف للـ AI بيتجيب في سيرفر المركز نفسه |
+ | **v21** 📶 رادار الباقات | 21 سب 2026 | `/telecom-radar`: 22 باقة موثّقة (هوائي مشترك فودافون×WE×أورنج من مصراوي مايو ٢٠٢٦ + Go Super + فليكس وبريميوم منشور) بمقياس **ج/جيجا** زي سعر اللتر؛ حاسبة «أحسن هوائي لاستخدامك» (أرخص باقة تغطي الاستخدام في كل شبكة جنب بعض)؛ تحذيرات صادقة (زيادات/فليكس=ميجا/عروض الولاء برّه)؛ `/api/telecom-radar` |
+ | **v22** 🤖 رادار اشتراكات AI | 21 سب 2026 | `/ai-radar`: 7 أدوات (ChatGPT/Claude/Gemini/Copilot/Grok/Perplexity/DeepSeek مجاني) بأسعار $ الرسمية متقاطعة من 5 مصادر ٢٠٢٦ + **تحويل للجنيه بسعر صرف حقيقي لايف** (er-api، ومع الفشل يعرض الدولار بس بصدق)؛ الرقم الكبير (أرخص AI: Gemini AI Plus $4.99) + فخ «كلهم مع بعض ≈$100» + أجندة الاختيار الـ 3 قواعد؛ `/api/ai-radar` |
+ | **v20** 👁 Watchlist تنبيه نزول السعر | 21 سب 2026 | migration `004_watchlist.sql` (price_watchlist unique إيميل+تطبيق+دولة، إدراج عام وقراءة مقفولة، تعطيل برمز UUID كإثبات ملكية؛ email_events مقفول خدمات)؛ زر «👁 نبّهني لو السعر نزل» على صفحات التطبيقات (نموذج منبثق بتعبئة مسبقة = 90% من السعر، عربي/إنجليزي، 503 صادق لحد الترحيل)؛ `/api/watchlist` اشتراك upsert + إلغاء؛ كرون `/api/watchlist/notify` يومي 11:00 (Bearer CRON_SECRET) يرسل نزلة-سعر عبر Resend **مقفول بمفتاح RESEND_API_KEY بصدق** (emailEnabled:false بدون كذبة إرسال) + قالب إيميل عربي RTL بلينك إلغاء |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index b34c913..c252943 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++-6. **v23 — المراجعة الملاحية قبل الانتشار** ✅ (21 سب 2026): لما الفرتيكالز زادت، المستخدم طلب تنظيمها قبل ما الناس تتوه — النتيجة: استخراج محتوى الرادارات لمكونات قابلة للتشارك بدل التكرار، ومركز توبات واحد، والحفاظ على الروابط المستقلة للسيو. القاعدة: **كل فرتيكال جديد يضاف محتواه كمكوّن مشترك** والمركز يرثه تلقائيًا — مش نقصّه في صفحة لوحدها.
+ -5. **v21/v22 — استراتيجية الفرتيكالز: رادار الوحدة** ✅ (21 سب 2026): اندماج سؤال المستخدم «إيه أكتر خدمة الناس بتدور عليها» قرر التليكوم + AI (وبعدهم fري فاير في الطابور). القاعدة الصلبة الجديدة لفرتيكال الرادار: **وحدة مقارنة واحدة صادقة** (ج/100 UC، ج/جيجا، $→ج لايف) + جدول واحد كبير بتاريخ مراجعة + حاسبة محلية + API مفتوح بالإشارة — فورمولا واحدة متكررة بدل صفحات متراكبة.
+ -4. **v20 — آخر حلقة في خطة التجارة: التنبيه بالإيميل** ✅ (21 سب 2026): Watchlist كاملة (اشتراك/إلغاء/كرون فحص يومي/قالب عربي) بدورة-حياة «مقفولة بمفاتيح»: التشغيل الكامل يحتاج migration 004 + RESEND_API_KEY — وبدونهما التنبيهات ما بتكذبش (503 صادق + emailEnabled:false). خطة التجارة الأصلية (أفيليات/إعلانات/متجر/API مميز/تنبيهات) اتقفلت كلها بنفس عقيدة: لا رقم بلا مصدر، لا تشغيل بلا مفتاح حقيقي.
+ -3. **v19 — رادار الشدات (أول فرتيكال برادار الوحدة)** ✅ (21 سب 2026): دخول سوق الشحن العالي الطلب في مصر بطريق «سعر الوحدة + حاسبة تشكيلة» — فريد عربيًا، ومصمم SEO («سعر شدات ببجي في مصر»). الداتا ثابتة مُراجعة يدويًا بتاريخ معلن (نفس قاعدة مؤشر الأسعار: لا أرقام مختلقة ولا وعود تحديث لايف مش موجودة) — والخطوة الجاية المنطقية: إطعامها من جدول price_watch لما يتبنى مصدر آلي موثوق.
+diff --git a/src/app/ai-radar/page.tsx b/src/app/ai-radar/page.tsx
+index ca50fd7..93ffe1d 100644
+--- a/src/app/ai-radar/page.tsx
++++ b/src/app/ai-radar/page.tsx
+@@ -1,7 +1,8 @@
+ import type { Metadata } from "next";
+ import Link from "next/link";
+ import { buildMeta } from "@/lib/seo";
+-import { AI_TOOLS, AI_REVIEW_DATE_AR, fetchUsdEgpRate, egp, type AiTool } from "@/lib/ai-radar-data";
++import { AI_REVIEW_DATE_AR, fetchUsdEgpRate } from "@/lib/ai-radar-data";
++import { AiRadarContent } from "@/components/radars/ai-content";
+ 
+ export const metadata: Metadata = buildMeta({
+   title: "رادار اشتراكات AI — سعر ChatGPT وClaude وGemini بالجنيه المصري لايف",
+@@ -13,78 +14,10 @@ export const metadata: Metadata = buildMeta({
+ 
+ export const dynamic = "force-dynamic"; // عشان سعر الصرف يفضل طازة
+ 
+-const fmtUsd = (n: number) => `$${n}`;
+-
+-function ToolCard({ tool, rate }: { tool: AiTool; rate: number | null }) {
+-  const cheapestPaid = tool.tiers[0];
+-  const egpCheapest = cheapestPaid ? egp(cheapestPaid.usd, rate) : null;
+-
+-  return (
+-    <div className="rounded-3xl bg-white p-6 shadow-soft space-y-4">
+-      <div className="flex items-center gap-3">
+-        <span className={`w-11 h-11 rounded-2xl flex items-center justify-center text-2xl ${tool.color}`}>
+-          {tool.icon}
+-        </span>
+-        <div className="flex-1">
+-          <h3 className="font-extrabold text-brand-900 text-lg">{tool.name}</h3>
+-          <p className="text-xs text-charcoal-500">{tool.bestFor}</p>
+-        </div>
+-        {cheapestPaid ? (
+-          <div className="text-end">
+-            <div className="font-extrabold text-accent-600 text-lg">{fmtUsd(cheapestPaid.usd)}</div>
+-            <div className="text-[11px] text-charcoal-500">
+-              {egpCheapest != null ? `≈ ${egpCheapest.toLocaleString("ar-EG")} ج` : "بالدولار"}
+-            </div>
+-          </div>
+-        ) : (
+-          <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-bold text-sage-700">مجاني 💚</span>
+-        )}
+-      </div>
+-
+-      <table className="w-full text-sm">
+-        <tbody>
+-          <tr className="border-b border-cream-100">
+-            <td className="py-2 font-bold text-sage-700">مجاني</td>
+-            <td className="py-2 text-charcoal-600" colSpan={2}>{tool.free}</td>
+-          </tr>
+-          {tool.tiers.map((t) => {
+-            const e = egp(t.usd, rate);
+-            return (
+-              <tr key={t.name} className="border-b border-cream-100">
+-                <td className="py-2.5 w-1/4">
+-                  <span className="font-bold text-brand-900">{t.name}</span>
+-                </td>
+-                <td className="py-2.5 w-1/4 whitespace-nowrap">
+-                  <span className="font-extrabold">{fmtUsd(t.usd)}</span>
+-                  {e != null && (
+-                    <span className="text-xs text-charcoal-500"> ≈ {e.toLocaleString("ar-EG")} ج</span>
+-                  )}
+-                </td>
+-                <td className="py-2.5 text-xs text-charcoal-500">{t.tag}</td>
+-              </tr>
+-            );
+-          })}
+-        </tbody>
+-      </table>
+-    </div>
+-  );
+-}
+-
+ export default async function AiRadarPage() {
+   const { rate, source } = await fetchUsdEgpRate();
+-  const cheapest = AI_TOOLS
+-    .flatMap((t) => t.tiers.map((tier) => ({ tool: t.name, ...tier })))
+-    .sort((a, b) => a.usd - b.usd)[0];
+-  const allIn = AI_TOOLS
+-    .map((t) => t.tiers.find((x) => x.usd >= 19.99 && x.usd <= 21))
+-    .filter(Boolean)
+-    .reduce((s, x) => s + (x?.usd ?? 0), 0);
+-  const egpCheapest = egp(cheapest.usd, rate);
+-  const egpAllIn = rate != null ? Math.round(allIn * rate) : null;
+-
+   return (
+-    <div className="mx-auto max-w-6xl space-y-10 animate-fade-in">
+-      {/* Hero */}
++    <div className="mx-auto max-w-6xl space-y-8 animate-fade-in">
+       <div className="rounded-3xl gradient-brand p-8 sm:p-10 text-white text-center">
+         <div className="text-6xl mb-3">🤖</div>
+         <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">رادار اشتراكات AI</h1>
+@@ -93,59 +26,11 @@ export default async function AiRadarPage() {
+           عشان تعرف الاشتراك بيخصم من كارتك كام قبل ما تعملها.
+         </p>
+         <p className="mt-3 text-xs text-white/60">
+-          المراجعة: {AI_REVIEW_DATE_AR} · سعر الصرف: {rate != null ? `${rate} ج/دولار (${source})` : "غير متاح لحظيًا — الدولار معروض فقط بصدق"}
++          المراجعة: {AI_REVIEW_DATE_AR} · سعر الصرف: {rate != null ? `${rate} ج/دولار (${source})` : "غير متاح لحظيًا — الدولار معروض فقط بصدق"} ·
++          جزء من <Link href="/price-radar" className="underline">مركز الرادارات</Link>
+         </p>
+       </div>
+-
+-      {/* الرقم الكبير */}
+-      <div className="grid gap-4 md:grid-cols-3 text-center">
+-        <div className="rounded-3xl bg-white p-6 shadow-soft">
+-          <div className="text-sm text-charcoal-500 mb-1">أرخص AI مدفوع</div>
+-          <div className="text-2xl font-extrabold text-brand-900">
+-            {fmtUsd(cheapest.usd)}
+-            {egpCheapest != null && <span className="text-lg"> ≈ {egpCheapest.toLocaleString("ar-EG")} ج</span>}
+-          </div>
+-          <div className="text-xs text-charcoal-400 mt-1">{cheapest.tool} {cheapest.name}/شهر</div>
+-        </div>
+-        <div className="rounded-3xl bg-white p-6 shadow-soft">
+-          <div className="text-sm text-charcoal-500 mb-1">السعر المعياري للسوق</div>
+-          <div className="text-2xl font-extrabold text-brand-900">
+-            $20{rate != null && <span className="text-lg"> ≈ {Math.round(20 * rate).toLocaleString("ar-EG")} ج</span>}
+-          </div>
+-          <div className="text-xs text-charcoal-400 mt-1">ChatGPT Plus = Claude Pro ≈ Gemini AI Pro</div>
+-        </div>
+-        <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-6 shadow-soft">
+-          <div className="text-sm text-red-700 mb-1">فخ «كلهم مع بعض»</div>
+-          <div className="text-2xl font-extrabold text-red-800">
+-            ≈ ${allIn}{egpAllIn != null && <span className="text-lg"> ≈ {egpAllIn.toLocaleString("ar-EG")} ج</span>}
+-          </div>
+-          <div className="text-xs text-red-600 mt-1">في الشهر — ٧٠٪ منهم نفس الحاجة بصراحة</div>
+-        </div>
+-      </div>
+-
+-      {/* الأدوات */}
+-      <div className="grid gap-5 md:grid-cols-2">
+-        {AI_TOOLS.map((t) => (
+-          <ToolCard key={t.id} tool={t} rate={rate} />
+-        ))}
+-      </div>
+-
+-      {/* أجندة اختيار ذكي */}
+-      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
+-        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🧭 اختار بذكاء — في ٣ قواعد</h2>
+-        <ol className="text-sm text-charcoal-600 space-y-2 list-decimal mr-5">
+-          <li><strong>ابدأ ببلاش</strong> — المستوى المجاني عند ChatGPT وGemini كافي للتجربة الحقيقية. لو بتوصل للحد يوميًا ساعتها بس فكر في الدفع.</li>
+-          <li><strong>اشتراك واحد يكفي ٩٥٪</strong> — $20 في أي من الكبار التلاتة بينجز نفس الشغل تقريبًا؛ الاشتراك الثاني بيبقى فخ «التخصص الوهمي» إلا لو محتاج مهمة محددة (سياق ضخم = Gemini؛ كود ثقيل = Claude؛ كل حاجة مع بعض = ChatGPT).</li>
+-          <li><strong>بكارت مصري بالدولار</strong> — البنك بيحاسبك بسعر الصرف وقت الخصم + ممكن رسوم إضافية بنسبة بسيطة؛ الجنيه الظاهر فوق استرشادي لحظي من {source ?? "المصدر"}.</li>
+-        </ol>
+-      </div>
+-
+-      {/* بيانات مفتوحة */}
+-      <div className="rounded-2xl bg-brand-50 p-5 text-sm text-charcoal-600 text-center">
+-        📡 نفس الداتا JSON: <code dir="ltr" className="rounded bg-white px-2 py-0.5">/api/ai-radar</code>
+-        {" — "}
+-        <Link href="/disclosure" className="font-bold underline">عقد الأرقام عندنا</Link>
+-      </div>
++      <AiRadarContent rate={rate} source={source} />
+     </div>
+   );
+ }
+diff --git a/src/app/price-radar/page.tsx b/src/app/price-radar/page.tsx
+index 36f1a70..94a0900 100644
+--- a/src/app/price-radar/page.tsx
++++ b/src/app/price-radar/page.tsx
+@@ -11,24 +11,27 @@ import {
+ import { PriceSparkline } from "@/components/price-radar/sparkline";
+ import { PriceAlertForm } from "@/components/price-radar/alert-form";
+ import { TelegramCard } from "@/components/price-radar/telegram-card";
++import { RadarHub } from "@/components/radar-hub";
++import { UcRadarContent } from "@/components/radars/uc-content";
++import { TelecomRadarContent } from "@/components/radars/telecom-content";
++import { AiRadarContent } from "@/components/radars/ai-content";
++import { fetchUsdEgpRate } from "@/lib/ai-radar-data";
+ import { CountryCode } from "@/lib/types";
+ 
+ /**
+- * 🚨 رادار الأسعار — الميزة الأقوى تنافسيًا:
+- * متتبع تاريخ أسعار الاشتراكات في المنطقة العربية.
+- * بيانات تراكمية لا يمكن نسخها رجعيًا = Moat حقيقي.
+- *
+- * بتقرا من قاعدة البيانات (price_watch) اللي بيحدّثها الـ Cron يوميًا،
+- * مع رجوع تلقائي للبيانات الثابتة لو القاعدة مش متاحة.
++ * 📡 مركز الرادارات — كل مستوايات التوفير في صفحة واحدة:
++ * الاشتراكات (تاريخ الأسعار) + الشدات + الباقات + اشتراكات AI.
++ * المحتوى الأصلي للرادار محفوظ بالكامل؛ التوبات تضيف الفرتيكالز الجديدة.
++ * الصفحات المستقلة (/uc-radar, /telecom-radar, /ai-radar) لسه شغالة للـ SEO.
+  */
+ 
+ // الصفحة بتتجدد كل ساعة من الكاش (البيانات بتتغير يوميًا بحد أقصى)
+ export const revalidate = 3600;
+ 
+ export const metadata: Metadata = {
+-  title: "رادار الأسعار — تاريخ أسعار اشتراكاتك المفضلة",
++  title: "مركز الرادارات — اشتراكاتك وشداتك وباقتك وأدوات AI في مكان واحد",
+   description:
+-    "تابع تاريخ أسعار الاشتراكات (نتفليكس، شاهد، سبوتيفاي وأكثر) في مصر والسعودية والإمارات — اعرف السعر زاد امتى وبيعكس متوقع، وفعّل التنبيهات أول ما أي سعر يتحرك.",
++    "رادار الأسعار الأصلي (تاريخ اشتراكات التطبيقات) + رادار شدات ببجي بسعر الوحدة + رادار الباقات بسعر الجيجا + رادار اشتراكات AI بتحويل جنيه لايف — كلهم في صفحة واحدة منظمة.",
+   alternates: { canonical: "https://apphub-eight.vercel.app/price-radar" }
+ };
+ 
+@@ -67,176 +70,186 @@ export default async function PriceRadarPage({
+     .flatMap((e) => e.plans.map(priceChange))
+     .filter((c) => c.dir === "up" || c.dir === "down").length;
+ 
++  // سعر الصرف لايف لتوب اشتراكات AI
++  const { rate, source } = await fetchUsdEgpRate();
++
+   const breadcrumb = {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     itemListElement: [
+       { "@type": "ListItem", position: 1, name: "الرئيسية", item: SITE_URL },
+-      { "@type": "ListItem", position: 2, name: "رادار الأسعار", item: `${SITE_URL}/price-radar` }
++      { "@type": "ListItem", position: 2, name: "مركز الرادارات", item: `${SITE_URL}/price-radar` }
+     ]
+   };
+ 
+-  return (
+-    <div className="bg-cream-50 min-h-screen">
++  const subsContent = (
++    <div className="space-y-10">
+       <script
+         type="application/ld+json"
+         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+       />
+ 
+-      <div className="max-w-6xl mx-auto px-4 py-12 space-y-10">
+-        {/* الهيدر */}
+-        <header className="text-center">
+-          <span className="rounded-full bg-red-100 text-red-700 px-4 py-1.5 text-sm font-bold">
+-            🚨 ميزة جديدة
++      {/* الهيدر */}
++      <header className="text-center">
++        <span className="rounded-full bg-red-100 text-red-700 px-4 py-1.5 text-sm font-bold">
++          🚨 الميزة الأقوى تنافسيًا
++        </span>
++        <h2 className="heading-display mt-4 text-3xl md:text-4xl text-brand-900">
++          رادار الأسعار الرسمية
++        </h2>
++        <p className="mt-3 max-w-2xl mx-auto text-charcoal-500 leading-relaxed">
++          الاشتراكات بتزيد أسعارها من غير ما تقول لحد. إحنا بنرصد سعر كل باقة
++          بالتاريخ — نقطة بنقطة — عشان تعرف بالظبط مين زوّد وامتى، وتقرر على أساس بيانات.
++        </p>
++
++        <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
++          <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++            🔍 {allEntries.length} اشتراك تحت الرصد
++          </span>
++          <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++            📊 {trackedPlans} باقة متتبعة
+           </span>
+-          <h1 className="heading-display mt-4 text-4xl md:text-5xl text-brand-900">
+-            رادار الأسعار
+-          </h1>
+-          <p className="mt-3 max-w-2xl mx-auto text-charcoal-500 leading-relaxed">
+-            الاشتراكات بتزيد أسعارها من غير ما تقول لحد. إحنا بنرصد سعر كل باقة
+-            بالتاريخ — نقطة بنقطة — عشان تعرف بالظبط مين زوّد وامتى، وتقرر على أساس بيانات.
+-          </p>
+-
+-          <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
+-            <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
+-              🔍 {allEntries.length} اشتراك تحت الرصد
+-            </span>
+-            <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
+-              📊 {trackedPlans} باقة متتبعة
+-            </span>
+-            <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
+-              📈 {changedRecently} تغيّر مرصود
+-            </span>
+-          </div>
+-        </header>
+-
+-        {/* قناة التنبيهات الفورية */}
+-        <TelegramCard />
+-
+-        {/* فورم التنبيهات */}
+-        <PriceAlertForm />
+-
+-        {/* فلتر الدول */}
+-        <div className="flex flex-wrap justify-center gap-2">
++          <span className="rounded-full bg-white border border-cream-200 px-4 py-1.5 font-bold text-brand-900 shadow-soft">
++            📈 {changedRecently} تغيّر مرصود
++          </span>
++        </div>
++      </header>
++
++      {/* قناة التنبيهات الفورية */}
++      <TelegramCard />
++
++      {/* فورم التنبيهات */}
++      <PriceAlertForm />
++
++      {/* فلتر الدول */}
++      <div className="flex flex-wrap justify-center gap-2">
++        <Link
++          href="/price-radar"
++          className={`rounded-full px-4 py-2 text-sm font-bold transition ${
++            !country
++              ? "bg-brand-900 text-white"
++              : "bg-white border border-cream-200 text-charcoal-500 hover:border-accent-300"
++          }`}
++        >
++          🌍 كل الدول
++        </Link>
++        {(Object.keys(countryNames) as CountryCode[]).map((c) => (
+           <Link
+-            href="/price-radar"
++            key={c}
++            href={`/price-radar?country=${c}`}
+             className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+-              !country
++              country === c
+                 ? "bg-brand-900 text-white"
+                 : "bg-white border border-cream-200 text-charcoal-500 hover:border-accent-300"
+             }`}
+           >
+-            🌍 كل الدول
++            {countryNames[c]}
+           </Link>
+-          {(Object.keys(countryNames) as CountryCode[]).map((c) => (
+-            <Link
+-              key={c}
+-              href={`/price-radar?country=${c}`}
+-              className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+-                country === c
+-                  ? "bg-brand-900 text-white"
+-                  : "bg-white border border-cream-200 text-charcoal-500 hover:border-accent-300"
+-              }`}
+-            >
+-              {countryNames[c]}
+-            </Link>
+-          ))}
+-        </div>
++        ))}
++      </div>
+ 
+-        {/* كروت الاشتراكات */}
+-        <div className="grid gap-5 md:grid-cols-2">
+-          {entries.map((entry, ei) => {
+-            const change = entryChange(entry);
+-            const style = dirStyles[change.dir];
+-            return (
+-              <article key={`${entry.appSlug}-${entry.country}-${ei}`} className="card-elegant p-6">
+-                <div className="flex items-start justify-between gap-3">
+-                  <div className="flex items-center gap-3">
+-                    <span className="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-3xl shadow-soft">
+-                      {entry.icon}
+-                    </span>
+-                    <div>
+-                      <h2 className="font-bold text-lg text-brand-900">
+-                        <Link href={`/apps/${entry.appSlug}`} className="hover:text-accent-600 transition">
+-                          {entry.name}
+-                        </Link>
+-                      </h2>
+-                      <p className="text-xs font-bold text-charcoal-500">
+-                        {countryNames[entry.country]}
+-                      </p>
+-                    </div>
+-                  </div>
+-                  <span className={`rounded-full px-3 py-1 text-xs font-black ${style.badge}`}>
+-                    {style.label(change.pct)}
++      {/* كروت الاشتراكات */}
++      <div className="grid gap-5 md:grid-cols-2">
++        {entries.map((entry, ei) => {
++          const change = entryChange(entry);
++          const style = dirStyles[change.dir];
++          return (
++            <article key={`${entry.appSlug}-${entry.country}-${ei}`} className="card-elegant p-6">
++              <div className="flex items-start justify-between gap-3">
++                <div className="flex items-center gap-3">
++                  <span className="w-12 h-12 rounded-2xl bg-cream-100 flex items-center justify-center text-3xl shadow-soft">
++                    {entry.icon}
+                   </span>
++                  <div>
++                    <h2 className="font-bold text-lg text-brand-900">
++                      <Link href={`/apps/${entry.appSlug}`} className="hover:text-accent-600 transition">
++                        {entry.name}
++                      </Link>
++                    </h2>
++                    <p className="text-xs font-bold text-charcoal-500">
++                      {countryNames[entry.country]}
++                    </p>
++                  </div>
+                 </div>
+-
+-                <ul className="mt-5 space-y-3">
+-                  {entry.plans.map((plan, pi) => {
+-                    const latest = latestPrice(plan);
+-                    const ch = priceChange(plan);
+-                    if (!latest) return null;
+-                    return (
+-                      <li
+-                        key={pi}
+-                        className="flex items-center justify-between gap-3 rounded-xl bg-cream-50 border border-cream-200 px-4 py-3"
+-                      >
+-                        <div className="min-w-0">
+-                          <p className="font-bold text-sm text-charcoal-800 truncate">
+-                            {plan.name}
+-                            {plan.note && (
+-                              <span className="mr-2 font-normal text-xs text-charcoal-500">
+-                                {plan.note}
+-                              </span>
+-                            )}
+-                          </p>
+-                          <p className="text-lg font-black text-brand-900" dir="ltr">
+-                            {formatPrice(latest.price, entry.currency)}{" "}
+-                            <span className="text-xs font-bold text-charcoal-500">
+-                              {currencySymbols[entry.currency]} / ش
++                <span className={`rounded-full px-3 py-1 text-xs font-black ${style.badge}`}>
++                  {style.label(change.pct)}
++                </span>
++              </div>
++
++              <ul className="mt-5 space-y-3">
++                {entry.plans.map((plan, pi) => {
++                  const latest = latestPrice(plan);
++                  const ch = priceChange(plan);
++                  if (!latest) return null;
++                  return (
++                    <li
++                      key={pi}
++                      className="flex items-center justify-between gap-3 rounded-xl bg-cream-50 border border-cream-200 px-4 py-3"
++                    >
++                      <div className="min-w-0">
++                        <p className="font-bold text-sm text-charcoal-800 truncate">
++                          {plan.name}
++                          {plan.note && (
++                            <span className="mr-2 font-normal text-xs text-charcoal-500">
++                              {plan.note}
+                             </span>
+-                          </p>
+-                          {ch.dir === "same" && ch.oldDate && (
+-                            <p className="text-xs text-slate-400">
+-                              ثابت منذ {ch.oldDate}
+-                            </p>
+-                          )}
+-                          {(ch.dir === "up" || ch.dir === "down") && (
+-                            <p className={`text-xs font-bold ${ch.dir === "up" ? "text-red-600" : "text-emerald-600"}`}>
+-                              {ch.dir === "up" ? "▲" : "▼"} {ch.pct}% منذ {ch.oldDate}
+-                            </p>
+                           )}
+-                        </div>
+-                        <PriceSparkline points={plan.points} trend={ch.dir} />
+-                      </li>
+-                    );
+-                  })}
+-                </ul>
+-
+-                <p className="mt-4 text-xs text-charcoal-500 flex items-center justify-between">
+-                  <span>🔄 آخر مراجعة: {entry.updatedAt}</span>
+-                  <Link
+-                    href={`/apps/${entry.appSlug}`}
+-                    className="font-bold text-accent-600 hover:text-accent-700"
+-                  >
+-                    صفحة التطبيق ←
+-                  </Link>
+-                </p>
+-              </article>
+-            );
+-          })}
+-        </div>
+-
+-        {/* المنهجية — الثقة */}
+-        <section className="card-elegant p-6 border-r-4 border-r-accent-400">
+-          <h2 className="heading-elegant text-xl text-brand-900">📜 إزاي بنرصد الأسعار؟</h2>
+-          <ul className="mt-3 space-y-2 text-sm leading-7 text-charcoal-800">
+-            <li className="flex gap-2"><span aria-hidden>•</span> مراجعة دورية للأسعار الرسمية المنشورة من كل منصة، وتوثيق كل تغيّر بتاريخه.</li>
+-            <li className="flex gap-2"><span aria-hidden>•</span> الأسعار لا تشمل ضريبة القيمة المضافة وقد تختلف حسب وسيلة الدفع (تطبيق/ويب/فاتورة محمول).</li>
+-            <li className="flex gap-2"><span aria-hidden>•</span> أول ما سعر يتحرك، التنبيه بيوصل للمشتركين في رادار الأسعار فورًا.</li>
+-          </ul>
+-        </section>
++                        </p>
++                        <p className="text-lg font-black text-brand-900" dir="ltr">
++                          {formatPrice(latest.price, entry.currency)}{" "}
++                          <span className="text-xs font-bold text-charcoal-500">
++                            {currencySymbols[entry.currency]} / ش
++                          </span>
++                        </p>
++                        {ch.dir === "same" && ch.oldDate && (
++                          <p className="text-xs text-slate-400">
++                            ثابت منذ {ch.oldDate}
++                          </p>
++                        )}
++                        {(ch.dir === "up" || ch.dir === "down") && (
++                          <p className={`text-xs font-bold ${ch.dir === "up" ? "text-red-600" : "text-emerald-600"}`}>
++                            {ch.dir === "up" ? "▲" : "▼"} {ch.pct}% منذ {ch.oldDate}
++                          </p>
++                        )}
++                      </div>
++                      <PriceSparkline points={plan.points} trend={ch.dir} />
++                    </li>
++                  );
++                })}
++              </ul>
++
++              <p className="mt-4 text-xs text-charcoal-500 flex items-center justify-between">
++                <span>🔄 آخر مراجعة: {entry.updatedAt}</span>
++                <Link
++                  href={`/apps/${entry.appSlug}`}
++                  className="font-bold text-accent-600 hover:text-accent-700"
++                >
++                  صفحة التطبيق ←
++                </Link>
++              </p>
++            </article>
++          );
++        })}
+       </div>
++
++      {/* المنهجية — الثقة */}
++      <section className="card-elegant p-6 border-r-4 border-r-accent-400">
++        <h2 className="heading-elegant text-xl text-brand-900">📜 إزاي بنرصد الأسعار؟</h2>
++        <ul className="mt-3 space-y-2 text-sm leading-7 text-charcoal-800">
++          <li className="flex gap-2"><span aria-hidden>•</span> مراجعة دورية للأسعار الرسمية المنشورة من كل منصة، وتوثيق كل تغيّر بتاريخه.</li>
++          <li className="flex gap-2"><span aria-hidden>•</span> الأسعار لا تشمل ضريبة القيمة المضافة وقد تختلف حسب وسيلة الدفع (تطبيق/ويب/فاتورة محمول).</li>
++          <li className="flex gap-2"><span aria-hidden>•</span> أول ما سعر يتحرك، التنبيه بيوصل للمشتركين في رادار الأسعار فورًا.</li>
++        </ul>
++      </section>
+     </div>
+   );
++
++  return (
++    <RadarHub
++      subs={subsContent}
++      uc={<UcRadarContent />}
++      telecom={<TelecomRadarContent />}
++      ai={<AiRadarContent rate={rate} source={source} />}
++    />
++  );
+ }
+diff --git a/src/app/telecom-radar/page.tsx b/src/app/telecom-radar/page.tsx
+index 2303cb9..f6600ed 100644
+--- a/src/app/telecom-radar/page.tsx
++++ b/src/app/telecom-radar/page.tsx
+@@ -1,15 +1,7 @@
+ import type { Metadata } from "next";
+-import Link from "next/link";
+ import { buildMeta } from "@/lib/seo";
+-import {
+-  BUNDLES,
+-  NETWORK_LABELS,
+-  TELECOM_REVIEW_DATE_AR,
+-  perGb,
+-  bestPerGb,
+-  type Bundle
+-} from "@/lib/telecom-data";
+-import { TelecomCalculator } from "@/components/telecom-calculator";
++import { TELECOM_REVIEW_DATE_AR } from "@/lib/telecom-data";
++import { TelecomRadarContent } from "@/components/radars/telecom-content";
+ 
+ export const metadata: Metadata = buildMeta({
+   title: "رادار الباقات — أرخص جيجابايت في مصر (فودافون/أورنج/WE)",
+@@ -19,48 +11,9 @@ export const metadata: Metadata = buildMeta({
+   keywords: ["باقات الإنترنت مصر", "أرخص باقة نت", "باقات فودافون", "باقات WE", "أنظمة أورنج"]
+ });
+ 
+-const fmt = (n: number) => n.toLocaleString("ar-EG");
+-
+-function BundleRow({ b, best }: { b: Bundle; best: boolean }) {
+-  return (
+-    <div
+-      className={`flex items-center justify-between gap-3 rounded-2xl border px-5 py-3 ${
+-        best ? "border-sage-300 bg-sage-50" : "border-cream-200 bg-white"
+-      }`}
+-    >
+-      <div className="min-w-0">
+-        <div className="flex items-center gap-2 flex-wrap">
+-          <span className="font-bold text-brand-900">{b.name}</span>
+-          <span className="text-[11px] text-charcoal-400">{NETWORK_LABELS[b.network]}</span>
+-          {best && (
+-            <span className="rounded-full bg-sage-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
+-              ⭐ أرخص جيجا
+-            </span>
+-          )}
+-        </div>
+-        {b.extra && <p className="text-xs text-charcoal-500 mt-0.5">{b.extra}</p>}
+-        {b.sourceNote && <p className="text-[11px] text-charcoal-400">{b.sourceNote}</p>}
+-      </div>
+-      <div className="text-end shrink-0">
+-        <div className="font-extrabold text-brand-900">{fmt(b.priceEgp)} ج</div>
+-        <div className={`text-xs font-bold ${best ? "text-sage-700" : "text-charcoal-500"}`}>
+-          {perGb(b).toFixed(2)} ج/جيجا
+-        </div>
+-      </div>
+-    </div>
+-  );
+-}
+-
+ export default function TelecomRadarPage() {
+-  const bestAir = bestPerGb("air");
+-  const bestMixed = bestPerGb("mixed");
+-  const airBundles = [...BUNDLES.filter((b) => b.kind === "air")].sort((a, b) => perGb(a) - perGb(b));
+-  const mobileData = [...BUNDLES.filter((b) => b.kind === "mobile-data")].sort((a, b) => perGb(a) - perGb(b));
+-  const mixed = [...BUNDLES.filter((b) => b.kind === "mixed")].sort((a, b) => perGb(a) - perGb(b));
+-
+   return (
+-    <div className="mx-auto max-w-6xl space-y-10 animate-fade-in">
+-      {/* Hero */}
++    <div className="mx-auto max-w-6xl space-y-8 animate-fade-in">
+       <div className="rounded-3xl gradient-brand p-8 sm:p-10 text-white text-center">
+         <div className="text-6xl mb-3">📶</div>
+         <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">رادار الباقات</h1>
+@@ -69,79 +22,11 @@ export default function TelecomRadarPage() {
+           إحنا بنوحّدها بمقياس واحد: <strong>الجنيه لكل جيجابايت</strong>، زي سعر اللتر في البنزين.
+         </p>
+         <p className="mt-3 text-xs text-white/60">
+-          المراجعة: {TELECOM_REVIEW_DATE_AR} · المصادر: قوائم الشركات + تغطيات صحفية موثّقة
+-        </p>
+-      </div>
+-
+-      {/* الرقم الكبير */}
+-      <div className="grid gap-4 md:grid-cols-3 text-center">
+-        <div className="rounded-3xl bg-white p-6 shadow-soft">
+-          <div className="text-sm text-charcoal-500 mb-1">أرخص جيجا هوائي</div>
+-          <div className="text-3xl font-extrabold text-brand-900">{perGb(bestAir).toFixed(2)} ج</div>
+-          <div className="text-xs text-charcoal-400 mt-1">{bestAir.name} — {fmt(bestAir.priceEgp)} ج</div>
+-        </div>
+-        <div className="rounded-3xl bg-white p-6 shadow-soft">
+-          <div className="text-sm text-charcoal-500 mb-1">أرخص (نت + مكالمات)</div>
+-          <div className="text-3xl font-extrabold text-brand-900">{perGb(bestMixed).toFixed(2)} ج</div>
+-          <div className="text-xs text-charcoal-400 mt-1">{bestMixed.name}</div>
+-        </div>
+-        <div className="rounded-3xl border-2 border-accent-300 bg-accent-50 p-6 shadow-soft">
+-          <div className="text-sm text-accent-700 mb-1">الدرس</div>
+-          <div className="text-base font-extrabold text-brand-900">الأصغر باقة الأعلى سعرًا</div>
+-          <div className="text-xs text-charcoal-500 mt-1">فارق الجيجا بين الباقات يوصل ٤ أضعاف</div>
+-        </div>
+-      </div>
+-
+-      {/* الهوائي */}
+-      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
+-        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🏠 الهوائي (مودم/راوتر) — مرتب بسعر الجيجا</h2>
+-        <p className="text-sm text-charcoal-500">للبيت والشغل الثقيل — مقارنة مباشرة عبر الشبكات الثلاث.</p>
+-        <div className="space-y-2">
+-          {airBundles.map((b) => (
+-            <BundleRow key={b.id} b={b} best={b.id === bestAir.id} />
+-          ))}
+-        </div>
+-      </section>
+-
+-      {/* الحاسبة */}
+-      <TelecomCalculator />
+-
+-      {/* نت الموبايل */}
+-      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
+-        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">📱 باقات نت الموبايل</h2>
+-        <p className="text-sm text-charcoal-500">للتصفح اليومي من الموبايل — سوبر ميجابايت بتتخصم مضاعفة في الاستخدام العالي حسب شروط الشركة.</p>
+-        <div className="space-y-2">
+-          {mobileData.map((b) => (
+-            <BundleRow key={b.id} b={b} best={false} />
+-          ))}
+-        </div>
+-      </section>
+-
+-      {/* المشتركة */}
+-      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
+-        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🎁 باقات مشتركة (نت + مكالمات)</h2>
+-        <p className="text-sm text-charcoal-500">
+-          سعر الجيجا هنا «لو استخدمت الباقة كلها نت» — لو هتكلم كتير فعلًا، الدقائق المضافة بترفع القيمة جدًا.
+-        </p>
+-        <div className="space-y-2">
+-          {mixed.map((b) => (
+-            <BundleRow key={b.id} b={b} best={b.id === bestMixed.id} />
+-          ))}
+-        </div>
+-      </section>
+-
+-      {/* صدق الأرقام */}
+-      <div className="rounded-3xl border-2 border-amber-200 bg-amber-50 p-6 sm:p-8 space-y-2">
+-        <h2 className="heading-elegant text-2xl text-amber-800">⚠️ ثلاث حقائق قبل ما تشترك</h2>
+-        <ul className="text-sm text-amber-900 space-y-2">
+-          <li>• <strong>الأسعار بتتغير مع كل زيادة</strong> — آخر موجة مايو ٢٠٢٦. تأكد من تطبيق شركتك قبل الاشتراك، والجدول ده مرجع للقيمة مش فاتورة.</li>
+-          <li>• <strong>الفليكس = ١ دقيقة لنفس الشبكة</strong> — لكن الشبكات التانية بـ ٢ فليكس؛ والنت بـ ١ (وسوبر فليكس بيضاعفها). إحنا حسبناها نت خالص صراحة.</li>
+-          <li>• <strong>عروض الولاء مش هنا</strong> — شركات الاتصالات بتدي ديسكونت شخصي في تطبيقها للخطوط القديمة؛ الأرقام دي هي القوائم المعلنة.</li>
+-        </ul>
+-        <p className="text-xs text-amber-700 pt-2">
+-          <Link href="/disclosure" className="font-bold underline">عقد الأرقام عندنا</Link> · نفس الداتا JSON: <code dir="ltr" className="rounded bg-white px-2 py-0.5">/api/telecom-radar</code>
++          المراجعة: {TELECOM_REVIEW_DATE_AR} · المصادر: قوائم الشركات + تغطيات صحفية موثّقة ·
++          جزء من <a href="/price-radar" className="underline">مركز الرادارات</a>
+         </p>
+       </div>
++      <TelecomRadarContent />
+     </div>
+   );
+ }
+diff --git a/src/app/uc-radar/page.tsx b/src/app/uc-radar/page.tsx
+index 4da2fd7..43cdb47 100644
+--- a/src/app/uc-radar/page.tsx
++++ b/src/app/uc-radar/page.tsx
+@@ -1,16 +1,7 @@
+ import type { Metadata } from "next";
+-import Link from "next/link";
+ import { buildMeta } from "@/lib/seo";
+-import {
+-  OFFICIAL_PACKS,
+-  MARKET_AVERAGE,
+-  TRUSTED_CHANNELS,
+-  UC_REVIEW_DATE_AR,
+-  packTotal,
+-  pricePer100,
+-  bestValuePackIndex
+-} from "@/lib/uc-data";
+-import { UcCalculator } from "@/components/uc-calculator";
++import { UC_REVIEW_DATE_AR } from "@/lib/uc-data";
++import { UcRadarContent } from "@/components/radars/uc-content";
+ 
+ export const metadata: Metadata = buildMeta({
+   title: "رادار شدات ببجي — سعر UC في مصر بالجنيه (رسمي vs سوق)",
+@@ -20,19 +11,10 @@ export const metadata: Metadata = buildMeta({
+   keywords: ["سعر شدات ببجي", "UC price Egypt", "شدات ببجي بالجنيه", "Midasbuy", "شحن UC"]
+ });
+ 
+-const fmt = (n: number) => n.toLocaleString("ar-EG");
+-
++// صفحة مستقلة (SEO + مشاركة) — المحتوى نفسه بيتشارك مع مركز الرادارات
+ export default function UcRadarPage() {
+-  const bestIdx = bestValuePackIndex();
+-  const p660 = OFFICIAL_PACKS.find((p) => p.uc === 600)!;
+-  const market660 = MARKET_AVERAGE.p660;
+-  const officialPer100 = pricePer100(p660);
+-  const marketPer100 = (market660.avgEgp / market660.ucTotal) * 100;
+-  const savePct = Math.round((1 - officialPer100 / marketPer100) * 100);
+-
+   return (
+-    <div className="mx-auto max-w-6xl space-y-10 animate-fade-in">
+-      {/* Hero */}
++    <div className="mx-auto max-w-6xl space-y-8 animate-fade-in">
+       <div className="rounded-3xl gradient-brand p-8 sm:p-10 text-white text-center">
+         <div className="text-6xl mb-3">🎮</div>
+         <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">رادار شدات ببجي</h1>
+@@ -41,188 +23,11 @@ export default function UcRadarPage() {
+           وأي «عرض» في السوق بيوفّر فلوس ولا مجرد شكل.
+         </p>
+         <p className="mt-3 text-xs text-white/60">
+-          المراجعة: {UC_REVIEW_DATE_AR} · المصدر الرسمي: Midasbuy (الشريك الرسمي لببجي)
+-        </p>
+-      </div>
+-
+-      {/* الرقم الكبير */}
+-      <div className="grid gap-4 md:grid-cols-3 text-center">
+-        <div className="rounded-3xl bg-white p-6 shadow-soft">
+-          <div className="text-sm text-charcoal-500 mb-1">باقة 660 UC رسمي</div>
+-          <div className="text-3xl font-extrabold text-brand-900">{fmt(p660.priceEgp)} ج</div>
+-          <div className="text-xs text-charcoal-400 mt-1">{officialPer100.toFixed(2)} ج / 100 UC</div>
+-        </div>
+-        <div className="rounded-3xl bg-white p-6 shadow-soft">
+-          <div className="text-sm text-charcoal-500 mb-1">متوسط السوق (استرشادي)</div>
+-          <div className="text-3xl font-extrabold text-charcoal-700">{fmt(market660.avgEgp)} ج</div>
+-          <div className="text-xs text-charcoal-400 mt-1">{marketPer100.toFixed(2)} ج / 100 UC</div>
+-        </div>
+-        <div className="rounded-3xl border-2 border-sage-300 bg-sage-50 p-6 shadow-soft">
+-          <div className="text-sm text-sage-700 mb-1">التوفير من الرسمي</div>
+-          <div className="text-3xl font-extrabold text-sage-700">≈ {fmt(savePct)}%</div>
+-          <div className="text-xs text-sage-600 mt-1">على نفس الـ 660 شدة</div>
+-        </div>
+-      </div>
+-
+-      {/* جدول سعر الوحدة */}
+-      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
+-        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900 mb-1">
+-          📊 جدول الأسعار الرسمية — مين أرخص وحدة؟
+-        </h2>
+-        <p className="text-sm text-charcoal-500 mb-5">
+-          الترتيب بالسعر لكل 100 UC — كل ما الرقم أقل، الباقة أحسن في قيمة الفلوس.
+-        </p>
+-        <div className="overflow-x-auto -mx-2 px-2">
+-          <table className="w-full min-w-[560px] text-sm">
+-            <thead>
+-              <tr className="border-b-2 border-cream-200 text-charcoal-500">
+-                <th className="py-3 text-start font-bold">الباقة</th>
+-                <th className="py-3 text-start font-bold">الإجمالي</th>
+-                <th className="py-3 text-start font-bold">السعر الرسمي</th>
+-                <th className="py-3 text-start font-bold">ج / 100 UC</th>
+-                <th className="py-3 text-start font-bold">تقييم القيمة</th>
+-              </tr>
+-            </thead>
+-            <tbody>
+-              {OFFICIAL_PACKS.map((p, i) => {
+-                const per = pricePer100(p);
+-                const isBest = i === bestIdx;
+-                return (
+-                  <tr
+-                    key={p.uc}
+-                    className={`border-b border-cream-100 ${isBest ? "bg-sage-50" : ""}`}
+-                  >
+-                    <td className="py-3 font-bold text-brand-900">
+-                      {fmt(p.uc)} UC
+-                      {p.bonus > 0 && (
+-                        <span className="text-sage-600 font-semibold"> +{fmt(p.bonus)} هدية</span>
+-                      )}
+-                    </td>
+-                    <td className="py-3 text-charcoal-600">{fmt(packTotal(p))}</td>
+-                    <td className="py-3 font-bold">{fmt(p.priceEgp)} ج</td>
+-                    <td className="py-3">
+-                      <span className={`font-extrabold ${isBest ? "text-sage-700" : "text-charcoal-700"}`}>
+-                        {per.toFixed(2)}
+-                      </span>
+-                    </td>
+-                    <td className="py-3">
+-                      {isBest ? (
+-                        <span className="rounded-full bg-sage-500 px-3 py-1 text-xs font-bold text-white">
+-                          ⭐ أحسن قيمة
+-                        </span>
+-                      ) : per < 70 ? (
+-                        <span className="text-xs text-sage-600 font-semibold">قيمة كويسة</span>
+-                      ) : (
+-                        <span className="text-xs text-charcoal-400">أعلى من المتوسط</span>
+-                      )}
+-                    </td>
+-                  </tr>
+-                );
+-              })}
+-            </tbody>
+-          </table>
+-        </div>
+-        <p className="mt-4 rounded-xl bg-brand-50 p-3 text-xs text-charcoal-600 border-r-4 border-accent-400">
+-          💡 الدرس الجدول بيقوله: الباقات الصغيرة وحدة السعر فيها أغلى ~٢٠٪ من الكبيرة — الطالب اللي بيشحن 60 كل أسبوع
+-          بيدفع أزيد من اللي جمع وشحن باقة كبيرة في الإجمالي.
++          المراجعة: {UC_REVIEW_DATE_AR} · المصدر الرسمي: Midasbuy (الشريك الرسمي لببجي) ·
++          جزء من <a href="/price-radar" className="underline">مركز الرادارات</a>
+         </p>
+       </div>
+-
+-      {/* حاسبة الشدات */}
+-      <UcCalculator />
+-
+-      {/* مقارنة السوق */}
+-      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
+-        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900 mb-1">⚖️ الرسمي vs متوسط السوق</h2>
+-        <p className="text-sm text-charcoal-500 mb-5">
+-          متوسط الأسعار المعروضة في السوق المصري (بائعين تالت طرف) — <strong>استرشادي مش عرض بيع</strong>،
+-          وبيشمل مكونين خطر معروفين: تأخير الشحن على حسابك بدل كود رسمي، أو مصادر غير موثقة.
+-        </p>
+-        <div className="space-y-3">
+-          {[
+-            { label: "60 UC", pack: OFFICIAL_PACKS[1], market: MARKET_AVERAGE.p60 },
+-            { label: "325 UC", pack: OFFICIAL_PACKS[2], market: MARKET_AVERAGE.p325 },
+-            { label: "660 UC", pack: p660, market: MARKET_AVERAGE.p660 },
+-            { label: "1800 UC", pack: OFFICIAL_PACKS[4], market: MARKET_AVERAGE.p1800 },
+-            { label: "8100 UC", pack: OFFICIAL_PACKS[6], market: MARKET_AVERAGE.p8100 }
+-          ].map(({ label, pack, market }) => {
+-            const off = pack.priceEgp;
+-            const mkt = market.avgEgp;
+-            const pctOff = Math.min(100, (off / Math.max(mkt, off)) * 100);
+-            const pctMkt = Math.min(100, (mkt / Math.max(mkt, off)) * 100);
+-            const cheaper = off < mkt;
+-            return (
+-              <div key={label} className="space-y-1">
+-                <div className="flex justify-between text-sm font-bold text-brand-900">
+-                  <span>{label}</span>
+-                  <span>
+-                    {cheaper
+-                      ? `الرسمي أرخص بـ ${fmt(Math.round(mkt - off))} ج`
+-                      : `السوق أرخص بـ ${fmt(Math.round(off - mkt))} ج`}
+-                  </span>
+-                </div>
+-                <div className="flex items-center gap-2 text-xs">
+-                  <span className="w-16 text-charcoal-500">رسمي {fmt(off)}ج</span>
+-                  <div className="flex-1 h-2.5 rounded-full bg-cream-100 overflow-hidden">
+-                    <div className="h-full rounded-full bg-accent-400" style={{ width: `${pctOff}%` }} />
+-                  </div>
+-                </div>
+-                <div className="flex items-center gap-2 text-xs">
+-                  <span className="w-16 text-charcoal-500">السوق {fmt(mkt)}ج</span>
+-                  <div className="flex-1 h-2.5 rounded-full bg-cream-100 overflow-hidden">
+-                    <div className="h-full rounded-full bg-charcoal-300" style={{ width: `${pctMkt}%` }} />
+-                  </div>
+-                </div>
+-              </div>
+-            );
+-          })}
+-        </div>
+-      </div>
+-
+-      {/* قنوات موثوقة + أمان */}
+-      <div className="grid gap-5 md:grid-cols-2">
+-        <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
+-          <h2 className="heading-elegant text-2xl text-brand-900 mb-4">🛡️ قنوات شحن موثوقة</h2>
+-          <ul className="space-y-3">
+-            {TRUSTED_CHANNELS.map((c) => (
+-              <li key={c.name} className="flex items-start gap-3">
+-                <span className="mt-0.5 text-lg" aria-hidden>{c.official ? "✅" : "🟢"}</span>
+-                <div className="flex-1">
+-                  <a
+-                    href={c.url}
+-                    target="_blank"
+-                    rel="nofollow noopener"
+-                    className="font-bold text-brand-700 hover:underline"
+-                  >
+-                    {c.name} ↗
+-                  </a>
+-                  <p className="text-xs text-charcoal-500">{c.note}</p>
+-                </div>
+-              </li>
+-            ))}
+-          </ul>
+-        </div>
+-        <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-6 sm:p-8">
+-          <h2 className="heading-elegant text-2xl text-red-800 mb-4">⚠️ حذار من دي</h2>
+-          <ul className="space-y-2 text-sm text-red-900">
+-            <li>• «سعر أقل من الرسمي بكتير» — الشدات الرسمية تكلفتها معروفة؛ الخصم الكبير غالبًا سرقة كروت أو تلاعب برد فأموال.</li>
+-            <li>• طلب الـ Player ID <strong>مع الباسورد</strong> — الشحن الرسمي يحتاج الـ ID بس.</li>
+-            <li>• صفحات تعمل شحن «عبر بنظام الرّد» تأخذ الفلوس وبعدين الببجي بيسحب الشدات لما تتسرّق المدفوعات.</li>
+-            <li>• مطالبة بـ OTP أو لقطة شاشة لحسابك — ده فتح لسرقة الحساب مش شحن.</li>
+-          </ul>
+-          <p className="mt-4 text-xs text-red-700">
+-            دليل كامل: <Link href="/disclosure" className="font-bold underline">فلسفة الأرقام عندنا</Link> ·
+-            <Link href="/apps" className="font-bold underline"> تطبيقات شحن وبطاقات ثانية 🔋</Link>
+-          </p>
+-        </div>
+-      </div>
+-
+-      {/* بيانات مفتوحة */}
+-      <div className="rounded-2xl bg-brand-50 p-5 text-sm text-charcoal-600 text-center">
+-        📡 نفس الجدول متاح JSON للصحافة والباحثين:{" "}
+-        <code className="rounded bg-white px-2 py-0.5 text-xs" dir="ltr">/api/uc-radar</code>
+-        {" — "}بشرط الإشارة لـ AppHub كمصدر.
+-      </div>
++      <UcRadarContent />
+     </div>
+   );
+ }
+diff --git a/src/components/radar-hub.tsx b/src/components/radar-hub.tsx
+new file mode 100644
+index 0000000..891ab15
+--- /dev/null
++++ b/src/components/radar-hub.tsx
+@@ -0,0 +1,69 @@
++"use client";
++
++import { useState, type ReactNode } from "react";
++
++type TabId = "subs" | "uc" | "telecom" | "ai";
++
++const TABS: { id: TabId; icon: string; label: string; desc: string }[] = [
++  { id: "subs", icon: "💳", label: "الاشتراكات والتطبيقات", desc: "تاريخ الأسعار نقطة بنقطة" },
++  { id: "uc", icon: "🎮", label: "شدات الألعاب", desc: "جنيه / 100 UC" },
++  { id: "telecom", icon: "📶", label: "باقات الإنترنت", desc: "جنيه / جيجابايت" },
++  { id: "ai", icon: "🤖", label: "اشتراكات AI", desc: "دولار → جنيه لايف" }
++];
++
++/**
++ * مركز الرادارات — توبات موحّدة فوق أربع رادارات متخصصة.
++ * المحتوى بييجي مهيّأ من السيرفر (RSC props) والتوبات بتبدّل محليًا — بلا fetch.
++ * صفحات الرادارات المستقلة (/uc-radar وشركاه) فضلت شغالة للـ SEO والمشاركة المباشرة.
++ */
++export function RadarHub({
++  subs,
++  uc,
++  telecom,
++  ai
++}: {
++  subs: ReactNode;
++  uc: ReactNode;
++  telecom: ReactNode;
++  ai: ReactNode;
++}) {
++  const [tab, setTab] = useState<TabId>("subs");
++  const content: Record<TabId, ReactNode> = { subs, uc, telecom, ai };
++
++  return (
++    <div className="bg-cream-50 min-h-screen">
++      <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
++        {/* هيدر المركز */}
++        <div className="text-center space-y-2">
++          <h1 className="heading-display text-3xl md:text-4xl text-brand-900">📡 مركز الرادارات</h1>
++          <p className="text-charcoal-500 max-w-xl mx-auto text-sm">
++            كل مستوايات التوفير في مكان واحد — اشتراكاتك، شداتك، باقتك، وأدوات الـ AI بتاعتك.
++          </p>
++        </div>
++
++        {/* التوبات */}
++        <div className="flex flex-wrap justify-center gap-2" role="tablist">
++          {TABS.map((t) => (
++            <button
++              key={t.id}
++              role="tab"
++              aria-selected={tab === t.id}
++              onClick={() => setTab(t.id)}
++              className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${
++                tab === t.id
++                  ? "bg-brand-900 text-white shadow-soft scale-[1.03]"
++                  : "bg-white border border-cream-200 text-charcoal-500 hover:border-accent-300 hover:text-brand-900"
++              }`}
++              title={t.desc}
++            >
++              {t.icon} {t.label}
++            </button>
++          ))}
++        </div>
++
++        {/* المحتوى */}
++        <div role="tabpanel">{content[tab]}</div>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/radars/ai-content.tsx b/src/components/radars/ai-content.tsx
+new file mode 100644
+index 0000000..2d16d11
+--- /dev/null
++++ b/src/components/radars/ai-content.tsx
+@@ -0,0 +1,118 @@
++import { AI_TOOLS, egp, type AiTool } from "@/lib/ai-radar-data";
++
++const fmtUsd = (n: number) => `$${n}`;
++
++function ToolCard({ tool, rate }: { tool: AiTool; rate: number | null }) {
++  const cheapestPaid = tool.tiers[0];
++  const egpCheapest = cheapestPaid ? egp(cheapestPaid.usd, rate) : null;
++
++  return (
++    <div className="rounded-3xl bg-white p-6 shadow-soft space-y-4">
++      <div className="flex items-center gap-3">
++        <span className={`w-11 h-11 rounded-2xl flex items-center justify-center text-2xl ${tool.color}`}>
++          {tool.icon}
++        </span>
++        <div className="flex-1">
++          <h3 className="font-extrabold text-brand-900 text-lg">{tool.name}</h3>
++          <p className="text-xs text-charcoal-500">{tool.bestFor}</p>
++        </div>
++        {cheapestPaid ? (
++          <div className="text-end">
++            <div className="font-extrabold text-accent-600 text-lg">{fmtUsd(cheapestPaid.usd)}</div>
++            <div className="text-[11px] text-charcoal-500">
++              {egpCheapest != null ? `≈ ${egpCheapest.toLocaleString("ar-EG")} ج` : "بالدولار"}
++            </div>
++          </div>
++        ) : (
++          <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-bold text-sage-700">مجاني 💚</span>
++        )}
++      </div>
++
++      <table className="w-full text-sm">
++        <tbody>
++          <tr className="border-b border-cream-100">
++            <td className="py-2 font-bold text-sage-700">مجاني</td>
++            <td className="py-2 text-charcoal-600" colSpan={2}>{tool.free}</td>
++          </tr>
++          {tool.tiers.map((t) => {
++            const e = egp(t.usd, rate);
++            return (
++              <tr key={t.name} className="border-b border-cream-100">
++                <td className="py-2.5 w-1/4">
++                  <span className="font-bold text-brand-900">{t.name}</span>
++                </td>
++                <td className="py-2.5 w-1/4 whitespace-nowrap">
++                  <span className="font-extrabold">{fmtUsd(t.usd)}</span>
++                  {e != null && (
++                    <span className="text-xs text-charcoal-500"> ≈ {e.toLocaleString("ar-EG")} ج</span>
++                  )}
++                </td>
++                <td className="py-2.5 text-xs text-charcoal-500">{t.tag}</td>
++              </tr>
++            );
++          })}
++        </tbody>
++      </table>
++    </div>
++  );
++}
++
++/** محتوى رادار اشتراكات AI — سعر الصرف بيتبعت برّا (سيرفر) عشان يفضل لايف */
++export function AiRadarContent({ rate, source }: { rate: number | null; source: string | null }) {
++  const cheapest = AI_TOOLS
++    .flatMap((t) => t.tiers.map((tier) => ({ tool: t.name, ...tier })))
++    .sort((a, b) => a.usd - b.usd)[0];
++  const allIn = AI_TOOLS
++    .map((t) => t.tiers.find((x) => x.usd >= 19.99 && x.usd <= 21))
++    .filter(Boolean)
++    .reduce((s, x) => s + (x?.usd ?? 0), 0);
++  const egpCheapest = egp(cheapest.usd, rate);
++  const egpAllIn = rate != null ? Math.round(allIn * rate) : null;
++
++  return (
++    <div className="space-y-10">
++      {/* الرقم الكبير */}
++      <div className="grid gap-4 md:grid-cols-3 text-center">
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">أرخص AI مدفوع</div>
++          <div className="text-2xl font-extrabold text-brand-900">
++            {fmtUsd(cheapest.usd)}
++            {egpCheapest != null && <span className="text-lg"> ≈ {egpCheapest.toLocaleString("ar-EG")} ج</span>}
++          </div>
++          <div className="text-xs text-charcoal-400 mt-1">{cheapest.tool} {cheapest.name}/شهر</div>
++        </div>
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">السعر المعياري للسوق</div>
++          <div className="text-2xl font-extrabold text-brand-900">
++            $20{rate != null && <span className="text-lg"> ≈ {Math.round(20 * rate).toLocaleString("ar-EG")} ج</span>}
++          </div>
++          <div className="text-xs text-charcoal-400 mt-1">ChatGPT Plus = Claude Pro ≈ Gemini AI Pro</div>
++        </div>
++        <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-6 shadow-soft">
++          <div className="text-sm text-red-700 mb-1">فخ «كلهم مع بعض»</div>
++          <div className="text-2xl font-extrabold text-red-800">
++            ≈ ${allIn}{egpAllIn != null && <span className="text-lg"> ≈ {egpAllIn.toLocaleString("ar-EG")} ج</span>}
++          </div>
++          <div className="text-xs text-red-600 mt-1">في الشهر — ٧٠٪ منهم نفس الحاجة بصراحة</div>
++        </div>
++      </div>
++
++      {/* الأدوات */}
++      <div className="grid gap-5 md:grid-cols-2">
++        {AI_TOOLS.map((t) => (
++          <ToolCard key={t.id} tool={t} rate={rate} />
++        ))}
++      </div>
++
++      {/* أجندة اختيار ذكي */}
++      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🧭 اختار بذكاء — في ٣ قواعد</h2>
++        <ol className="text-sm text-charcoal-600 space-y-2 list-decimal mr-5">
++          <li><strong>ابدأ ببلاش</strong> — المستوى المجاني عند ChatGPT وGemini كافي للتجربة الحقيقية. لو بتوصل للحد يوميًا ساعتها بس فكر في الدفع.</li>
++          <li><strong>اشتراك واحد يكفي ٩٥٪</strong> — $20 في أي من الكبار التلاتة بينجز نفس الشغل تقريبًا؛ الاشتراك الثاني بيبقى فخ «التخصص الوهمي» إلا لو محتاج مهمة محددة.</li>
++          <li><strong>بكارت مصري بالدولار</strong> — البنك بيحاسبك بسعر الصرف وقت الخصم + ممكن رسوم إضافية بنسبة بسيطة؛ الجنيه الظاهر فوق استرشادي لحظي من {source ?? "المصدر"}.</li>
++        </ol>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/radars/telecom-content.tsx b/src/components/radars/telecom-content.tsx
+new file mode 100644
+index 0000000..b7bfb9d
+--- /dev/null
++++ b/src/components/radars/telecom-content.tsx
+@@ -0,0 +1,124 @@
++import Link from "next/link";
++import {
++  BUNDLES,
++  NETWORK_LABELS,
++  perGb,
++  bestPerGb,
++  type Bundle
++} from "@/lib/telecom-data";
++import { TelecomCalculator } from "@/components/telecom-calculator";
++
++const fmt = (n: number) => n.toLocaleString("ar-EG");
++
++function BundleRow({ b, best }: { b: Bundle; best: boolean }) {
++  return (
++    <div
++      className={`flex items-center justify-between gap-3 rounded-2xl border px-5 py-3 ${
++        best ? "border-sage-300 bg-sage-50" : "border-cream-200 bg-white"
++      }`}
++    >
++      <div className="min-w-0">
++        <div className="flex items-center gap-2 flex-wrap">
++          <span className="font-bold text-brand-900">{b.name}</span>
++          <span className="text-[11px] text-charcoal-400">{NETWORK_LABELS[b.network]}</span>
++          {best && (
++            <span className="rounded-full bg-sage-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
++              ⭐ أرخص جيجا
++            </span>
++          )}
++        </div>
++        {b.extra && <p className="text-xs text-charcoal-500 mt-0.5">{b.extra}</p>}
++        {b.sourceNote && <p className="text-[11px] text-charcoal-400">{b.sourceNote}</p>}
++      </div>
++      <div className="text-end shrink-0">
++        <div className="font-extrabold text-brand-900">{fmt(b.priceEgp)} ج</div>
++        <div className={`text-xs font-bold ${best ? "text-sage-700" : "text-charcoal-500"}`}>
++          {perGb(b).toFixed(2)} ج/جيجا
++        </div>
++      </div>
++    </div>
++  );
++}
++
++/** محتوى رادار الباقات — بيشتغل كصفحة مستقلة وكتوب جوه مركز الرادارات */
++export function TelecomRadarContent() {
++  const bestAir = bestPerGb("air");
++  const bestMixed = bestPerGb("mixed");
++  const airBundles = [...BUNDLES.filter((b) => b.kind === "air")].sort((a, b) => perGb(a) - perGb(b));
++  const mobileData = [...BUNDLES.filter((b) => b.kind === "mobile-data")].sort((a, b) => perGb(a) - perGb(b));
++  const mixed = [...BUNDLES.filter((b) => b.kind === "mixed")].sort((a, b) => perGb(a) - perGb(b));
++
++  return (
++    <div className="space-y-10">
++      {/* الرقم الكبير */}
++      <div className="grid gap-4 md:grid-cols-3 text-center">
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">أرخص جيجا هوائي</div>
++          <div className="text-3xl font-extrabold text-brand-900">{perGb(bestAir).toFixed(2)} ج</div>
++          <div className="text-xs text-charcoal-400 mt-1">{bestAir.name} — {fmt(bestAir.priceEgp)} ج</div>
++        </div>
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">أرخص (نت + مكالمات)</div>
++          <div className="text-3xl font-extrabold text-brand-900">{perGb(bestMixed).toFixed(2)} ج</div>
++          <div className="text-xs text-charcoal-400 mt-1">{bestMixed.name}</div>
++        </div>
++        <div className="rounded-3xl border-2 border-accent-300 bg-accent-50 p-6 shadow-soft">
++          <div className="text-sm text-accent-700 mb-1">الدرس</div>
++          <div className="text-base font-extrabold text-brand-900">الأصغر باقة الأعلى سعرًا</div>
++          <div className="text-xs text-charcoal-500 mt-1">فارق الجيجا بين الباقات يوصل ٤ أضعاف</div>
++        </div>
++      </div>
++
++      {/* الهوائي */}
++      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🏠 الهوائي (مودم/راوتر) — مرتب بسعر الجيجا</h2>
++        <p className="text-sm text-charcoal-500">للبيت والشغل الثقيل — مقارنة مباشرة عبر الشبكات الثلاث.</p>
++        <div className="space-y-2">
++          {airBundles.map((b) => (
++            <BundleRow key={b.id} b={b} best={b.id === bestAir.id} />
++          ))}
++        </div>
++      </section>
++
++      {/* الحاسبة */}
++      <TelecomCalculator />
++
++      {/* نت الموبايل */}
++      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">📱 باقات نت الموبايل</h2>
++        <p className="text-sm text-charcoal-500">للتصفح اليومي من الموبايل — سوبر ميجابايت بتتخصم مضاعفة في الاستخدام العالي حسب شروط الشركة.</p>
++        <div className="space-y-2">
++          {mobileData.map((b) => (
++            <BundleRow key={b.id} b={b} best={false} />
++          ))}
++        </div>
++      </section>
++
++      {/* المشتركة */}
++      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🎁 باقات مشتركة (نت + مكالمات)</h2>
++        <p className="text-sm text-charcoal-500">
++          سعر الجيجا هنا «لو استخدمت الباقة كلها نت» — لو هتكلم كتير فعلًا، الدقائق المضافة بترفع القيمة جدًا.
++        </p>
++        <div className="space-y-2">
++          {mixed.map((b) => (
++            <BundleRow key={b.id} b={b} best={b.id === bestMixed.id} />
++          ))}
++        </div>
++      </section>
++
++      {/* صدق الأرقام */}
++      <div className="rounded-3xl border-2 border-amber-200 bg-amber-50 p-6 sm:p-8 space-y-2">
++        <h2 className="heading-elegant text-2xl text-amber-800">⚠️ ثلاث حقائق قبل ما تشترك</h2>
++        <ul className="text-sm text-amber-900 space-y-2">
++          <li>• <strong>الأسعار بتتغير مع كل زيادة</strong> — آخر موجة مايو ٢٠٢٦. تأكد من تطبيق شركتك قبل الاشتراك، والجدول ده مرجع للقيمة مش فاتورة.</li>
++          <li>• <strong>الفليكس = ١ دقيقة لنفس الشبكة</strong> — لكن الشبكات التانية بـ ٢ فليكس؛ والنت بـ ١ (وسوبر فليكس بيضاعفها). إحنا حسبناها نت خالص صراحة.</li>
++          <li>• <strong>عروض الولاء مش هنا</strong> — شركات الاتصالات بتدي ديسكونت شخصي في تطبيقها للخطوط القديمة؛ الأرقام دي هي القوائم المعلنة.</li>
++        </ul>
++        <p className="text-xs text-amber-700 pt-2">
++          <Link href="/disclosure" className="font-bold underline">عقد الأرقام عندنا</Link> · نفس الداتا JSON: <code dir="ltr" className="rounded bg-white px-2 py-0.5">/api/telecom-radar</code>
++        </p>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/radars/uc-content.tsx b/src/components/radars/uc-content.tsx
+new file mode 100644
+index 0000000..af872dc
+--- /dev/null
++++ b/src/components/radars/uc-content.tsx
+@@ -0,0 +1,202 @@
++import Link from "next/link";
++import {
++  OFFICIAL_PACKS,
++  MARKET_AVERAGE,
++  TRUSTED_CHANNELS,
++  packTotal,
++  pricePer100,
++  bestValuePackIndex
++} from "@/lib/uc-data";
++import { UcCalculator } from "@/components/uc-calculator";
++
++const fmt = (n: number) => n.toLocaleString("ar-EG");
++
++/** محتوى رادار الشدات — بيشتغل كصفحة مستقلة وكتوب جوه مركز الرادارات */
++export function UcRadarContent() {
++  const bestIdx = bestValuePackIndex();
++  const p660 = OFFICIAL_PACKS.find((p) => p.uc === 600)!;
++  const market660 = MARKET_AVERAGE.p660;
++  const officialPer100 = pricePer100(p660);
++  const marketPer100 = (market660.avgEgp / market660.ucTotal) * 100;
++  const savePct = Math.round((1 - officialPer100 / marketPer100) * 100);
++
++  return (
++    <div className="space-y-10">
++      {/* الرقم الكبير */}
++      <div className="grid gap-4 md:grid-cols-3 text-center">
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">باقة 660 UC رسمي</div>
++          <div className="text-3xl font-extrabold text-brand-900">{fmt(p660.priceEgp)} ج</div>
++          <div className="text-xs text-charcoal-400 mt-1">{officialPer100.toFixed(2)} ج / 100 UC</div>
++        </div>
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">متوسط السوق (استرشادي)</div>
++          <div className="text-3xl font-extrabold text-charcoal-700">{fmt(market660.avgEgp)} ج</div>
++          <div className="text-xs text-charcoal-400 mt-1">{marketPer100.toFixed(2)} ج / 100 UC</div>
++        </div>
++        <div className="rounded-3xl border-2 border-sage-300 bg-sage-50 p-6 shadow-soft">
++          <div className="text-sm text-sage-700 mb-1">التوفير من الرسمي</div>
++          <div className="text-3xl font-extrabold text-sage-700">≈ {fmt(savePct)}%</div>
++          <div className="text-xs text-sage-600 mt-1">على نفس الـ 660 شدة</div>
++        </div>
++      </div>
++
++      {/* جدول سعر الوحدة */}
++      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900 mb-1">
++          📊 جدول الأسعار الرسمية — مين أرخص وحدة؟
++        </h2>
++        <p className="text-sm text-charcoal-500 mb-5">
++          الترتيب بالسعر لكل 100 UC — كل ما الرقم أقل، الباقة أحسن في قيمة الفلوس.
++        </p>
++        <div className="overflow-x-auto -mx-2 px-2">
++          <table className="w-full min-w-[560px] text-sm">
++            <thead>
++              <tr className="border-b-2 border-cream-200 text-charcoal-500">
++                <th className="py-3 text-start font-bold">الباقة</th>
++                <th className="py-3 text-start font-bold">الإجمالي</th>
++                <th className="py-3 text-start font-bold">السعر الرسمي</th>
++                <th className="py-3 text-start font-bold">ج / 100 UC</th>
++                <th className="py-3 text-start font-bold">تقييم القيمة</th>
++              </tr>
++            </thead>
++            <tbody>
++              {OFFICIAL_PACKS.map((p, i) => {
++                const per = pricePer100(p);
++                const isBest = i === bestIdx;
++                return (
++                  <tr key={p.uc} className={`border-b border-cream-100 ${isBest ? "bg-sage-50" : ""}`}>
++                    <td className="py-3 font-bold text-brand-900">
++                      {fmt(p.uc)} UC
++                      {p.bonus > 0 && (
++                        <span className="text-sage-600 font-semibold"> +{fmt(p.bonus)} هدية</span>
++                      )}
++                    </td>
++                    <td className="py-3 text-charcoal-600">{fmt(packTotal(p))}</td>
++                    <td className="py-3 font-bold">{fmt(p.priceEgp)} ج</td>
++                    <td className="py-3">
++                      <span className={`font-extrabold ${isBest ? "text-sage-700" : "text-charcoal-700"}`}>
++                        {per.toFixed(2)}
++                      </span>
++                    </td>
++                    <td className="py-3">
++                      {isBest ? (
++                        <span className="rounded-full bg-sage-500 px-3 py-1 text-xs font-bold text-white">
++                          ⭐ أحسن قيمة
++                        </span>
++                      ) : per < 70 ? (
++                        <span className="text-xs text-sage-600 font-semibold">قيمة كويسة</span>
++                      ) : (
++                        <span className="text-xs text-charcoal-400">أعلى من المتوسط</span>
++                      )}
++                    </td>
++                  </tr>
++                );
++              })}
++            </tbody>
++          </table>
++        </div>
++        <p className="mt-4 rounded-xl bg-brand-50 p-3 text-xs text-charcoal-600 border-r-4 border-accent-400">
++          💡 الدرس الجدول بيقوله: الباقات الصغيرة وحدة السعر فيها أغلى ~٢٠٪ من الكبيرة — الطالب اللي بيشحن 60 كل أسبوع
++          بيدفع أزيد من اللي جمع وشحن باقة كبيرة في الإجمالي.
++        </p>
++      </div>
++
++      {/* حاسبة الشدات */}
++      <UcCalculator />
++
++      {/* مقارنة السوق */}
++      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900 mb-1">⚖️ الرسمي vs متوسط السوق</h2>
++        <p className="text-sm text-charcoal-500 mb-5">
++          متوسط الأسعار المعروضة في السوق المصري (بائعين تالت طرف) — <strong>استرشادي مش عرض بيع</strong>،
++          وبيشمل مكونين خطر معروفين: تأخير الشحن على حسابك بدل كود رسمي، أو مصادر غير موثقة.
++        </p>
++        <div className="space-y-3">
++          {[
++            { label: "60 UC", pack: OFFICIAL_PACKS[1], market: MARKET_AVERAGE.p60 },
++            { label: "325 UC", pack: OFFICIAL_PACKS[2], market: MARKET_AVERAGE.p325 },
++            { label: "660 UC", pack: p660, market: MARKET_AVERAGE.p660 },
++            { label: "1800 UC", pack: OFFICIAL_PACKS[4], market: MARKET_AVERAGE.p1800 },
++            { label: "8100 UC", pack: OFFICIAL_PACKS[6], market: MARKET_AVERAGE.p8100 }
++          ].map(({ label, pack, market }) => {
++            const off = pack.priceEgp;
++            const mkt = market.avgEgp;
++            const pctOff = Math.min(100, (off / Math.max(mkt, off)) * 100);
++            const pctMkt = Math.min(100, (mkt / Math.max(mkt, off)) * 100);
++            const cheaper = off < mkt;
++            return (
++              <div key={label} className="space-y-1">
++                <div className="flex justify-between text-sm font-bold text-brand-900">
++                  <span>{label}</span>
++                  <span>
++                    {cheaper
++                      ? `الرسمي أرخص بـ ${fmt(Math.round(mkt - off))} ج`
++                      : `السوق أرخص بـ ${fmt(Math.round(off - mkt))} ج`}
++                  </span>
++                </div>
++                <div className="flex items-center gap-2 text-xs">
++                  <span className="w-16 text-charcoal-500">رسمي {fmt(off)}ج</span>
++                  <div className="flex-1 h-2.5 rounded-full bg-cream-100 overflow-hidden">
++                    <div className="h-full rounded-full bg-accent-400" style={{ width: `${pctOff}%` }} />
++                  </div>
++                </div>
++                <div className="flex items-center gap-2 text-xs">
++                  <span className="w-16 text-charcoal-500">السوق {fmt(mkt)}ج</span>
++                  <div className="flex-1 h-2.5 rounded-full bg-cream-100 overflow-hidden">
++                    <div className="h-full rounded-full bg-charcoal-300" style={{ width: `${pctMkt}%` }} />
++                  </div>
++                </div>
++              </div>
++            );
++          })}
++        </div>
++      </div>
++
++      {/* قنوات موثوقة + أمان */}
++      <div className="grid gap-5 md:grid-cols-2">
++        <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
++          <h2 className="heading-elegant text-2xl text-brand-900 mb-4">🛡️ قنوات شحن موثوقة</h2>
++          <ul className="space-y-3">
++            {TRUSTED_CHANNELS.map((c) => (
++              <li key={c.name} className="flex items-start gap-3">
++                <span className="mt-0.5 text-lg" aria-hidden>{c.official ? "✅" : "🟢"}</span>
++                <div className="flex-1">
++                  <a
++                    href={c.url}
++                    target="_blank"
++                    rel="nofollow noopener"
++                    className="font-bold text-brand-700 hover:underline"
++                  >
++                    {c.name} ↗
++                  </a>
++                  <p className="text-xs text-charcoal-500">{c.note}</p>
++                </div>
++              </li>
++            ))}
++          </ul>
++        </div>
++        <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-6 sm:p-8">
++          <h2 className="heading-elegant text-2xl text-red-800 mb-4">⚠️ حذار من دي</h2>
++          <ul className="space-y-2 text-sm text-red-900">
++            <li>• «سعر أقل من الرسمي بكتير» — الشدات الرسمية تكلفتها معروفة؛ الخصم الكبير غالبًا سرقة كروت أو تلاعب برد فأموال.</li>
++            <li>• طلب الـ Player ID <strong>مع الباسورد</strong> — الشحن الرسمي يحتاج الـ ID بس.</li>
++            <li>• صفحات تعمل شحن «عبر بنظام الرّد» تأخذ الفلوس وبعدين الببجي بيسحب الشدات لما تتسرّق المدفوعات.</li>
++            <li>• مطالبة بـ OTP أو لقطة شاشة لحسابك — ده فتح لسرقة الحساب مش شحن.</li>
++          </ul>
++          <p className="mt-4 text-xs text-red-700">
++            دليل كامل: <Link href="/disclosure" className="font-bold underline">فلسفة الأرقام عندنا</Link> ·
++            <Link href="/apps" className="font-bold underline"> تطبيقات شحن وبطاقات ثانية 🔋</Link>
++          </p>
++        </div>
++      </div>
++
++      {/* بيانات مفتوحة */}
++      <div className="rounded-2xl bg-brand-50 p-5 text-sm text-charcoal-600 text-center">
++        📡 نفس الجدول متاح JSON للصحافة والباحثين:{" "}
++        <code className="rounded bg-white px-2 py-0.5 text-xs" dir="ltr">/api/uc-radar</code>
++        {" — "}بشرط الإشارة لـ AppHub كمصدر.
++      </div>
++    </div>
++  );
++}
+-- 
+2.47.3
+

@@ -1,0 +1,406 @@
+From bb45738dbbaf80cf5f6ea5ae18458b6da1356345 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Wed, 23 Sep 2026 15:59:41 +0000
+Subject: [PATCH] =?UTF-8?q?v26:=20=F0=9F=8C=99=20=D8=AF=D8=A7=D8=B1=D9=83?=
+ =?UTF-8?q?=20=D9=85=D9=88=D8=AF=20=D8=B4=D8=A7=D9=85=D9=84=20+=20=D9=85?=
+ =?UTF-8?q?=D9=81=D8=A7=D8=AA=D9=8A=D8=AD=20=D9=84=D8=BA=D8=A9=20=D9=85?=
+ =?UTF-8?q?=D9=8F=D8=B5=D9=84=D9=91=D8=AD=D8=A9=20+=20=D9=82=D8=A7=D8=A6?=
+ =?UTF-8?q?=D9=85=D8=A9=20Go-Live?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- darkMode class + منع وميض + ٢٨ override مُتحقق وجودها في CSS المُصغّر + ThemeToggle على desktop والموبايل
+- إصلاح جوهري: مفاتيح لغة/ثيم كانت غائبة تمامًا عن قائمة الموبايل
+- كوكيز apphub-lang (تجهيز SSR + استعادة لغة عبر الأجهزة)
+- SETUP-HUB.sql: تجميع الجداول الأربعة في ملف واحد لقاعدة البيانات
+- DEPLOY-CHECKLIST.md: خطوات Go-Live بالترتيب (SQL → patches → env → push → تحقق)
+---
+ docs/BRAND-GUIDE.md               |  1 +
+ docs/DEPLOY-CHECKLIST.md          | 49 ++++++++++++++++
+ docs/PROJECT-AUDIT.md             |  1 +
+ src/app/globals.css               | 35 ++++++++++-
+ src/app/layout.tsx                |  6 ++
+ src/components/mobile-menu.tsx    |  8 +++
+ src/components/navbar.tsx         |  2 +
+ src/components/theme-toggle.tsx   | 33 +++++++++++
+ src/contexts/language-context.tsx | 12 ++--
+ supabase/SETUP-HUB.sql            | 97 +++++++++++++++++++++++++++++++
+ tailwind.config.ts                |  1 +
+ 11 files changed, 240 insertions(+), 5 deletions(-)
+ create mode 100644 docs/DEPLOY-CHECKLIST.md
+ create mode 100644 src/components/theme-toggle.tsx
+ create mode 100644 supabase/SETUP-HUB.sql
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 07ea95c..5bfbd69 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v26** 🌙 دارك مود + لغة مُصلّحة | 21 سب 2026 | darkMode:'class' + سكربت منع-وميض في layout (localStorage apphub-theme/النظام) + ٢٨ override شاملة للتوكينز الفاتحة (أسطح/نصوص/حدود — verified in compiled CSS) + ThemeToggle 🌙/☀️ في الهيدر **والموبايل**. اللغة: المفاتيح بيعملوا (٢٦٨ مفتاح) بس المفاتيح كانت **مفقودة من الموبايل نهائي** → اتضافت للقائمة الجانبية + كوكيز apphub-lang (تجهيز SSR) + استعادة من كوكيز. **ملاحظة صراحة لليوزر: صفحات المحتوى (server-inline عربي) بتتحتاج مشروع ترجمة منفصل — دلوقتي الهيدر/الفوتر/الهوم/الكروت/الآلات/الديلز ثنائية اللغة** |
+ | **v25** 🌉 حلقة الوصل | 21 سب 2026 | الناس→رسمي: زر «اطلب تنفيذها دلوقتي» على كروت المتجر (بريد+Player ID بدون باسورد أبد+ملاحظة) يدفع `/api/shop/order` → shop_orders pending يدوي (503 صادق لحد 003+005) — brokerage MVP بلا بوابة دفع؛ الشركات→ناس: `/partners` بوابة التحديث الرسمي (company+plan+جديد+دليل رسمي إلزامي) → jدول `brand_updates` pending للتحقق بشارة «من المصدر الرسمي» — مجانًا، والترتيب مش للبيع (عقد صريح جوه الصفحة) |
+ | **v24** 📰 Press Kit + ترقية B2B | 21 سب 2026 | `/press`: هوية المصدر (٦ أرقام جاهزة للاقتباس)، عينة تقرير قابلة للتحميل (**`/api/reports/index.csv` — CSV حقيقي من سلسلة المؤشر بترخيص الإشارة**)، ٤ اقتباسات جاهزة كوبي-باست بأرقام حقيقية (٤١٩٫٩٩ ج للـ ٦٦٠ UC، ٣٫١٨ ج/جيجا، $4.99 أرخص AI)، قنوات API المفتوحة، وتواصل press@apphub.eg. `/data`: بطاقة «جرّب المنتج» بتحميل العينة + فورم «اطلب عرضك» (WaitlistForm interest=data-lead — leads في الجدول نفسه). فوتر + sitemap + ترجمة nav_press |
+ | **v23** 📡 مركز الرادارات | 21 سب 2026 | `/price-radar` بقى **هاب موحّد**: توبات كلاينت (اشتراكات 💳 · شدات 🎮 · باقات 📶 · AI 🤖) فوق محتوى مستخرج لمكونات `components/radars/*-content.tsx` — تبديل محلي بلا fetch، والصفحات المستقلة `/uc-radar /telecom-radar /ai-radar` **فضلت شغالة** بهيروها ورابط رجع للمركز (SEO ومشاركة مباشرة محفوظة)؛ رادار الاشتراكات الأصلي محفوظ ١٠٠٪ (فلتر الدول/تيليجرام/المنهجية)؛ سعر الصرف للـ AI بيتجيب في سيرفر المركز نفسه |
+diff --git a/docs/DEPLOY-CHECKLIST.md b/docs/DEPLOY-CHECKLIST.md
+new file mode 100644
+index 0000000..e89cf76
+--- /dev/null
++++ b/docs/DEPLOY-CHECKLIST.md
+@@ -0,0 +1,49 @@
++# 🚀 قائمة الـ Go-Live — AppHub (نفّذ بالترتيب، كل مربع قبل اللي بعده)
++
++## المتطلبات عندك أولًا
++- [ ] جهازك فيه git + الوصول للريبو المحلي اللي عليه الباتشات المنزّلة
++- [ ] حساب Supabase (المشروع نفسه اللي بتاخد منه الأنون كي)
++- [ ] حساب Vercel مربوط بـ GitHub repo (apphub-eight.vercel.app موجود)
++
++---
++
++## ① الترحيلات (قاعدة البيانات)
++1. [ ] Supabase → مشروع AppHub → **SQL Editor** → New query
++2. [ ] الصق **`supabase/SETUP-HUB.sql`** كله → **RUN** → لازم تطلع `Success`
++3. [ ] تحقق: الصق ده وشغّله، لازم يطلع ٤ صفوف:
++   ```sql
++   SELECT table_name FROM information_schema.tables
++   WHERE table_schema='public'
++     AND table_name IN ('shop_products','shop_orders','waitlist','brand_updates');
++   ```
++4. [ ] (اختياري بعدين — الباقي يشتغل من غيرهم) migration 001/002/004 للرادار والبلاغات والتنبيهات
++
++## ② الكود
++5. [ ] في الريبو المحلي:
++   ```bash
++   git am --abort 2>/dev/null   # لو محاولة نصف كاملة
++   git am <هنا آخر باتش غير مطبق بالترتيب تصاعديًا>   # v23 v24 v25 v26
++   git status                   # لازم clean، على HEAD الأخير
++   ```
++6. [ ] متغيرات البيئة (Vercel → Settings → Environment Variables):
++   - `NEXT_PUBLIC_SUPABASE_URL`
++   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
++   - (اختياري للتوسع لاحقًا) `PAYMOB_*` · `RESEND_API_KEY` · `TELEGRAM_*`
++7. [ ] `git push origin main` → Vercel بيبني تلقائي
++
++## ③ التحقق بعد النشر (افتح apphub-eight.vercel.app)
++8. [ ] `/shop` — كل منتج فيه زر «اطلب تنفيذها دلوقتي» والنموذج بيفتح
++9. [ ] قدّم طلب تجريبي بإيميلك → لازم يرجع رقم طلب (مش 503) → بتتأكد في Supabase Table Editor إن الصف اتسجّل في `shop_orders`
++10. [ ] `/partners` — قدّم تحديث شركة تجريبي → بيتسجّل في `brand_updates`
++11. [ ] `/press` — حمّل عينة الـ CSV وافتحها في Excel (٣٦ سطر + شروط الإشارة)
++12. [ ] `/price-radar` — التوبات الأربعة بتعمل ومؤشرك ظاهر
++13. [ ] زر 🌙 → الدارك مود بيشتغل وبيفضل بعد الريلود
++14. [ ] زر AR/EN → الهيدر/الفوتر/الهوم بيقلّبوا، والاتجاه RTL/LTR بينعكس
++
++## ⚠️ لو حاجة ظهرت 503
++معناها ترحيل ناقص — راجع خطوة ① (تشغّلت SETUP-HUB؟) والـ env vars خطوة ②.
++
++## 🧭 بعد الـ Go-Live مباشرة (باقي الخطة)
++- v27: التقرير الربع سنوي الأول (الاستخراج تلقائي من السلاسل)
++- رادار فري فاير (الداتا جاهزة)
++- `PAYMOB_*` للمدفوعات الرقمية + `RESEND_API_KEY` لرسائل الطلبات
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index e5e0af0..ab284ae 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++-9. **v26 — الثيمة بقاعدة «تجريب قبل توثيق»** ✅ (21 سب 2026): الدارك مود نُفّذ بـ global overrides (`html.dark .bg-white...!important`) بدل إعادة كتابة ١٥٠ صفحة — الحكم: لازم يتتحقق بعد البناء من قواعد المظهر في الـ CSS المُصغّر (grep 'html.dark'), والتأكيد بصري على الصفحات الرئيسية. واكتشاف: مفاتيح اللغة وُجدوا في الهيدر بس — **الموبايل كان مفقود تمامًا المفاتيح**؛ قاعدة جديدة: أي UI تحكّم عالمي لازم يتواجد في النسختين (desktop + mobile) في نفس الـ batch.
+ -8. **v25 — حلقة الوصل (الوسيط)** ✅ (21 سب 2026): استكمال فلسفة «لا تشغيل بلا مفتاح» للوساطة: طلبات التنفيذ اليدوية (shop_orders) وتحديثات الشركات الرسمية (brand_updates) بتبني **خزينة علاقات الجانبين** (مستهلكون محتاجون تنفيذ × شركات محتاجة قناة موثقة) قبل أي بوابة دفع — الـ brokerage يشتغل كأصل علاقات من يومه الأول. وحدة الربط: صدق السعر للناس × رسمية التواصل للشركات × شارة تحقق يدوي مكتسبة مش مباعة.
+ -7. **v24 — من المحتوى لشركة بيانات: واجهة الصحافة** ✅ (21 سب 2026): قرار المستخدم الاستثمار في فجوة «نيلسن الاقتصاد الرقمي» (مذكرة INVESTMENT-THESIS.md) ترجم لواجهات الثقة: عينة التقرير CSV القابلة للتحميل هي **أول منتج مدفوع ملموس يُوزَّع مجانًا** (freemium صادق)، والاقتباسات الجاهزة تخلي AppHub مصدر صحفة من غير شيك تسويق. القاعدة الجديدة: أي رقم يُعرض للشركات **يجب أن يكون قابلًا للتحميل كأونر** — مش مجرد ادعاء في صفحة.
+ -6. **v23 — المراجعة الملاحية قبل الانتشار** ✅ (21 سب 2026): لما الفرتيكالز زادت، المستخدم طلب تنظيمها قبل ما الناس تتوه — النتيجة: استخراج محتوى الرادارات لمكونات قابلة للتشارك بدل التكرار، ومركز توبات واحد، والحفاظ على الروابط المستقلة للسيو. القاعدة: **كل فرتيكال جديد يضاف محتواه كمكوّن مشترك** والمركز يرثه تلقائيًا — مش نقصّه في صفحة لوحدها.
+diff --git a/src/app/globals.css b/src/app/globals.css
+index e25eb23..0eac4b2 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -332,4 +332,37 @@ header {
+   .hero-bg {
+     padding-bottom: 100px;
+   }
+-}
+\ No newline at end of file
++}
++/* ═══ Dark Mode (v26) — overrides شاملة للتوكينز الفاتحة ═══ */
++html.dark {
++  color-scheme: dark;
++}
++html.dark body {
++  background-color: #0a1420;
++}
++/* الأسطح */
++html.dark .bg-white { background-color: #101d2c !important; }
++html.dark .bg-cream-50, html.dark .bg-cream-50\/95 { background-color: rgba(10, 20, 32, 0.95) !important; }
++html.dark .bg-cream-100 { background-color: #152536 !important; }
++html.dark .bg-cream-200 { background-color: #1d3046 !important; }
++html.dark .bg-brand-50 { background-color: #0d1a29 !important; }
++html.dark .bg-accent-50 { background-color: #142233 !important; }
++html.dark .bg-amber-50 { background-color: #28220f !important; }
++html.dark .bg-sage-50 { background-color: #11291d !important; }
++/* النصوص */
++html.dark .text-brand-900 { color: #eaf1f8 !important; }
++html.dark .text-charcoal-800 { color: #d7e1ec !important; }
++html.dark .text-charcoal-700 { color: #c3d0df !important; }
++html.dark .text-charcoal-600 { color: #adc0d4 !important; }
++html.dark .text-charcoal-500 { color: #93a9bf !important; }
++html.dark .text-charcoal-400, html.dark .text-charcoal-300 { color: #7b93aa !important; }
++html.dark .text-amber-900 { color: #fde9c4 !important; }
++html.dark .text-amber-800 { color: #f5d89a !important; }
++html.dark .text-sage-700 { color: #bfe3cd !important; }
++html.dark .text-red-600 { color: #f87171 !important; }
++/* الحدود */
++html.dark .border-cream-200, html.dark .border-cream-300 { border-color: #22354a !important; }
++html.dark .border-accent-300 { border-color: #3a4a5f !important; }
++html.dark .border-accent-200 { border-color: #2e3f52 !important; }
++html.dark .border-amber-200 { border-color: #584a2e !important; }
++html.dark .border-sage-300 { border-color: #2f4a3e !important; }
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 9a954cf..e0d1a9d 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -64,6 +64,12 @@ export default function RootLayout({
+   return (
+     <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable} ${almarai.variable}`}>
+       <body className={`${cairo.className} min-h-screen flex flex-col bg-cream-50`}>
++        {/* منع وميض الثيم: يقرأ التفضيل قبل أول رسم */}
++        <script
++          dangerouslySetInnerHTML={{
++            __html: `try{var t=localStorage.getItem("apphub-theme");var d=t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark");}catch(e){}`
++          }}
++        />
+         {process.env.NEXT_PUBLIC_GA_ID && (
+           <>
+             <Script
+diff --git a/src/components/mobile-menu.tsx b/src/components/mobile-menu.tsx
+index 7c2248a..e4711dc 100644
+--- a/src/components/mobile-menu.tsx
++++ b/src/components/mobile-menu.tsx
+@@ -3,6 +3,8 @@
+ import { useState, useEffect } from "react";
+ import Link from "next/link";
+ import { useLanguage } from "@/contexts/language-context";
++import { LanguageSwitcher } from "./language-switcher";
++import { ThemeToggle } from "./theme-toggle";
+ 
+ type Props = {
+   links: { href: string; label: string; icon?: string }[];
+@@ -137,6 +139,12 @@ export function MobileMenu({ links, user, isAdmin, userName, lightMode = false }
+                 </div>
+               </div>
+ 
++              {/* مفاتيح اللغة والثيم — كانت مفقودة تمامًا على الموبايل */}
++              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginInlineStart: "auto", marginInlineEnd: "8px" }}>
++                <ThemeToggle />
++                <LanguageSwitcher />
++              </div>
++
+               <button
+                 onClick={() => setOpen(false)}
+                 style={{
+diff --git a/src/components/navbar.tsx b/src/components/navbar.tsx
+index 9620bf2..360bb29 100644
+--- a/src/components/navbar.tsx
++++ b/src/components/navbar.tsx
+@@ -8,6 +8,7 @@ import { NotificationBell } from "./notification-bell";
+ import { SearchBar } from "./search-bar";
+ import { MobileMenu } from "./mobile-menu";
+ import { LanguageSwitcher } from "./language-switcher";
++import { ThemeToggle } from "./theme-toggle";
+ import { useLanguage } from "@/contexts/language-context";
+ 
+ export function Navbar() {
+@@ -121,6 +122,7 @@ export function Navbar() {
+ 
+           {/* Right Actions */}
+           <div className="flex items-center gap-2 shrink-0">
++            <ThemeToggle />
+             <LanguageSwitcher />
+ 
+             {user ? (
+diff --git a/src/components/theme-toggle.tsx b/src/components/theme-toggle.tsx
+new file mode 100644
+index 0000000..616a91d
+--- /dev/null
++++ b/src/components/theme-toggle.tsx
+@@ -0,0 +1,33 @@
++"use client";
++
++import { useEffect, useState } from "react";
++
++/**
++ * مفتاح الدارك مود — class على <html> + localStorage ("apphub-theme").
++ * الافتراضي: تفضيل النظام. سكربت layout بيطبقها قبل أول رسم (مفيش وميض).
++ */
++export function ThemeToggle() {
++  const [dark, setDark] = useState<boolean | null>(null);
++
++  useEffect(() => {
++    setDark(document.documentElement.classList.contains("dark"));
++  }, []);
++
++  function toggle() {
++    const next = !dark;
++    setDark(next);
++    document.documentElement.classList.toggle("dark", next);
++    localStorage.setItem("apphub-theme", next ? "dark" : "light");
++  }
++
++  return (
++    <button
++      onClick={toggle}
++      className="flex items-center justify-center rounded-full bg-cream-100 w-10 h-10 text-base text-brand-900 hover:bg-cream-200 transition border border-cream-200 dark:bg-[#152536] dark:border-[#22354a] dark:hover:bg-[#1d3046]"
++      aria-label={dark ? "الوضع الفاتح" : "الوضع الداكن"}
++      title={dark ? "☀️ وضع فاتح" : "🌙 وضع داكن"}
++    >
++      {dark ? "☀️" : "🌙"}
++    </button>
++  );
++}
+diff --git a/src/contexts/language-context.tsx b/src/contexts/language-context.tsx
+index 6db683b..41bab4c 100644
+--- a/src/contexts/language-context.tsx
++++ b/src/contexts/language-context.tsx
+@@ -18,16 +18,20 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
+ 
+   useEffect(() => {
+     const saved = localStorage.getItem("apphub-lang") as Language | null;
+-    if (saved && (saved === "ar" || saved === "en")) {
+-      setLangState(saved);
+-      document.documentElement.lang = saved;
+-      document.documentElement.dir = saved === "ar" ? "rtl" : "ltr";
++    const cookie = document.cookie.match(/apphub-lang=(ar|en)/)?.[1] as Language | undefined;
++    const pre = saved ?? cookie;
++    if (pre === "ar" || pre === "en") {
++      setLangState(pre);
++      document.documentElement.lang = pre;
++      document.documentElement.dir = pre === "ar" ? "rtl" : "ltr";
+     }
+   }, []);
+ 
+   function setLang(newLang: Language) {
+     setLangState(newLang);
+     localStorage.setItem("apphub-lang", newLang);
++    // كوكيز كمان — يخلي السيرفر/الأناليتكس تتعامل مع نفس اللغة (تجهيز لترجمة SSR مستقبلية)
++    document.cookie = `apphub-lang=${newLang};path=/;max-age=31536000;samesite=lax`;
+     document.documentElement.lang = newLang;
+     document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
+   }
+diff --git a/supabase/SETUP-HUB.sql b/supabase/SETUP-HUB.sql
+new file mode 100644
+index 0000000..2e618e4
+--- /dev/null
++++ b/supabase/SETUP-HUB.sql
+@@ -0,0 +1,97 @@
++-- ═══════════════════════════════════════════════════════════════════
++-- AppHub — إعداد الجداول الأربعة الأساسية (ملف واحد | idempotent آمن)
++-- الصقه كله في Supabase → SQL Editor → RUN (مرة واحدة)
++-- الجداول: shop_products · shop_orders · waitlist · brand_updates
++-- ═══════════════════════════════════════════════════════════════════
++
++-- 1) منتجات المتجر الرقمي (بطاقات/شحن/اشتراكات)
++create table if not exists public.shop_products (
++  id uuid primary key default gen_random_uuid(),
++  slug text not null unique,
++  title text not null,
++  description text,
++  kind text not null check (kind in ('card', 'topup', 'subscription')),
++  face_value numeric,
++  currency text check (currency in ('EGP', 'SAR', 'AED', 'USD')),
++  icon text,
++  status text not null default 'waitlist' check (status in ('waitlist', 'live', 'off')),
++  created_at timestamptz not null default now()
++);
++alter table public.shop_products enable row level security;
++drop policy if exists read_products on public.shop_products;
++create policy read_products on public.shop_products
++  for select to anon, authenticated using (status <> 'off');
++
++-- 2) قائمة الانتظار (الليدز: بريد + اهتمام)
++create table if not exists public.waitlist (
++  id uuid primary key default gen_random_uuid(),
++  email text not null,
++  interest text not null default 'general',
++  created_at timestamptz not null default now(),
++  unique (email, interest)
++);
++alter table public.waitlist enable row level security;
++drop policy if exists insert_waitlist on public.waitlist;
++create policy insert_waitlist on public.waitlist
++  for insert to anon, authenticated with check (true);
++
++-- 3) طلبات المتجر/التنفيذ الموثوق (مع أعمدة v25 من الأول)
++create table if not exists public.shop_orders (
++  id uuid primary key default gen_random_uuid(),
++  email text not null,
++  product_slug text not null,
++  amount numeric,
++  player_ref text,              -- الـ Player ID (v25)
++  notes text,                   -- ملاحظة العميل (v25)
++  channel text not null default 'web',  -- web | concierge (v25)
++  status text not null default 'pending' check (status in ('pending', 'paid', 'fulfilled', 'cancelled')),
++  paymob_ref text,
++  created_at timestamptz not null default now()
++);
++alter table public.shop_orders enable row level security;
++drop policy if exists insert_orders on public.shop_orders;
++create policy insert_orders on public.shop_orders
++  for insert to anon, authenticated with check (true);
++
++-- لو الجدول اتعمل قبل كده من غير أعمدة v25 — ضيفها بأمان
++DO $$
++BEGIN
++  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shop_orders' AND column_name='player_ref') THEN
++    ALTER TABLE public.shop_orders ADD COLUMN player_ref text;
++  END IF;
++  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shop_orders' AND column_name='notes') THEN
++    ALTER TABLE public.shop_orders ADD COLUMN notes text;
++  END IF;
++  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shop_orders' AND column_name='channel') THEN
++    ALTER TABLE public.shop_orders ADD COLUMN channel text not null default 'web';
++  END IF;
++END $$;
++
++-- 4) تحديثات الشركات الرسمية (بوابة الشركاء — إدراج عام، قراءة مقفولة للتحقق اليدوي)
++create table if not exists public.brand_updates (
++  id uuid primary key default gen_random_uuid(),
++  company text not null,
++  contact_email text not null,
++  plan_name text not null,
++  old_price numeric,
++  new_price numeric not null,
++  currency text not null default 'EGP',
++  evidence_url text not null,         -- رابط الإعلان الرسمي (إلزامي)
++  note text,
++  status text not null default 'pending' check (status in ('pending','verified','rejected')),
++  created_at timestamptz not null default now()
++);
++alter table public.brand_updates enable row level security;
++drop policy if exists insert_brand_update on public.brand_updates;
++create policy insert_brand_update on public.brand_updates
++  for insert to anon, authenticated with check (true);
++
++create index if not exists idx_brand_updates_status on public.brand_updates (status, created_at desc);
++
++-- ═══════════════════════════════════════════════════════════════════
++-- ✅ للتحقق بعد التنفيذ (الصقه في محرر SQL جديد واضغط RUN):
++-- SELECT table_name FROM information_schema.tables
++-- WHERE table_schema = 'public'
++--   AND table_name IN ('shop_products','shop_orders','waitlist','brand_updates');
++-- لازم يطلعلك ٤ صفوف.
++-- ═══════════════════════════════════════════════════════════════════
+diff --git a/tailwind.config.ts b/tailwind.config.ts
+index f98dbc7..021733f 100644
+--- a/tailwind.config.ts
++++ b/tailwind.config.ts
+@@ -2,6 +2,7 @@ import type { Config } from "tailwindcss";
+ 
+ const config: Config = {
+   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
++  darkMode: "class",
+   theme: {
+     extend: {
+       fontFamily: {
+-- 
+2.47.3
+

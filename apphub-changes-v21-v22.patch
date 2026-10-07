@@ -1,0 +1,861 @@
+From feed3a0af8d4d8ce86c2448fb110d3d9de49a9c8 Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Tue, 22 Sep 2026 17:45:18 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?v21:=20=F0=9F=93=B6=20=D8=B1=D8=A7=D8=AF?=
+ =?UTF-8?q?=D8=A7=D8=B1=20=D8=A7=D9=84=D8=A8=D8=A7=D9=82=D8=A7=D8=AA=20?=
+ =?UTF-8?q?=E2=80=94=2022=20=D8=A8=D8=A7=D9=82=D8=A9=20=D9=85=D9=88=D8=AB?=
+ =?UTF-8?q?=D9=91=D9=82=D8=A9=20=D8=A8=D9=85=D9=82=D9=8A=D8=A7=D8=B3=20?=
+ =?UTF-8?q?=D8=AC/=D8=AC=D9=8A=D8=AC=D8=A7=20+=20=D8=AD=D8=A7=D8=B3=D8=A8?=
+ =?UTF-8?q?=D8=A9=20=C2=AB=D8=A3=D8=AD=D8=B3=D9=86=20=D9=87=D9=88=D8=A7?=
+ =?UTF-8?q?=D8=A6=D9=8A=20=D9=84=D8=A7=D8=B3=D8=AA=D8=AE=D8=AF=D8=A7=D9=85?=
+ =?UTF-8?q?=D9=83=C2=BB?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- lib/telecom-data.ts: هوائي مشترك من مصراوي (مايو ٢٠٢٦) + Orange Go Super + فليكس فودافون وأورنج بريميوم (قوائم منشورة) — 1 فليكس = 1 ميجا بصراحة معلنة
+- /telecom-radar: hero gradient-brand + الرقم الكبير + 3 جداول مرتبة ج/جيجا + ⭐ أرخص جيجا + تحذيرات الزيادات وعروض الولاء
+- حاسبة الاستخدام (client): إدخال الجيجابايت → أرخص باقة تغطيه في كل شبكة مرتّبة بالسعر
+- /api/telecom-radar JSON مفتوح مع الإشارة
+---
+ docs/BRAND-GUIDE.md                   |   2 +
+ docs/PROJECT-AUDIT.md                 |   1 +
+ src/app/api/telecom-radar/route.ts    |  34 ++++++
+ src/app/telecom-radar/page.tsx        | 147 ++++++++++++++++++++++++++
+ src/components/telecom-calculator.tsx | 100 ++++++++++++++++++
+ src/lib/telecom-data.ts               |  77 ++++++++++++++
+ 6 files changed, 361 insertions(+)
+ create mode 100644 src/app/api/telecom-radar/route.ts
+ create mode 100644 src/app/telecom-radar/page.tsx
+ create mode 100644 src/components/telecom-calculator.tsx
+ create mode 100644 src/lib/telecom-data.ts
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 1ead359..f6bb59b 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,8 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v21** 📶 رادار الباقات | 21 سب 2026 | `/telecom-radar`: 22 باقة موثّقة (هوائي مشترك فودافون×WE×أورنج من مصراوي مايو ٢٠٢٦ + Go Super + فليكس وبريميوم منشور) بمقياس **ج/جيجا** زي سعر اللتر؛ حاسبة «أحسن هوائي لاستخدامك» (أرخص باقة تغطي الاستخدام في كل شبكة جنب بعض)؛ تحذيرات صادقة (زيادات/فليكس=ميجا/عروض الولاء برّه)؛ `/api/telecom-radar` |
++| **v22** 🤖 رادار اشتراكات AI | 21 سب 2026 | `/ai-radar`: 7 أدوات (ChatGPT/Claude/Gemini/Copilot/Grok/Perplexity/DeepSeek مجاني) بأسعار $ الرسمية متقاطعة من 5 مصادر ٢٠٢٦ + **تحويل للجنيه بسعر صرف حقيقي لايف** (er-api، ومع الفشل يعرض الدولار بس بصدق)؛ الرقم الكبير (أرخص AI: Gemini AI Plus $4.99) + فخ «كلهم مع بعض ≈$100» + أجندة الاختيار الـ 3 قواعد؛ `/api/ai-radar` |
+ | **v20** 👁 Watchlist تنبيه نزول السعر | 21 سب 2026 | migration `004_watchlist.sql` (price_watchlist unique إيميل+تطبيق+دولة، إدراج عام وقراءة مقفولة، تعطيل برمز UUID كإثبات ملكية؛ email_events مقفول خدمات)؛ زر «👁 نبّهني لو السعر نزل» على صفحات التطبيقات (نموذج منبثق بتعبئة مسبقة = 90% من السعر، عربي/إنجليزي، 503 صادق لحد الترحيل)؛ `/api/watchlist` اشتراك upsert + إلغاء؛ كرون `/api/watchlist/notify` يومي 11:00 (Bearer CRON_SECRET) يرسل نزلة-سعر عبر Resend **مقفول بمفتاح RESEND_API_KEY بصدق** (emailEnabled:false بدون كذبة إرسال) + قالب إيميل عربي RTL بلينك إلغاء |
+ | **v19** 🎮 رادار الشدات | 21 سب 2026 | `/uc-radar`: جدول أسعار UC الرسمي (Midasbuy الشريك الرسمي) بـ **سعر الوحدة ج/100 UC** + ⭐ أحسن قيمة + حاسبة أرخص تشكيلة (DP محلي في المتصفح) + مقارنة رسمي vs متوسط سوق **موسوم استرشادي** + قنوات موثوقة وتحذيرات النصب (باسورد/OTP/شحن بالرّد) + `/api/uc-radar` JSON مفتوح مع الإشارة — مراجعة يدوية بتاريخ معلن، ممنوع رقم بلا مصدر |
+ | **v18** 🩹 إحياء خلفيات البراند | 21 سب 2026 | `gradient-brand` (20 ملف) و`bg-gradient-navy` (كارت النشرة + لوجو الفوتر) كانوا كلاسات **ميتة** (مش متعرّفة في CSS ولا Tailwind) → هيرو كل الصفحات الثابتة نصه أبيض على كريمي = غير مرئي في البرود. اتعرّفوا في globals.css بنفس طبقات الـ hero (نيفي 135° #1a2942→#0f1830 + راديال ذهبي خفيف) — إصلاح واحد رجّع ٢٠+ صفحة |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index d31ec58..b34c913 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++-5. **v21/v22 — استراتيجية الفرتيكالز: رادار الوحدة** ✅ (21 سب 2026): اندماج سؤال المستخدم «إيه أكتر خدمة الناس بتدور عليها» قرر التليكوم + AI (وبعدهم fري فاير في الطابور). القاعدة الصلبة الجديدة لفرتيكال الرادار: **وحدة مقارنة واحدة صادقة** (ج/100 UC، ج/جيجا، $→ج لايف) + جدول واحد كبير بتاريخ مراجعة + حاسبة محلية + API مفتوح بالإشارة — فورمولا واحدة متكررة بدل صفحات متراكبة.
+ -4. **v20 — آخر حلقة في خطة التجارة: التنبيه بالإيميل** ✅ (21 سب 2026): Watchlist كاملة (اشتراك/إلغاء/كرون فحص يومي/قالب عربي) بدورة-حياة «مقفولة بمفاتيح»: التشغيل الكامل يحتاج migration 004 + RESEND_API_KEY — وبدونهما التنبيهات ما بتكذبش (503 صادق + emailEnabled:false). خطة التجارة الأصلية (أفيليات/إعلانات/متجر/API مميز/تنبيهات) اتقفلت كلها بنفس عقيدة: لا رقم بلا مصدر، لا تشغيل بلا مفتاح حقيقي.
+ -3. **v19 — رادار الشدات (أول فرتيكال برادار الوحدة)** ✅ (21 سب 2026): دخول سوق الشحن العالي الطلب في مصر بطريق «سعر الوحدة + حاسبة تشكيلة» — فريد عربيًا، ومصمم SEO («سعر شدات ببجي في مصر»). الداتا ثابتة مُراجعة يدويًا بتاريخ معلن (نفس قاعدة مؤشر الأسعار: لا أرقام مختلقة ولا وعود تحديث لايف مش موجودة) — والخطوة الجاية المنطقية: إطعامها من جدول price_watch لما يتبنى مصدر آلي موثوق.
+ -2. **v18 — كلاسات البراند الميتة** ✅ (21 سب 2026): سكرينات المستخدم (متجر/أبحاث/نشرة) كشفت إن `gradient-brand` و`bg-gradient-navy` مستخدمين في ٢٢ موضع **بدون أي تعريف CSS** — أثر متراكم من نسخ قديمة. القاعدة الجديدة: أي كلاس custom جديد يُضاف **يُتحقق من تعريفه في نفس الضفعة** + فحص build مؤقت (grep في CSS المُبنّى) قبل الكوميت.
+diff --git a/src/app/api/telecom-radar/route.ts b/src/app/api/telecom-radar/route.ts
+new file mode 100644
+index 0000000..c2567ca
+--- /dev/null
++++ b/src/app/api/telecom-radar/route.ts
+@@ -0,0 +1,34 @@
++import { NextResponse } from "next/server";
++import {
++  BUNDLES,
++  NETWORK_LABELS,
++  TELECOM_REVIEW_DATE,
++  perGb,
++  bestPerGb
++} from "@/lib/telecom-data";
++
++// رادار الباقات — بيانات مفتوحة مع الإشارة (مراجعة يدوية بتاريخ معلن)
++export const revalidate = 3600;
++
++export async function GET() {
++  return NextResponse.json({
++    reviewDate: TELECOM_REVIEW_DATE,
++    currency: "EGP",
++    unit: "EGP per GB",
++    disclaimer: "قوائم منشورة — الأسعار بتتغير مع الزيادات، تأكد من تطبيق شركتك",
++    bestAirPerGb: { bundle: bestPerGb("air").name, egpPerGb: Math.round(perGb(bestPerGb("air")) * 100) / 100 },
++    bestMixedPerGb: { bundle: bestPerGb("mixed").name, egpPerGb: Math.round(perGb(bestPerGb("mixed")) * 100) / 100 },
++    bundles: BUNDLES.map((b) => ({
++      id: b.id,
++      network: b.network,
++      networkAr: NETWORK_LABELS[b.network],
++      kind: b.kind,
++      name: b.name,
++      priceEgp: b.priceEgp,
++      gb: Math.round(b.gb * 100) / 100,
++      egpPerGb: Math.round(perGb(b) * 100) / 100,
++      extra: b.extra ?? null
++    })),
++    attribution: "رادار الباقات AppHub — https://apphub.eg/telecom-radar"
++  });
++}
+diff --git a/src/app/telecom-radar/page.tsx b/src/app/telecom-radar/page.tsx
+new file mode 100644
+index 0000000..2303cb9
+--- /dev/null
++++ b/src/app/telecom-radar/page.tsx
+@@ -0,0 +1,147 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { buildMeta } from "@/lib/seo";
++import {
++  BUNDLES,
++  NETWORK_LABELS,
++  TELECOM_REVIEW_DATE_AR,
++  perGb,
++  bestPerGb,
++  type Bundle
++} from "@/lib/telecom-data";
++import { TelecomCalculator } from "@/components/telecom-calculator";
++
++export const metadata: Metadata = buildMeta({
++  title: "رادار الباقات — أرخص جيجابايت في مصر (فودافون/أورنج/WE)",
++  description:
++    "مقارنة باقات الإنترنت في مصر بسعر الجيجا الحقيقي: هوائي فودافون وWE وأورنج + باقات النت الموبايل والمشتركة — مراجعة بتاريخ معلن وحاسبة «أحسن باقة لاستخدامك».",
++  url: "https://apphub.eg/telecom-radar",
++  keywords: ["باقات الإنترنت مصر", "أرخص باقة نت", "باقات فودافون", "باقات WE", "أنظمة أورنج"]
++});
++
++const fmt = (n: number) => n.toLocaleString("ar-EG");
++
++function BundleRow({ b, best }: { b: Bundle; best: boolean }) {
++  return (
++    <div
++      className={`flex items-center justify-between gap-3 rounded-2xl border px-5 py-3 ${
++        best ? "border-sage-300 bg-sage-50" : "border-cream-200 bg-white"
++      }`}
++    >
++      <div className="min-w-0">
++        <div className="flex items-center gap-2 flex-wrap">
++          <span className="font-bold text-brand-900">{b.name}</span>
++          <span className="text-[11px] text-charcoal-400">{NETWORK_LABELS[b.network]}</span>
++          {best && (
++            <span className="rounded-full bg-sage-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
++              ⭐ أرخص جيجا
++            </span>
++          )}
++        </div>
++        {b.extra && <p className="text-xs text-charcoal-500 mt-0.5">{b.extra}</p>}
++        {b.sourceNote && <p className="text-[11px] text-charcoal-400">{b.sourceNote}</p>}
++      </div>
++      <div className="text-end shrink-0">
++        <div className="font-extrabold text-brand-900">{fmt(b.priceEgp)} ج</div>
++        <div className={`text-xs font-bold ${best ? "text-sage-700" : "text-charcoal-500"}`}>
++          {perGb(b).toFixed(2)} ج/جيجا
++        </div>
++      </div>
++    </div>
++  );
++}
++
++export default function TelecomRadarPage() {
++  const bestAir = bestPerGb("air");
++  const bestMixed = bestPerGb("mixed");
++  const airBundles = [...BUNDLES.filter((b) => b.kind === "air")].sort((a, b) => perGb(a) - perGb(b));
++  const mobileData = [...BUNDLES.filter((b) => b.kind === "mobile-data")].sort((a, b) => perGb(a) - perGb(b));
++  const mixed = [...BUNDLES.filter((b) => b.kind === "mixed")].sort((a, b) => perGb(a) - perGb(b));
++
++  return (
++    <div className="mx-auto max-w-6xl space-y-10 animate-fade-in">
++      {/* Hero */}
++      <div className="rounded-3xl gradient-brand p-8 sm:p-10 text-white text-center">
++        <div className="text-6xl mb-3">📶</div>
++        <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">رادار الباقات</h1>
++        <p className="text-white/90 max-w-2xl mx-auto">
++          باقات الإنترنت في مصر بزيادة مستمرة والأسماء متلخبطة على قصد —
++          إحنا بنوحّدها بمقياس واحد: <strong>الجنيه لكل جيجابايت</strong>، زي سعر اللتر في البنزين.
++        </p>
++        <p className="mt-3 text-xs text-white/60">
++          المراجعة: {TELECOM_REVIEW_DATE_AR} · المصادر: قوائم الشركات + تغطيات صحفية موثّقة
++        </p>
++      </div>
++
++      {/* الرقم الكبير */}
++      <div className="grid gap-4 md:grid-cols-3 text-center">
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">أرخص جيجا هوائي</div>
++          <div className="text-3xl font-extrabold text-brand-900">{perGb(bestAir).toFixed(2)} ج</div>
++          <div className="text-xs text-charcoal-400 mt-1">{bestAir.name} — {fmt(bestAir.priceEgp)} ج</div>
++        </div>
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">أرخص (نت + مكالمات)</div>
++          <div className="text-3xl font-extrabold text-brand-900">{perGb(bestMixed).toFixed(2)} ج</div>
++          <div className="text-xs text-charcoal-400 mt-1">{bestMixed.name}</div>
++        </div>
++        <div className="rounded-3xl border-2 border-accent-300 bg-accent-50 p-6 shadow-soft">
++          <div className="text-sm text-accent-700 mb-1">الدرس</div>
++          <div className="text-base font-extrabold text-brand-900">الأصغر باقة الأعلى سعرًا</div>
++          <div className="text-xs text-charcoal-500 mt-1">فارق الجيجا بين الباقات يوصل ٤ أضعاف</div>
++        </div>
++      </div>
++
++      {/* الهوائي */}
++      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🏠 الهوائي (مودم/راوتر) — مرتب بسعر الجيجا</h2>
++        <p className="text-sm text-charcoal-500">للبيت والشغل الثقيل — مقارنة مباشرة عبر الشبكات الثلاث.</p>
++        <div className="space-y-2">
++          {airBundles.map((b) => (
++            <BundleRow key={b.id} b={b} best={b.id === bestAir.id} />
++          ))}
++        </div>
++      </section>
++
++      {/* الحاسبة */}
++      <TelecomCalculator />
++
++      {/* نت الموبايل */}
++      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">📱 باقات نت الموبايل</h2>
++        <p className="text-sm text-charcoal-500">للتصفح اليومي من الموبايل — سوبر ميجابايت بتتخصم مضاعفة في الاستخدام العالي حسب شروط الشركة.</p>
++        <div className="space-y-2">
++          {mobileData.map((b) => (
++            <BundleRow key={b.id} b={b} best={false} />
++          ))}
++        </div>
++      </section>
++
++      {/* المشتركة */}
++      <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🎁 باقات مشتركة (نت + مكالمات)</h2>
++        <p className="text-sm text-charcoal-500">
++          سعر الجيجا هنا «لو استخدمت الباقة كلها نت» — لو هتكلم كتير فعلًا، الدقائق المضافة بترفع القيمة جدًا.
++        </p>
++        <div className="space-y-2">
++          {mixed.map((b) => (
++            <BundleRow key={b.id} b={b} best={b.id === bestMixed.id} />
++          ))}
++        </div>
++      </section>
++
++      {/* صدق الأرقام */}
++      <div className="rounded-3xl border-2 border-amber-200 bg-amber-50 p-6 sm:p-8 space-y-2">
++        <h2 className="heading-elegant text-2xl text-amber-800">⚠️ ثلاث حقائق قبل ما تشترك</h2>
++        <ul className="text-sm text-amber-900 space-y-2">
++          <li>• <strong>الأسعار بتتغير مع كل زيادة</strong> — آخر موجة مايو ٢٠٢٦. تأكد من تطبيق شركتك قبل الاشتراك، والجدول ده مرجع للقيمة مش فاتورة.</li>
++          <li>• <strong>الفليكس = ١ دقيقة لنفس الشبكة</strong> — لكن الشبكات التانية بـ ٢ فليكس؛ والنت بـ ١ (وسوبر فليكس بيضاعفها). إحنا حسبناها نت خالص صراحة.</li>
++          <li>• <strong>عروض الولاء مش هنا</strong> — شركات الاتصالات بتدي ديسكونت شخصي في تطبيقها للخطوط القديمة؛ الأرقام دي هي القوائم المعلنة.</li>
++        </ul>
++        <p className="text-xs text-amber-700 pt-2">
++          <Link href="/disclosure" className="font-bold underline">عقد الأرقام عندنا</Link> · نفس الداتا JSON: <code dir="ltr" className="rounded bg-white px-2 py-0.5">/api/telecom-radar</code>
++        </p>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/telecom-calculator.tsx b/src/components/telecom-calculator.tsx
+new file mode 100644
+index 0000000..37fe5f4
+--- /dev/null
++++ b/src/components/telecom-calculator.tsx
+@@ -0,0 +1,100 @@
++"use client";
++
++import { useState } from "react";
++import { BUNDLES, NETWORK_LABELS, perGb, type Bundle, type Network } from "@/lib/telecom-data";
++
++/**
++ * «استخدامك كام جيجا في الشهر؟» → أرخص باقة تغطيه في كل شبكة (هوائي).
++ * كل الحساب محلي في المتصفح من الجدول المعلن فوق الصفحة مباشرة.
++ */
++export function TelecomCalculator() {
++  const [input, setInput] = useState("");
++  const [results, setResults] = useState<{ network: Network; bundle: Bundle }[] | null>(null);
++  const [error, setError] = useState("");
++
++  function compute() {
++    const n = Number(input);
++    if (!Number.isFinite(n) || n <= 0) {
++      setError("اكتب استهلاكك التقريبي بالجيجا");
++      setResults(null);
++      return;
++    }
++    if (n > 400) {
++      setError("١٤٠٠ جيجا دي قصة تانية 😄 — جرّب حتى ٤٠٠");
++      setResults(null);
++      return;
++    }
++    setError("");
++    const nets: { network: Network; bundle: Bundle }[] = [];
++    (Object.keys(NETWORK_LABELS) as Network[]).forEach((net) => {
++      const options = BUNDLES
++        .filter((b) => b.kind === "air" && b.network === net && b.gb >= n)
++        .sort((a, b) => a.priceEgp - b.priceEgp);
++      if (options[0]) nets.push({ network: net, bundle: options[0] });
++    });
++    nets.sort((a, b) => a.bundle.priceEgp - b.bundle.priceEgp);
++    setResults(nets.length ? nets : null);
++  }
++
++  return (
++    <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-5">
++      <div>
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🧮 أحسن هوائي لاستخدامك</h2>
++        <p className="mt-1 text-sm text-charcoal-500">
++          اكتب استهلاكك الشهري التقريبي بالجيجابايت — وهنقارن أرخص باقة <strong>هوائي</strong> تغطيه في كل شبكة جنب بعض.
++        </p>
++      </div>
++
++      <div className="flex flex-col sm:flex-row gap-2">
++        <input
++          type="number"
++          min={1}
++          max={400}
++          value={input}
++          onChange={(e) => setInput(e.target.value)}
++          onKeyDown={(e) => e.key === "Enter" && compute()}
++          placeholder="مثال: 100"
++          dir="ltr"
++          className="flex-1 rounded-full border border-cream-200 px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++        />
++        <button
++          onClick={compute}
++          className="rounded-full bg-accent-400 px-8 py-3 text-sm font-bold text-brand-900 hover:bg-accent-500 transition"
++        >
++          قارنلي الشبكات
++        </button>
++      </div>
++      {error && <p className="text-sm text-red-600">{error}</p>}
++
++      {results && (
++        <ul className="grid gap-3 sm:grid-cols-3 animate-fade-in">
++          {results.map(({ network, bundle }, i) => (
++            <li
++              key={network}
++              className={`rounded-2xl border-2 p-5 text-center space-y-1 ${
++                i === 0 ? "border-sage-300 bg-sage-50" : "border-cream-200 bg-white"
++              }`}
++            >
++              {i === 0 && (
++                <span className="inline-block rounded-full bg-sage-500 px-3 py-0.5 text-[11px] font-bold text-white mb-1">
++                  الأرخص
++                </span>
++              )}
++              <div className="text-xs font-bold text-charcoal-500">{NETWORK_LABELS[network]}</div>
++              <div className="font-extrabold text-brand-900">{bundle.name}</div>
++              <div className="text-2xl font-extrabold text-accent-600">{bundle.priceEgp.toLocaleString("ar-EG")} ج</div>
++              <div className="text-xs text-charcoal-500">
++                {perGb(bundle).toFixed(2)} ج / جيجا
++              </div>
++            </li>
++          ))}
++        </ul>
++      )}
++      {results && (
++        <p className="text-[11px] text-charcoal-400">
++          المقارنة على سعر الاشتراك قبل العروض المؤقتة — شركتك ممكن يكون عندها ديسكونت للخطوط القديمة.
++        </p>
++      )}
++    </div>
++  );
++}
+diff --git a/src/lib/telecom-data.ts b/src/lib/telecom-data.ts
+new file mode 100644
+index 0000000..ad51367
+--- /dev/null
++++ b/src/lib/telecom-data.ts
+@@ -0,0 +1,77 @@
++/**
++ * رادار الباقات 📶 — أسعار الإنترنت (والباقات المشتركة) في مصر.
++ * أرقام منشورة من مصادر صحفية/رسمية (مايو–سبتمبر ٢٠٢٦) — الأسعار بنتغير
++ * كتير مع الزيادات، فالقاعدة: مراجعة بتاريخ معلن + «تأكد من تطبيق شركتك قبل الاشتراك».
++ * وحدة المقارنة: جنيه لكل جيجابايت (زي سعر اللتر في البنزين).
++ */
++
++export const TELECOM_REVIEW_DATE = "2026-09-21";
++export const TELECOM_REVIEW_DATE_AR = "سبتمبر ٢٠٢٦";
++
++export type Network = "vodafone" | "orange" | "we";
++
++export const NETWORK_LABELS: Record<Network, string> = {
++  vodafone: "فودافون",
++  orange: "أورنج",
++  we: "WE وي"
++};
++
++export type Bundle = {
++  id: string;
++  network: Network;
++  name: string;
++  /** هوائي (مودم/راوتر) أو باقة نت موبايل أو مشتركة (مكالمات + نت) */
++  kind: "air" | "mobile-data" | "mixed";
++  priceEgp: number;
++  gb: number;
++  /** قيمة مضافة معلنة (دقائق مثلًا) — بتظهر كملاحظة، مش بتدخل في سعر الجيجا */
++  extra?: string;
++  sourceNote?: string;
++};
++
++/** ج/جيجا — وحدة الرادار الصادقة */
++export const perGb = (b: Bundle) => b.priceEgp / b.gb;
++
++export const BUNDLES: Bundle[] = [
++  // ─── الهوائي (مودم 4G/راوتر) — مصدر: مصراوي بعد زيادة مايو ٢٠٢٦ ───
++  { id: "vf-air-90", network: "vodafone", name: "هوائي ٩٠ جيجا", kind: "air", priceEgp: 390, gb: 90 },
++  { id: "vf-air-140", network: "vodafone", name: "هوائي ١٤٠ جيجا", kind: "air", priceEgp: 520, gb: 140 },
++  { id: "vf-air-225", network: "vodafone", name: "هوائي ٢٢٥ جيجا", kind: "air", priceEgp: 750, gb: 225 },
++  { id: "vf-air-400", network: "vodafone", name: "هوائي ٤٠٠ جيجا", kind: "air", priceEgp: 1270, gb: 400, extra: "أرخص جيجا في السوق حاليًا" },
++  { id: "we-air-40", network: "we", name: "WE Air ٢٩٠", kind: "air", priceEgp: 290, gb: 40 },
++  { id: "we-air-105", network: "we", name: "WE Air ٤٦٠", kind: "air", priceEgp: 460, gb: 105 },
++  { id: "we-air-200", network: "we", name: "WE Air ٦٩٠", kind: "air", priceEgp: 690, gb: 200 },
++  { id: "org-air-40", network: "orange", name: "هوائي أورنج ٤٠ جيجا", kind: "air", priceEgp: 290, gb: 40 },
++
++  // ─── باقات نت الموبايل (سوبر ميجابايت) — مصدر: قوائم منشورة ديسمبر ٢٠٢٥ ───
++  { id: "org-go-35", network: "orange", name: "Go Super ٣٥", kind: "mobile-data", priceEgp: 35, gb: 4500 / 1024, sourceNote: "٤٥٠٠ سوبر ميجابايت" },
++  { id: "org-go-50", network: "orange", name: "Go Super ٥٠", kind: "mobile-data", priceEgp: 50, gb: 7000 / 1024, sourceNote: "٧٠٠٠ سوبر ميجابايت" },
++  { id: "org-go-70", network: "orange", name: "Go Super ٧٠", kind: "mobile-data", priceEgp: 70, gb: 10500 / 1024, sourceNote: "١٠٥٠٠ سوبر ميجابايت" },
++  { id: "org-go-120", network: "orange", name: "Go Super ١٢٠", kind: "mobile-data", priceEgp: 120, gb: 20000 / 1024, sourceNote: "٢٠٠٠٠ سوبر ميجابايت" },
++
++  // ─── مشتركة (مكالمات + نت) — المكالمات قيمة مضافة مش بتتحسب في سعر الجيجا ───
++  // فليكس فودافون — آخر قوائم منشورة بداية ٢٠٢٦ — ١ فليكس = ١ ميجا (لو استخدمته نت بس)
++  { id: "vf-flex-30", network: "vodafone", name: "فليكس ٣٠", kind: "mixed", priceEgp: 40, gb: 1000 / 1024, extra: "١٠٠٠ فليكس: دقائق ورسائل وميجا", sourceNote: "١ فليكس = ١ ميجا قبل سوبر فليكس" },
++  { id: "vf-flex-45", network: "vodafone", name: "فليكس ٤٥", kind: "mixed", priceEgp: 60, gb: 2000 / 1024, extra: "٢٠٠٠ فليكس: تكفي نت↔مكالمات", sourceNote: "١ فليكس = ١ ميجا قبل سوبر فليكس" },
++  { id: "vf-flex-70", network: "vodafone", name: "فليكس ٧٠", kind: "mixed", priceEgp: 90, gb: 3000 / 1024, extra: "٣٠٠٠ فليكس", sourceNote: "١ فليكس = ١ ميجا قبل سوبر فليكس" },
++  { id: "vf-flex-100", network: "vodafone", name: "فليكس ١٠٠", kind: "mixed", priceEgp: 130, gb: 5500 / 1024, extra: "٥٥٠٠ فليكس", sourceNote: "١ فليكس = ١ ميجا قبل سوبر فليكس" },
++  { id: "vf-flex-260", network: "vodafone", name: "فليكس ٢٦٠", kind: "mixed", priceEgp: 371.4, gb: 13000 / 1024, extra: "١٣٠٠٠ فليكس", sourceNote: "١ فليكس = ١ ميجا قبل سوبر فليكس" },
++  // أورنج بريميوم — منشور ديسمبر ٢٠٢٥
++  { id: "org-prem-250", network: "orange", name: "أورنج بريميوم ٢٥٠", kind: "mixed", priceEgp: 40, gb: 12, extra: "+٢٥٠٠ دقيقة لكل الشبكات" },
++  { id: "org-prem-350", network: "orange", name: "أورنج بريميوم ٣٥٠", kind: "mixed", priceEgp: 80, gb: 16, extra: "+٣٥٠٠ دقيقة" },
++  { id: "org-prem-500", network: "orange", name: "أورنج بريميوم ٥٠٠", kind: "mixed", priceEgp: 120, gb: 25, extra: "+٥٠٠٠ دقيقة" },
++  { id: "org-prem-700", network: "orange", name: "أورنج بريميوم ٧٠٠", kind: "mixed", priceEgp: 200, gb: 40, extra: "+٧٠٠٠ دقيقة" },
++  { id: "org-prem-1000", network: "orange", name: "أورنج بريميوم ١٠٠٠", kind: "mixed", priceEgp: 250, gb: 70, extra: "+١٠٠٠٠ دقيقة" }
++];
++
++export function bestPerGb(kind?: Bundle["kind"]): Bundle {
++  const pool = kind ? BUNDLES.filter((b) => b.kind === kind) : BUNDLES;
++  return pool.reduce((a, b) => (perGb(b) < perGb(a) ? b : a));
++}
++
++/** أرخص باقة من النوع المطلوب تغطّي استهلاك معين بالجيجا */
++export function cheapestForUsage(usageGb: number, kind: Bundle["kind"] = "air"): Bundle | null {
++  if (!Number.isFinite(usageGb) || usageGb <= 0) return null;
++  const pool = BUNDLES.filter((b) => b.kind === kind && b.gb >= usageGb).sort((a, b) => a.priceEgp - b.priceEgp);
++  return pool[0] ?? null;
++}
+-- 
+2.47.3
+
+
+From 25e1cc9fb7813ce6536d88cfe139e21ac19309aa Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Tue, 22 Sep 2026 17:45:18 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?v22:=20=F0=9F=A4=96=20=D8=B1=D8=A7=D8=AF?=
+ =?UTF-8?q?=D8=A7=D8=B1=20=D8=A7=D8=B4=D8=AA=D8=B1=D8=A7=D9=83=D8=A7=D8=AA?=
+ =?UTF-8?q?=20AI=20=E2=80=94=20=D8=A3=D8=B3=D8=B9=D8=A7=D8=B1=20=D8=B1?=
+ =?UTF-8?q?=D8=B3=D9=85=D9=8A=D8=A9=20=D8=AF=D9=88=D9=84=D8=A7=D8=B1=D9=8A?=
+ =?UTF-8?q?=D8=A9=20+=20=D8=AA=D8=AD=D9=88=D9=8A=D9=84=20=D8=AC=D9=86?=
+ =?UTF-8?q?=D9=8A=D9=87=20=D9=84=D8=A7=D9=8A=D9=81=20=D8=AD=D9=82=D9=8A?=
+ =?UTF-8?q?=D9=82=D9=8A?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- lib/ai-radar-data.ts: 7 أدوات بأسعار متقاطعة من 5 مصادر ٢٠٢٦
+- fetchUsdEgpRate(): نفس مصدر /api/fx (er-api كاش 6 ساعات) — الفشل يعني الدولار فقط بصدق
+- /ai-radar: الرقم الكبير + فخ كلهم مع بعض ≈$100 + 3 قواعد اختيار
+- /api/ai-radar JSON + ترجمات nav_telecom/nav_ai_radar + فوتر وsitemap
+---
+ src/app/ai-radar/page.tsx     | 151 ++++++++++++++++++++++++++++++++++
+ src/app/api/ai-radar/route.ts |  29 +++++++
+ src/app/sitemap.ts            |   2 +
+ src/components/footer.tsx     |  10 +++
+ src/lib/ai-radar-data.ts      | 131 +++++++++++++++++++++++++++++
+ src/lib/translations.ts       |   4 +
+ 6 files changed, 327 insertions(+)
+ create mode 100644 src/app/ai-radar/page.tsx
+ create mode 100644 src/app/api/ai-radar/route.ts
+ create mode 100644 src/lib/ai-radar-data.ts
+
+diff --git a/src/app/ai-radar/page.tsx b/src/app/ai-radar/page.tsx
+new file mode 100644
+index 0000000..ca50fd7
+--- /dev/null
++++ b/src/app/ai-radar/page.tsx
+@@ -0,0 +1,151 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { buildMeta } from "@/lib/seo";
++import { AI_TOOLS, AI_REVIEW_DATE_AR, fetchUsdEgpRate, egp, type AiTool } from "@/lib/ai-radar-data";
++
++export const metadata: Metadata = buildMeta({
++  title: "رادار اشتراكات AI — سعر ChatGPT وClaude وGemini بالجنيه المصري لايف",
++  description:
++    "أسعار اشتراكات الذكاء الاصطناعي بالدولار الرسمي وبالجنيه بسعر الصرف الحقيقي لايف: ChatGPT Go $8، Plus $20، Claude Pro $20، Gemini AI Plus $4.99 — مراجعة بتاريخ معلن.",
++  url: "https://apphub.eg/ai-radar",
++  keywords: ["سعر ChatGPT في مصر", "اشتراك ChatGPT بالجنيه", "سعر Claude مصر", "Gemini سعر"]
++});
++
++export const dynamic = "force-dynamic"; // عشان سعر الصرف يفضل طازة
++
++const fmtUsd = (n: number) => `$${n}`;
++
++function ToolCard({ tool, rate }: { tool: AiTool; rate: number | null }) {
++  const cheapestPaid = tool.tiers[0];
++  const egpCheapest = cheapestPaid ? egp(cheapestPaid.usd, rate) : null;
++
++  return (
++    <div className="rounded-3xl bg-white p-6 shadow-soft space-y-4">
++      <div className="flex items-center gap-3">
++        <span className={`w-11 h-11 rounded-2xl flex items-center justify-center text-2xl ${tool.color}`}>
++          {tool.icon}
++        </span>
++        <div className="flex-1">
++          <h3 className="font-extrabold text-brand-900 text-lg">{tool.name}</h3>
++          <p className="text-xs text-charcoal-500">{tool.bestFor}</p>
++        </div>
++        {cheapestPaid ? (
++          <div className="text-end">
++            <div className="font-extrabold text-accent-600 text-lg">{fmtUsd(cheapestPaid.usd)}</div>
++            <div className="text-[11px] text-charcoal-500">
++              {egpCheapest != null ? `≈ ${egpCheapest.toLocaleString("ar-EG")} ج` : "بالدولار"}
++            </div>
++          </div>
++        ) : (
++          <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-bold text-sage-700">مجاني 💚</span>
++        )}
++      </div>
++
++      <table className="w-full text-sm">
++        <tbody>
++          <tr className="border-b border-cream-100">
++            <td className="py-2 font-bold text-sage-700">مجاني</td>
++            <td className="py-2 text-charcoal-600" colSpan={2}>{tool.free}</td>
++          </tr>
++          {tool.tiers.map((t) => {
++            const e = egp(t.usd, rate);
++            return (
++              <tr key={t.name} className="border-b border-cream-100">
++                <td className="py-2.5 w-1/4">
++                  <span className="font-bold text-brand-900">{t.name}</span>
++                </td>
++                <td className="py-2.5 w-1/4 whitespace-nowrap">
++                  <span className="font-extrabold">{fmtUsd(t.usd)}</span>
++                  {e != null && (
++                    <span className="text-xs text-charcoal-500"> ≈ {e.toLocaleString("ar-EG")} ج</span>
++                  )}
++                </td>
++                <td className="py-2.5 text-xs text-charcoal-500">{t.tag}</td>
++              </tr>
++            );
++          })}
++        </tbody>
++      </table>
++    </div>
++  );
++}
++
++export default async function AiRadarPage() {
++  const { rate, source } = await fetchUsdEgpRate();
++  const cheapest = AI_TOOLS
++    .flatMap((t) => t.tiers.map((tier) => ({ tool: t.name, ...tier })))
++    .sort((a, b) => a.usd - b.usd)[0];
++  const allIn = AI_TOOLS
++    .map((t) => t.tiers.find((x) => x.usd >= 19.99 && x.usd <= 21))
++    .filter(Boolean)
++    .reduce((s, x) => s + (x?.usd ?? 0), 0);
++  const egpCheapest = egp(cheapest.usd, rate);
++  const egpAllIn = rate != null ? Math.round(allIn * rate) : null;
++
++  return (
++    <div className="mx-auto max-w-6xl space-y-10 animate-fade-in">
++      {/* Hero */}
++      <div className="rounded-3xl gradient-brand p-8 sm:p-10 text-white text-center">
++        <div className="text-6xl mb-3">🤖</div>
++        <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">رادار اشتراكات AI</h1>
++        <p className="text-white/90 max-w-2xl mx-auto">
++          الأسعار الرسمية العالمية بالدولار — <strong>وبالجنيه بسعر الصرف الحقيقي لايف</strong>،
++          عشان تعرف الاشتراك بيخصم من كارتك كام قبل ما تعملها.
++        </p>
++        <p className="mt-3 text-xs text-white/60">
++          المراجعة: {AI_REVIEW_DATE_AR} · سعر الصرف: {rate != null ? `${rate} ج/دولار (${source})` : "غير متاح لحظيًا — الدولار معروض فقط بصدق"}
++        </p>
++      </div>
++
++      {/* الرقم الكبير */}
++      <div className="grid gap-4 md:grid-cols-3 text-center">
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">أرخص AI مدفوع</div>
++          <div className="text-2xl font-extrabold text-brand-900">
++            {fmtUsd(cheapest.usd)}
++            {egpCheapest != null && <span className="text-lg"> ≈ {egpCheapest.toLocaleString("ar-EG")} ج</span>}
++          </div>
++          <div className="text-xs text-charcoal-400 mt-1">{cheapest.tool} {cheapest.name}/شهر</div>
++        </div>
++        <div className="rounded-3xl bg-white p-6 shadow-soft">
++          <div className="text-sm text-charcoal-500 mb-1">السعر المعياري للسوق</div>
++          <div className="text-2xl font-extrabold text-brand-900">
++            $20{rate != null && <span className="text-lg"> ≈ {Math.round(20 * rate).toLocaleString("ar-EG")} ج</span>}
++          </div>
++          <div className="text-xs text-charcoal-400 mt-1">ChatGPT Plus = Claude Pro ≈ Gemini AI Pro</div>
++        </div>
++        <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-6 shadow-soft">
++          <div className="text-sm text-red-700 mb-1">فخ «كلهم مع بعض»</div>
++          <div className="text-2xl font-extrabold text-red-800">
++            ≈ ${allIn}{egpAllIn != null && <span className="text-lg"> ≈ {egpAllIn.toLocaleString("ar-EG")} ج</span>}
++          </div>
++          <div className="text-xs text-red-600 mt-1">في الشهر — ٧٠٪ منهم نفس الحاجة بصراحة</div>
++        </div>
++      </div>
++
++      {/* الأدوات */}
++      <div className="grid gap-5 md:grid-cols-2">
++        {AI_TOOLS.map((t) => (
++          <ToolCard key={t.id} tool={t} rate={rate} />
++        ))}
++      </div>
++
++      {/* أجندة اختيار ذكي */}
++      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-3">
++        <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">🧭 اختار بذكاء — في ٣ قواعد</h2>
++        <ol className="text-sm text-charcoal-600 space-y-2 list-decimal mr-5">
++          <li><strong>ابدأ ببلاش</strong> — المستوى المجاني عند ChatGPT وGemini كافي للتجربة الحقيقية. لو بتوصل للحد يوميًا ساعتها بس فكر في الدفع.</li>
++          <li><strong>اشتراك واحد يكفي ٩٥٪</strong> — $20 في أي من الكبار التلاتة بينجز نفس الشغل تقريبًا؛ الاشتراك الثاني بيبقى فخ «التخصص الوهمي» إلا لو محتاج مهمة محددة (سياق ضخم = Gemini؛ كود ثقيل = Claude؛ كل حاجة مع بعض = ChatGPT).</li>
++          <li><strong>بكارت مصري بالدولار</strong> — البنك بيحاسبك بسعر الصرف وقت الخصم + ممكن رسوم إضافية بنسبة بسيطة؛ الجنيه الظاهر فوق استرشادي لحظي من {source ?? "المصدر"}.</li>
++        </ol>
++      </div>
++
++      {/* بيانات مفتوحة */}
++      <div className="rounded-2xl bg-brand-50 p-5 text-sm text-charcoal-600 text-center">
++        📡 نفس الداتا JSON: <code dir="ltr" className="rounded bg-white px-2 py-0.5">/api/ai-radar</code>
++        {" — "}
++        <Link href="/disclosure" className="font-bold underline">عقد الأرقام عندنا</Link>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/api/ai-radar/route.ts b/src/app/api/ai-radar/route.ts
+new file mode 100644
+index 0000000..dd85aff
+--- /dev/null
++++ b/src/app/api/ai-radar/route.ts
+@@ -0,0 +1,29 @@
++import { NextResponse } from "next/server";
++import { AI_TOOLS, AI_REVIEW_DATE, fetchUsdEgpRate } from "@/lib/ai-radar-data";
++
++// رادار اشتراكات AI — أسعار رسمية بالدولار + تحويل جنيه لايف (نفس مصدر /api/fx)
++export const revalidate = 3600;
++
++export async function GET() {
++  const { rate, source } = await fetchUsdEgpRate();
++  return NextResponse.json({
++    reviewDate: AI_REVIEW_DATE,
++    baseCurrency: "USD",
++    egpRate: rate, // null بصدق لو المصدر غير متاح — ممنوع متوسط مختلق
++    egpRateSource: source,
++    note: "التحويل استرشادي — البنك بيخصم بسعر لحظة العملية وقد يضيف رسومًا",
++    tools: AI_TOOLS.map((t) => ({
++      id: t.id,
++      name: t.name,
++      bestFor: t.bestFor,
++      free: t.free,
++      tiers: t.tiers.map((tier) => ({
++        name: tier.name,
++        usd: tier.usd,
++        egpApprox: rate != null ? Math.round(tier.usd * rate) : null,
++        tag: tier.tag
++      }))
++    })),
++    attribution: "رادار اشتراكات AI — AppHub https://apphub.eg/ai-radar"
++  });
++}
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index c89e3b3..da6bbb7 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -22,6 +22,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/data`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+     { url: `${baseUrl}/disclosure`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+     { url: `${baseUrl}/uc-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
++    { url: `${baseUrl}/telecom-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
++    { url: `${baseUrl}/ai-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+     { url: `${baseUrl}/calculator`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/best`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+diff --git a/src/components/footer.tsx b/src/components/footer.tsx
+index 32f164c..9a38ea7 100644
+--- a/src/components/footer.tsx
++++ b/src/components/footer.tsx
+@@ -129,6 +129,16 @@ export function Footer() {
+                   {t("nav_uc")}
+                 </Link>
+               </li>
++              <li>
++                <Link href="/telecom-radar" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("nav_telecom")}
++                </Link>
++              </li>
++              <li>
++                <Link href="/ai-radar" className="text-charcoal-500 hover:text-accent-600 transition">
++                  {t("nav_ai_radar")}
++                </Link>
++              </li>
+               <li>
+                 <Link href="/blog" className="text-charcoal-500 hover:text-accent-600 transition">
+                   {t("nav_blog")}
+diff --git a/src/lib/ai-radar-data.ts b/src/lib/ai-radar-data.ts
+new file mode 100644
+index 0000000..6bf42ca
+--- /dev/null
++++ b/src/lib/ai-radar-data.ts
+@@ -0,0 +1,131 @@
++/**
++ * رادار اشتراكات AI 🤖 — الأسعار الرسمية العالمية بالدولار (مراجعة موثّقة)،
++ * وتحويلها للجنيه بسعر صرف **حقيقي لايف** (نفس مصدر /api/fx) — ولما المصدر غير متاح
++ * نعرض الدولار بس بدون متوسط مُختلق.
++ */
++
++export const AI_REVIEW_DATE = "2026-09-21";
++export const AI_REVIEW_DATE_AR = "سبتمبر ٢٠٢٦";
++
++export type AiTier = {
++  name: string;       // اسم الخطة
++  usd: number;        // شهريًا بالدولار
++  tag: string;        // سبب اختيارها
++};
++
++export type AiTool = {
++  id: string;
++  name: string;
++  icon: string;
++  color: string;      // لون علامة مميز في الجدول
++  free: string;       // وصف الباقة المجانية
++  tiers: AiTier[];
++  bestFor: string;    // أقوى استخدام
++};
++
++/** أسعار رسمية منشورة — متقاطعة من ٥ مصادر (يونيو–سبتمبر ٢٠٢٦) */
++export const AI_TOOLS: AiTool[] = [
++  {
++    id: "chatgpt",
++    name: "ChatGPT",
++    icon: "🤖",
++    color: "bg-emerald-50 text-emerald-800",
++    free: "مجاني (بإعلانات في بعض المناطق)",
++    tiers: [
++      { name: "Go", usd: 8, tag: "أرخص دخول رسمي" },
++      { name: "Plus", usd: 20, tag: "الأوسع استخدامًا — المرجع المعياري" },
++      { name: "Pro", usd: 100, tag: "استخدام تقيل بلا حدود تقريبًا" },
++      { name: "Pro+", usd: 200, tag: "أقصى الأولويات والموديلات" }
++    ],
++    bestFor: "الأداة الواحدة لكل حاجة: كتابة وصور وصوت ومنظومة إضافات"
++  },
++  {
++    id: "claude",
++    name: "Claude",
++    icon: "🧠",
++    color: "bg-orange-50 text-orange-800",
++    free: "مجاني بحدود يومية",
++    tiers: [
++      { name: "Pro", usd: 20, tag: "نقطة الحلوة — أقوى قيمة عند $20" },
++      { name: "Max 5x", usd: 100, tag: "خمس أضعاف الاستخدام" },
++      { name: "Max 20x", usd: 200, tag: "عشرين ضعفًا + أولوية" }
++    ],
++    bestFor: "مستندات طويلة وبرمجة (يشمل Claude Code)"
++  },
++  {
++    id: "gemini",
++    name: "Gemini (Google)",
++    icon: "✨",
++    color: "bg-sky-50 text-sky-800",
++    free: "مجاني سخي + اندماج جوجل",
++    tiers: [
++      { name: "AI Plus", usd: 4.99, tag: "أرخص اشتراك AI مدفوع في القايمة" },
++      { name: "AI Pro", usd: 19.99, tag: "١ مليون توكن + سعة ٢ تيرا" },
++      { name: "AI Ultra", usd: 99.99, tag: "أعلى الحدود وأولوية الوصول" }
++    ],
++    bestFor: "أهل Gmail وDocs: اندماج عميق في شغلك اليومي"
++  },
++  {
++    id: "copilot",
++    name: "Copilot (Microsoft)",
++    icon: "🪟",
++    color: "bg-blue-50 text-blue-800",
++    free: "مجاني داخل ويندوز وBing",
++    tiers: [
++      { name: "Pro", usd: 20, tag: "أولوية GPT-5 داخل التطبيقات" },
++      { name: "M365 Personal", usd: 19.99, tag: "أوفيس كامل + Copilot" }
++    ],
++    bestFor: "لو شغلك كله Word وExcel وOutlook"
++  },
++  {
++    id: "grok",
++    name: "Grok (xAI)",
++    icon: "⚡",
++    color: "bg-stone-100 text-stone-800",
++    free: "محدود عبر X",
++    tiers: [
++      { name: "SuperGrok Lite", usd: 10, tag: "دخول اقتصادي" },
++      { name: "SuperGrok", usd: 30, tag: "داتا X اللحظية كاملة" },
++      { name: "Heavy", usd: 300, tag: "أقصى الاستخدام البحثي" }
++    ],
++    bestFor: "متابعة أخبار X لحظة بلحظة والنغمة الحرة"
++  },
++  {
++    id: "perplexity",
++    name: "Perplexity",
++    icon: "🔎",
++    color: "bg-teal-50 text-teal-800",
++    free: "بحث مجاني يوميًا",
++    tiers: [
++      { name: "Pro", usd: 20, tag: "٣٠٠ بحث Pro يوميًا + Deep Research" }
++    ],
++    bestFor: "البحث بمصادر وإحالات — بديل جوجل الموجّه"
++  },
++  {
++    id: "deepseek",
++    name: "DeepSeek",
++    icon: "🐳",
++    color: "bg-indigo-50 text-indigo-800",
++    free: "محادثة الويب مجانية بالكامل",
++    tiers: [],
++    bestFor: "أقوى خيار ببلاش نهائيًا — الدفع للـ API بس"
++  }
++];
++
++/** جلب سعر الدولار حقيقي من نفس مصدر /api/fx (كاش ٦ ساعات في السيرفر) */
++export async function fetchUsdEgpRate(): Promise<{ rate: number | null; source: string | null }> {
++  try {
++    const res = await fetch("https://open.er-api.com/v6/latest/USD", {
++      next: { revalidate: 21600 }
++    });
++    if (!res.ok) throw new Error("fx failed");
++    const j = await res.json();
++    const rate = j?.rates?.EGP;
++    if (typeof rate !== "number" || rate <= 0) throw new Error("bad rate");
++    return { rate, source: "ExchangeRate-API" };
++  } catch {
++    return { rate: null, source: null };
++  }
++}
++
++export const egp = (usd: number, rate: number | null) => (rate ? Math.round(usd * rate) : null);
+diff --git a/src/lib/translations.ts b/src/lib/translations.ts
+index 8c8ccb8..21781e3 100644
+--- a/src/lib/translations.ts
++++ b/src/lib/translations.ts
+@@ -125,6 +125,8 @@ export const translations = {
+     nav_store: "المتجر",
+     nav_research: "الأبحاث",
+     nav_uc: "رادار الشدات",
++    nav_telecom: "رادار الباقات",
++    nav_ai_radar: "رادار AI",
+     nav_disclosure: "الإفصاح والشفافية",
+     nav_shop: "المتجر الرقمي",
+     nav_data: "البيانات والأبحاث",
+@@ -278,6 +280,8 @@ export const translations = {
+     nav_store: "Store",
+     nav_research: "Research",
+     nav_uc: "UC Radar",
++    nav_telecom: "Bundles Radar",
++    nav_ai_radar: "AI Radar",
+     nav_disclosure: "Disclosure & Transparency",
+     nav_shop: "Digital Store",
+     nav_data: "Data & Research",
+-- 
+2.47.3
+

@@ -1,0 +1,604 @@
+From e4b845e0221e842f85dd5ebcc8f10c600d3e00eb Mon Sep 17 00:00:00 2001
+From: Arena Agent <agent@apphub.local>
+Date: Tue, 22 Sep 2026 18:36:29 +0000
+Subject: [PATCH] =?UTF-8?q?v25:=20=F0=9F=8C=89=20=D8=AD=D9=84=D9=82=D8=A9?=
+ =?UTF-8?q?=20=D8=A7=D9=84=D9=88=D8=B5=D9=84=20=E2=80=94=20=D8=B7=D9=84?=
+ =?UTF-8?q?=D8=A8=D8=A7=D8=AA=20=D8=AA=D9=86=D9=81=D9=8A=D8=B0=20=D9=85?=
+ =?UTF-8?q?=D9=88=D8=AB=D9=88=D9=82=D8=A9=20=D9=84=D9=84=D9=86=D8=A7=D8=B3?=
+ =?UTF-8?q?=20+=20=D8=A8=D9=88=D8=A7=D8=A8=D8=A9=20=D8=AA=D8=AD=D8=AF?=
+ =?UTF-8?q?=D9=8A=D8=AB=20=D8=B1=D8=B3=D9=85=D9=8A=20=D9=84=D9=84=D8=B4?=
+ =?UTF-8?q?=D8=B1=D9=83=D8=A7=D8=AA?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- migration 005: توسيع shop_orders (player_ref/notes/channel guarded alters) + جدول brand_updates
+- زر «اطلب تنفيذها دلوقتي» على كروت المتجر (بريد+Player ID بدون باسورد مثلًا) → /api/shop/order يسجل pending بصدق
+- /partners: استمارة تحديث سعر رسمي بدليل URL إلزامي → pending للتحقق اليدوي؛ عقد صريح: الظهور مجاني والترتيب مش للبيع
+- الـ brokerage يشتغل كأصل علاقات من يومه الأول قبل أي بوابة دفع
+---
+ docs/BRAND-GUIDE.md                   |   1 +
+ docs/PROJECT-AUDIT.md                 |   1 +
+ src/app/api/brand-updates/route.ts    |  58 ++++++++++++
+ src/app/api/shop/order/route.ts       |  51 +++++++++++
+ src/app/partners/page.tsx             |  75 ++++++++++++++++
+ src/app/shop/page.tsx                 |   7 ++
+ src/app/sitemap.ts                    |   1 +
+ src/components/brand-update-form.tsx  | 124 ++++++++++++++++++++++++++
+ src/components/shop-order-button.tsx  | 121 +++++++++++++++++++++++++
+ supabase/migrations/005_brokerage.sql |  38 ++++++++
+ 10 files changed, 477 insertions(+)
+ create mode 100644 src/app/api/brand-updates/route.ts
+ create mode 100644 src/app/api/shop/order/route.ts
+ create mode 100644 src/app/partners/page.tsx
+ create mode 100644 src/components/brand-update-form.tsx
+ create mode 100644 src/components/shop-order-button.tsx
+ create mode 100644 supabase/migrations/005_brokerage.sql
+
+diff --git a/docs/BRAND-GUIDE.md b/docs/BRAND-GUIDE.md
+index 78e198c..07ea95c 100644
+--- a/docs/BRAND-GUIDE.md
++++ b/docs/BRAND-GUIDE.md
+@@ -130,6 +130,7 @@
+ | **v5** الفئات الفرعية | 18 سب 2026 | نظام Subcategories كامل: إصلاح بدائل الحاسبة (سبوتيفاي ≠ شاهد) + تقسيم صفحات /best + فلاتر الدليل + أداة مقارنة مجمعة + تحذير «مش منافسين مباشرين» + الترشيح الذكي بالنوع |
+ | **v6** إعادة ترتيب الكتالوج + دليل العلامة | 18 سب 2026 | 162 تطبيق مرتبين بالتقييم داخل كل فئة + افتراضي مقارنة حقيقي + **بدء دليل العلامة ده** |
+ | **v7** فئة «شحن وبطاقات» 🔋 | 18 سب 2026 | فئة جديدة #16 بخمس تطبيقات موثقة (ميداس باي، كوداشوب، لايك كارد، UniPin، كاري فيرست) + فئتان فرعيتان (شحن ألعاب/بطاقات) + 3 صفحات /best/topup جديدة + مقارنة ميداس باي vs كوداشوب بجدول UC رسمي = **238 رابط** |
++| **v25** 🌉 حلقة الوصل | 21 سب 2026 | الناس→رسمي: زر «اطلب تنفيذها دلوقتي» على كروت المتجر (بريد+Player ID بدون باسورد أبد+ملاحظة) يدفع `/api/shop/order` → shop_orders pending يدوي (503 صادق لحد 003+005) — brokerage MVP بلا بوابة دفع؛ الشركات→ناس: `/partners` بوابة التحديث الرسمي (company+plan+جديد+دليل رسمي إلزامي) → jدول `brand_updates` pending للتحقق بشارة «من المصدر الرسمي» — مجانًا، والترتيب مش للبيع (عقد صريح جوه الصفحة) |
+ | **v24** 📰 Press Kit + ترقية B2B | 21 سب 2026 | `/press`: هوية المصدر (٦ أرقام جاهزة للاقتباس)، عينة تقرير قابلة للتحميل (**`/api/reports/index.csv` — CSV حقيقي من سلسلة المؤشر بترخيص الإشارة**)، ٤ اقتباسات جاهزة كوبي-باست بأرقام حقيقية (٤١٩٫٩٩ ج للـ ٦٦٠ UC، ٣٫١٨ ج/جيجا، $4.99 أرخص AI)، قنوات API المفتوحة، وتواصل press@apphub.eg. `/data`: بطاقة «جرّب المنتج» بتحميل العينة + فورم «اطلب عرضك» (WaitlistForm interest=data-lead — leads في الجدول نفسه). فوتر + sitemap + ترجمة nav_press |
+ | **v23** 📡 مركز الرادارات | 21 سب 2026 | `/price-radar` بقى **هاب موحّد**: توبات كلاينت (اشتراكات 💳 · شدات 🎮 · باقات 📶 · AI 🤖) فوق محتوى مستخرج لمكونات `components/radars/*-content.tsx` — تبديل محلي بلا fetch، والصفحات المستقلة `/uc-radar /telecom-radar /ai-radar` **فضلت شغالة** بهيروها ورابط رجع للمركز (SEO ومشاركة مباشرة محفوظة)؛ رادار الاشتراكات الأصلي محفوظ ١٠٠٪ (فلتر الدول/تيليجرام/المنهجية)؛ سعر الصرف للـ AI بيتجيب في سيرفر المركز نفسه |
+ | **v21** 📶 رادار الباقات | 21 سب 2026 | `/telecom-radar`: 22 باقة موثّقة (هوائي مشترك فودافون×WE×أورنج من مصراوي مايو ٢٠٢٦ + Go Super + فليكس وبريميوم منشور) بمقياس **ج/جيجا** زي سعر اللتر؛ حاسبة «أحسن هوائي لاستخدامك» (أرخص باقة تغطي الاستخدام في كل شبكة جنب بعض)؛ تحذيرات صادقة (زيادات/فليكس=ميجا/عروض الولاء برّه)؛ `/api/telecom-radar` |
+diff --git a/docs/PROJECT-AUDIT.md b/docs/PROJECT-AUDIT.md
+index d165761..e5e0af0 100644
+--- a/docs/PROJECT-AUDIT.md
++++ b/docs/PROJECT-AUDIT.md
+@@ -35,6 +35,7 @@
+ | تكرار 3 بلوكات media في globals.css | نظافة | دمج |
+ 
+ ### 🎨 مقترح الواجهة القادم (يُناقش — لم يُنفذ بعد)
++-8. **v25 — حلقة الوصل (الوسيط)** ✅ (21 سب 2026): استكمال فلسفة «لا تشغيل بلا مفتاح» للوساطة: طلبات التنفيذ اليدوية (shop_orders) وتحديثات الشركات الرسمية (brand_updates) بتبني **خزينة علاقات الجانبين** (مستهلكون محتاجون تنفيذ × شركات محتاجة قناة موثقة) قبل أي بوابة دفع — الـ brokerage يشتغل كأصل علاقات من يومه الأول. وحدة الربط: صدق السعر للناس × رسمية التواصل للشركات × شارة تحقق يدوي مكتسبة مش مباعة.
+ -7. **v24 — من المحتوى لشركة بيانات: واجهة الصحافة** ✅ (21 سب 2026): قرار المستخدم الاستثمار في فجوة «نيلسن الاقتصاد الرقمي» (مذكرة INVESTMENT-THESIS.md) ترجم لواجهات الثقة: عينة التقرير CSV القابلة للتحميل هي **أول منتج مدفوع ملموس يُوزَّع مجانًا** (freemium صادق)، والاقتباسات الجاهزة تخلي AppHub مصدر صحفة من غير شيك تسويق. القاعدة الجديدة: أي رقم يُعرض للشركات **يجب أن يكون قابلًا للتحميل كأونر** — مش مجرد ادعاء في صفحة.
+ -6. **v23 — المراجعة الملاحية قبل الانتشار** ✅ (21 سب 2026): لما الفرتيكالز زادت، المستخدم طلب تنظيمها قبل ما الناس تتوه — النتيجة: استخراج محتوى الرادارات لمكونات قابلة للتشارك بدل التكرار، ومركز توبات واحد، والحفاظ على الروابط المستقلة للسيو. القاعدة: **كل فرتيكال جديد يضاف محتواه كمكوّن مشترك** والمركز يرثه تلقائيًا — مش نقصّه في صفحة لوحدها.
+ -5. **v21/v22 — استراتيجية الفرتيكالز: رادار الوحدة** ✅ (21 سب 2026): اندماج سؤال المستخدم «إيه أكتر خدمة الناس بتدور عليها» قرر التليكوم + AI (وبعدهم fري فاير في الطابور). القاعدة الصلبة الجديدة لفرتيكال الرادار: **وحدة مقارنة واحدة صادقة** (ج/100 UC، ج/جيجا، $→ج لايف) + جدول واحد كبير بتاريخ مراجعة + حاسبة محلية + API مفتوح بالإشارة — فورمولا واحدة متكررة بدل صفحات متراكبة.
+diff --git a/src/app/api/brand-updates/route.ts b/src/app/api/brand-updates/route.ts
+new file mode 100644
+index 0000000..52c3f5c
+--- /dev/null
++++ b/src/app/api/brand-updates/route.ts
+@@ -0,0 +1,58 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient } from "@/lib/supabase/server";
++
++const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
++const URL_RE = /^https?:\/\/.+\..+/i;
++
++/**
++ * تحديث سعر رسمي من شركة/علامة — يتسجّل pending للتحقق اليدوي.
++ * بعد المراجعة بيظهر في الرادارات بشارة «من المصدر الرسمي» — الظهور مش للبيع (ميثاق الإفصاح)،
++ * فيدل الشركات هو الوضوح الرسمي مش شراء الترتيب.
++ */
++export async function POST(req: NextRequest) {
++  try {
++    const b = await req.json();
++    const company = String(b.company ?? "").trim().slice(0, 120);
++    const contactEmail = String(b.contactEmail ?? "").trim().toLowerCase();
++    const planName = String(b.planName ?? "").trim().slice(0, 120);
++    const oldPrice = b.oldPrice != null ? Number(b.oldPrice) : null;
++    const newPrice = Number(b.newPrice);
++    const currency = ["EGP", "SAR", "AED", "USD"].includes(b.currency) ? b.currency : "EGP";
++    const evidenceUrl = String(b.evidenceUrl ?? "").trim().slice(0, 400);
++    const note = String(b.note ?? "").trim().slice(0, 300) || null;
++
++    if (!company || !EMAIL_RE.test(contactEmail) || !planName ||
++        !Number.isFinite(newPrice) || newPrice <= 0 || !URL_RE.test(evidenceUrl)) {
++      return NextResponse.json({ ok: false, error: "بيانات ناقصة أو غير صحيحة" }, { status: 400 });
++    }
++    if (oldPrice != null && (!Number.isFinite(oldPrice) || oldPrice <= 0)) {
++      return NextResponse.json({ ok: false, error: "السعر القديم غير صحيح" }, { status: 400 });
++    }
++
++    const supabase = createClient();
++    const { error } = await supabase.from("brand_updates").insert({
++      company,
++      contact_email: contactEmail,
++      plan_name: planName,
++      old_price: oldPrice,
++      new_price: newPrice,
++      currency,
++      evidence_url: evidenceUrl,
++      note
++    });
++
++    if (error) {
++      return NextResponse.json(
++        { ok: false, error: "بوابة الشركات بتتجهز — الترحيل لسه (migration 005)" },
++        { status: 503 }
++      );
++    }
++
++    return NextResponse.json({
++      ok: true,
++      message: "وصل طلب التحديث — هنراجع المصدر الرسمي ونرد على بريدك خلال ٢٤-٤٨ ساعة"
++    });
++  } catch {
++    return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 });
++  }
++}
+diff --git a/src/app/api/shop/order/route.ts b/src/app/api/shop/order/route.ts
+new file mode 100644
+index 0000000..35de23e
+--- /dev/null
++++ b/src/app/api/shop/order/route.ts
+@@ -0,0 +1,51 @@
++import { NextRequest, NextResponse } from "next/server";
++import { createClient } from "@/lib/supabase/server";
++
++const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
++
++/**
++ * طلب تنفيذ موثوق (حلقة الوصل): يتسجّل في shop_orders بحالة pending.
++ * التنفيذ يدوي لحد بوابة الدفع — من غير وعد سعر نهائي ولا تحصيل.
++ */
++export async function POST(req: NextRequest) {
++  try {
++    const b = await req.json();
++    const email = String(b.email ?? "").trim().toLowerCase();
++    const productSlug = String(b.productSlug ?? "").trim().slice(0, 80);
++    const playerRef = String(b.playerRef ?? "").trim().slice(0, 80) || null;
++    const notes = String(b.notes ?? "").trim().slice(0, 300) || null;
++
++    if (!EMAIL_RE.test(email) || !productSlug) {
++      return NextResponse.json({ ok: false, error: "البريد والمنتج مطلوبين" }, { status: 400 });
++    }
++
++    const supabase = createClient();
++    const { data, error } = await supabase
++      .from("shop_orders")
++      .insert({
++        email,
++        product_slug: productSlug,
++        player_ref: playerRef,
++        notes,
++        channel: "concierge",
++        status: "pending"
++      })
++      .select("id")
++      .single();
++
++    if (error) {
++      return NextResponse.json(
++        { ok: false, error: "الطلبات بتتجهز — الترحيل لسه ما تمش (migration 003+005)" },
++        { status: 503 }
++      );
++    }
++
++    return NextResponse.json({
++      ok: true,
++      orderId: String(data.id).slice(0, 8),
++      nextStep: "هنتواصل معاك على بريدك لتأكيد السعر الرسمي اللحظي والرسوم والدفع — قبل أي خصم."
++    });
++  } catch {
++    return NextResponse.json({ ok: false, error: "طلب غير صالح" }, { status: 400 });
++  }
++}
+diff --git a/src/app/partners/page.tsx b/src/app/partners/page.tsx
+new file mode 100644
+index 0000000..0577dbc
+--- /dev/null
++++ b/src/app/partners/page.tsx
+@@ -0,0 +1,75 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import { buildMeta } from "@/lib/seo";
++import { BrandUpdateForm } from "@/components/brand-update-form";
++
++export const metadata: Metadata = buildMeta({
++  title: "بوابة الشركاء — حدّث سعرك الرسمي في رادارات AppHub",
++  description:
++    "قناة التحديث الرسمي للشركات: أرسل تغيير الأسعار بدليل رسمي فنتحقق ونظهره في رادارات الأسعار والباقات والـ AI بشارة «من المصدر الرسمي» — مجانًا وبدون صفقات ترتيب.",
++  url: "https://apphub.eg/partners",
++  keywords: ["شركاء", "تحديث سعر رسمي", "علامة موثوقة"]
++});
++
++const VALUES = [
++  { icon: "📡", title: "قناة رسمية للجمهور", text: "بدل ما خبر السعر يتسرّب مشوّه في المنتديات — قوله بنفسك على منصة الناس بتثق فيها، وبرابطك الرسمي." },
++  { icon: "✅", title: "شارة «من المصدر الرسمي»", text: "بعد التحقق اليدوي، التحديث بيظهر موسومًا صريحًا — حضور أقوى من أي إعلان لأنه معلومة موثقة." },
++  { icon: "📊", title: "ظهور في مؤشر الأسعار", text: "تغييرك الموثّق بينعكس في مؤشر الاقتصاد الرقمي — الصحافة بتراقبه، يعني خبرك بيوصل بالإطار الصح." },
++  { icon: "🧾", title: "سجل تاريخي عام", text: "تاريخ زياداتك الصادق معلن — اللي بينزّل سعره أو بيثبّته للعميل بياخد فضل السجل الحسن ده" }
++];
++
++export default function PartnersPage() {
++  return (
++    <div className="mx-auto max-w-5xl space-y-10 animate-fade-in">
++      {/* Hero */}
++      <div className="rounded-3xl gradient-brand p-8 sm:p-10 text-white text-center">
++        <div className="text-6xl mb-3">🤝</div>
++        <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">بوابة الشركاء</h1>
++        <p className="text-white/90 max-w-2xl mx-auto">
++          قناة التحديث الرسمي: ابعتلنا تغيير الأسعار بدليله الرسمي — نتحقق ونظهره
++          في الرادارات بشارة «من المصدر الرسمي». مجانًا تمامًا.
++        </p>
++      </div>
++
++      {/* القيمة للشركات */}
++      <div className="grid gap-4 sm:grid-cols-2">
++        {VALUES.map((v) => (
++          <div key={v.title} className="rounded-2xl bg-white p-6 shadow-soft space-y-2">
++            <div className="flex items-center gap-2">
++              <span className="text-2xl" aria-hidden>{v.icon}</span>
++              <h2 className="font-extrabold text-brand-900">{v.title}</h2>
++            </div>
++            <p className="text-sm text-charcoal-600 leading-6">{v.text}</p>
++          </div>
++        ))}
++      </div>
++
++      {/* الميثاق الصريح */}
++      <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 space-y-2">
++        <p className="font-bold">📜 العقد مع الشركات (نفس عقدنا مع الجمهور):</p>
++        <ul className="space-y-1">
++          <li>• الظهور الرسمي <strong>مجاني</strong> — مفيش «ظهور مميز بالفلوس». الإعلانات عندها خاناتها الموسومة في <Link href="/advertise" className="underline font-bold">صفحة الإعلان</Link>.</li>
++          <li>• <strong>الترتيب مش للبيع</strong>: باقتك لو أغلى من المنافس هتفضل أغلى في جدولنا — قيمتك عندنا إن رقمك يكون موثّق وصريح، مش أجمل.</li>
++          <li>• كل تحديث بيتتحقق يدويًا من الرابط الرسمي المرفق — التحديثات المجهولة المصدر بتترفض بهدوء.</li>
++        </ul>
++      </div>
++
++      {/* الاستمارة */}
++      <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft space-y-4">
++        <div>
++          <h2 className="heading-elegant text-2xl sm:text-3xl text-brand-900">📨 قدّم تحديثك الرسمي</h2>
++          <p className="text-sm text-charcoal-500 mt-1">
++            لازم رابط إعلان رسمي (موقعك، صفحتك الموثقة، بيان صحفي) — الرد على بريدك خلال ٢٤-٤٨ ساعة.
++          </p>
++        </div>
++        <BrandUpdateForm />
++      </div>
++
++      {/* للبيانات التجارية */}
++      <div className="rounded-2xl bg-brand-50 p-5 text-sm text-charcoal-600 text-center">
++        محتاج وصول API لداتا السوق بالكامل؟ <Link href="/data" className="font-bold underline">باقات الأبحاث المميزة</Link> ·
++        للصحافة؟ <Link href="/press" className="font-bold underline">مركز الصحافة</Link>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/shop/page.tsx b/src/app/shop/page.tsx
+index 61f652e..1e5343d 100644
+--- a/src/app/shop/page.tsx
++++ b/src/app/shop/page.tsx
+@@ -2,6 +2,7 @@ import type { Metadata } from "next";
+ import { buildMeta } from "@/lib/seo";
+ import { createClient } from "@/lib/supabase/server";
+ import { WaitlistForm } from "@/components/waitlist-form";
++import { ShopOrderButton } from "@/components/shop-order-button";
+ 
+ export const dynamic = "force-dynamic";
+ 
+@@ -74,6 +75,12 @@ export default async function ShopPage() {
+             <p className="text-xs text-charcoal-400">
+               السعر النهائي هيتحدد مع التشغيل — ممنوع نعلن رقم قبل ما نلتزم بيه.
+             </p>
++            {/* طلب التنفيذ اليدوي — حلقة الوصل الحقيقية */}
++            <ShopOrderButton
++              productSlug={p.slug}
++              productTitle={p.title}
++              needsPlayerId={p.kind === "topup"}
++            />
+           </div>
+         ))}
+       </div>
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 23ab354..6d8bc36 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -25,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+     { url: `${baseUrl}/telecom-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+     { url: `${baseUrl}/ai-radar`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+     { url: `${baseUrl}/press`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
++    { url: `${baseUrl}/partners`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+     { url: `${baseUrl}/calculator`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+     { url: `${baseUrl}/best`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+     { url: `${baseUrl}/deals`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+diff --git a/src/components/brand-update-form.tsx b/src/components/brand-update-form.tsx
+new file mode 100644
+index 0000000..2c9199a
+--- /dev/null
++++ b/src/components/brand-update-form.tsx
+@@ -0,0 +1,124 @@
++"use client";
++
++import { useState, type FormEvent } from "react";
++
++/**
++ * استمارة تحديث سعر رسمي — للشركات والعلامات.
++ * التقديم يبقى pending وبيتراجع يدويًا قبل أي ظهور في الرادارات.
++ */
++export function BrandUpdateForm() {
++  const [form, setForm] = useState({
++    company: "",
++    contactEmail: "",
++    planName: "",
++    oldPrice: "",
++    newPrice: "",
++    currency: "EGP",
++    evidenceUrl: "",
++    note: ""
++  });
++  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
++  const [msg, setMsg] = useState("");
++
++  function set(k: keyof typeof form) {
++    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
++      setForm((f) => ({ ...f, [k]: e.target.value }));
++  }
++
++  async function submit(e: FormEvent) {
++    e.preventDefault();
++    setState("sending");
++    setMsg("");
++    try {
++      const res = await fetch("/api/brand-updates", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({
++          company: form.company,
++          contactEmail: form.contactEmail,
++          planName: form.planName,
++          oldPrice: form.oldPrice ? Number(form.oldPrice) : null,
++          newPrice: Number(form.newPrice),
++          currency: form.currency,
++          evidenceUrl: form.evidenceUrl,
++          note: form.note
++        })
++      });
++      const j = await res.json();
++      if (!res.ok || !j.ok) {
++        setState("error");
++        setMsg(j.error ?? "حصل خطأ — جرّب تاني");
++        return;
++      }
++      setState("done");
++      setMsg(j.message ?? "وصل الطلب ✅");
++    } catch {
++      setState("error");
++      setMsg("مفيش اتصال — جرّب لاحقًا");
++    }
++  }
++
++  if (state === "done") {
++    return (
++      <p className="rounded-2xl border border-sage-300 bg-sage-50 px-5 py-4 text-sm font-bold text-sage-700">
++        ✅ {msg}
++      </p>
++    );
++  }
++
++  const input = "w-full rounded-2xl border border-cream-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400";
++
++  return (
++    <form onSubmit={submit} className="space-y-4">
++      <div className="grid gap-4 sm:grid-cols-2">
++        <div>
++          <label className="mb-1 block text-xs font-bold text-charcoal-500">اسم الشركة *</label>
++          <input required value={form.company} onChange={set("company")} placeholder="مثال: Midasbuy" className={input} />
++        </div>
++        <div>
++          <label className="mb-1 block text-xs font-bold text-charcoal-500">بريد العمل *</label>
++          <input required type="email" dir="ltr" value={form.contactEmail} onChange={set("contactEmail")} placeholder="name@company.com" className={input} />
++        </div>
++        <div>
++          <label className="mb-1 block text-xs font-bold text-charcoal-500">اسم الخطة/الباقة *</label>
++          <input required value={form.planName} onChange={set("planName")} placeholder="مثال: UC ٦٦٠" className={input} />
++        </div>
++        <div className="grid grid-cols-3 gap-2">
++          <div className="col-span-1">
++            <label className="mb-1 block text-xs font-bold text-charcoal-500">العملة</label>
++            <select value={form.currency} onChange={set("currency")} className={input}>
++              <option value="EGP">ج</option>
++              <option value="SAR">ر.س</option>
++              <option value="AED">د.إ</option>
++              <option value="USD">$</option>
++            </select>
++          </div>
++          <div className="col-span-1">
++            <label className="mb-1 block text-xs font-bold text-charcoal-500">السعر القديم</label>
++            <input type="number" step="0.01" min="0" dir="ltr" value={form.oldPrice} onChange={set("oldPrice")} placeholder="—" className={input} />
++          </div>
++          <div className="col-span-1">
++            <label className="mb-1 block text-xs font-bold text-charcoal-500">الجديد *</label>
++            <input required type="number" step="0.01" min="0" dir="ltr" value={form.newPrice} onChange={set("newPrice")} placeholder="0.00" className={input} />
++          </div>
++        </div>
++      </div>
++      <div>
++        <label className="mb-1 block text-xs font-bold text-charcoal-500">رابط الإعلان الرسمي (الدليل) *</label>
++        <input required type="url" dir="ltr" value={form.evidenceUrl} onChange={set("evidenceUrl")} placeholder="https://..." className={input} />
++      </div>
++      <div>
++        <label className="mb-1 block text-xs font-bold text-charcoal-500">ملاحظة إضافية</label>
++        <textarea value={form.note} onChange={set("note")} rows={2} className={input} placeholder="مثال: يسري من ١ أكتوبر" />
++      </div>
++      <button
++        type="submit"
++        disabled={state === "sending"}
++        className="w-full rounded-full bg-accent-400 px-6 py-3 text-sm font-bold text-brand-900 hover:bg-accent-500 disabled:opacity-50"
++      >
++        {state === "sending" ? "بيبعت…" : "قدّم التحديث الرسمي"}
++      </button>
++      {state === "error" && <p className="text-sm text-red-600">{msg}</p>}
++    </form>
++  );
++}
+diff --git a/src/components/shop-order-button.tsx b/src/components/shop-order-button.tsx
+new file mode 100644
+index 0000000..b45241f
+--- /dev/null
++++ b/src/components/shop-order-button.tsx
+@@ -0,0 +1,121 @@
++"use client";
++
++import { useState, type FormEvent } from "react";
++
++/**
++ * «اطلبها دلوقتي» — طلب تنفيذ موثوق يتحوّل لـ shop_orders.
++ * التنفيذ يدوي حتى البوابة المالية: بنسجّل الرغبة والبيانات ونرجع على البريد.
++ * ممنوع وعد بسعر نهائي غير الرسمي اللحظي عند التواصل.
++ */
++export function ShopOrderButton({
++  productSlug,
++  productTitle,
++  needsPlayerId = false
++}: {
++  productSlug: string;
++  productTitle: string;
++  needsPlayerId?: boolean;
++}) {
++  const [open, setOpen] = useState(false);
++  const [email, setEmail] = useState("");
++  const [playerRef, setPlayerRef] = useState("");
++  const [notes, setNotes] = useState("");
++  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
++  const [msg, setMsg] = useState("");
++  const [orderId, setOrderId] = useState("");
++
++  async function submit(e: FormEvent) {
++    e.preventDefault();
++    setState("sending");
++    setMsg("");
++    try {
++      const res = await fetch("/api/shop/order", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ email, productSlug, playerRef, notes })
++      });
++      const j = await res.json();
++      if (!res.ok || !j.ok) {
++        setState("error");
++        setMsg(j.error ?? "حصل خطأ — جرّب تاني");
++        return;
++      }
++      setOrderId(j.orderId ?? "");
++      setState("done");
++    } catch {
++      setState("error");
++      setMsg("مفيش اتصال — جرّب لاحقًا");
++    }
++  }
++
++  if (state === "done") {
++    return (
++      <p className="rounded-2xl border border-sage-300 bg-sage-50 px-4 py-3 text-sm font-bold text-sage-700">
++        ✅ اتسجّل الطلب #{orderId} — هنتواصل لتأكيد السعر الرسمي اللحظي قبل أي خصم.
++      </p>
++    );
++  }
++
++  return (
++    <div>
++      {!open ? (
++        <button
++          onClick={() => setOpen(true)}
++          className="w-full rounded-full bg-brand-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-800 transition"
++        >
++          🛒 اطلب تنفيذها دلوقتي
++        </button>
++      ) : (
++        <form onSubmit={submit} className="space-y-3 rounded-2xl border-2 border-accent-400 p-4 animate-fade-in">
++          <p className="text-sm font-bold text-brand-900">طلب: {productTitle}</p>
++          <input
++            type="email"
++            required
++            value={email}
++            onChange={(e) => setEmail(e.target.value)}
++            placeholder="بريدك الإلكتروني للتنفيذ"
++            dir="ltr"
++            className="w-full rounded-full border border-cream-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++          />
++          {needsPlayerId && (
++            <input
++              type="text"
++              value={playerRef}
++              onChange={(e) => setPlayerRef(e.target.value)}
++              placeholder="الـ Player ID (الأرقام بس — مش الباسورد أبدًا)"
++              dir="ltr"
++              className="w-full rounded-full border border-cream-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++            />
++          )}
++          <input
++            type="text"
++            value={notes}
++            onChange={(e) => setNotes(e.target.value)}
++            placeholder="ملاحظة (عدد الباقات مثلًا)"
++            className="w-full rounded-full border border-cream-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400"
++          />
++          <p className="text-[11px] text-charcoal-400">
++            التنفيذ يدوي حاليًا حتى بوابة الدفع — الأولوية بتاريخ الطلب، والسعر يتأكد رسمي لحظة التواصل.
++          </p>
++          <div className="flex gap-2">
++            <button
++              type="submit"
++              disabled={state === "sending"}
++              className="flex-1 rounded-full bg-accent-400 px-5 py-2.5 text-sm font-bold text-brand-900 hover:bg-accent-500 disabled:opacity-50"
++            >
++              {state === "sending" ? "ثانية…" : "أكد الطلب"}
++            </button>
++            <button
++              type="button"
++              onClick={() => setOpen(false)}
++              className="rounded-full bg-cream-100 px-4 py-2.5 text-sm font-bold text-charcoal-600 hover:bg-cream-200"
++            >
++              إلغاء
++            </button>
++          </div>
++          {state === "error" && <p className="text-sm text-red-600">{msg}</p>}
++        </form>
++      )}
++    </div>
++  );
++}
+diff --git a/supabase/migrations/005_brokerage.sql b/supabase/migrations/005_brokerage.sql
+new file mode 100644
+index 0000000..72a1b06
+--- /dev/null
++++ b/supabase/migrations/005_brokerage.sql
+@@ -0,0 +1,38 @@
++-- 005: حلقة الوصل — طلبات تنفيذ الشحن/الاشتراكات + تحديثات الشركات الرسمية
++-- idempotent بالكامل (create if not exists / drop policy if exists / alter guarded by DO blocks)
++
++-- 1) وسّع جدول shop_orders (من 003) لاستقبال تفاصيل التنفيذ
++DO $$
++BEGIN
++  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shop_orders' AND column_name='player_ref') THEN
++    ALTER TABLE public.shop_orders ADD COLUMN player_ref text;
++  END IF;
++  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shop_orders' AND column_name='notes') THEN
++    ALTER TABLE public.shop_orders ADD COLUMN notes text;
++  END IF;
++  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shop_orders' AND column_name='channel') THEN
++    ALTER TABLE public.shop_orders ADD COLUMN channel text not null default 'web';
++  END IF;
++END $$;
++
++-- 2) تحديثات الشركات الرسمية — إدراج عام، قراءة مقفولة (تحقق فريق العمل)
++create table if not exists public.brand_updates (
++  id uuid primary key default gen_random_uuid(),
++  company text not null,
++  contact_email text not null,
++  plan_name text not null,
++  old_price numeric,
++  new_price numeric not null,
++  currency text not null default 'EGP',
++  evidence_url text not null,          -- رابط الإعلان الرسمي/اللبنك
++  note text,
++  status text not null default 'pending' check (status in ('pending','verified','rejected')),
++  created_at timestamptz not null default now()
++);
++alter table public.brand_updates enable row level security;
++
++drop policy if exists insert_brand_update on public.brand_updates;
++create policy insert_brand_update on public.brand_updates
++  for insert to anon, authenticated with check (true);
++
++create index if not exists idx_brand_updates_status on public.brand_updates (status, created_at desc);
+-- 
+2.47.3
+
