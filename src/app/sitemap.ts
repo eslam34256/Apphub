@@ -2,6 +2,7 @@ import { MetadataRoute } from "next";
 import { apps as staticApps } from "@/data/apps";
 import { comparisons } from "@/data/comparisons";
 import { bestCombos } from "@/lib/best";
+import { blogPosts } from "@/data/blog-posts";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -34,6 +35,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/ai`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/business`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${baseUrl}/blog`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+    // v40: المقالات نفسها في الـ sitemap — الأرشفة بتبدأ من هنا
+    ...blogPosts.filter(p => p.published).map(p => ({
+      url: `${baseUrl}/blog/${p.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7
+    })),
     { url: `${baseUrl}/advertise`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/methodology`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
