@@ -1,4 +1,5 @@
 import { businessStacks } from "@/data/business";
+import { StackBuilder } from "@/components/business/stack-builder";
 export default function BusinessPage() {
   return (
     <div className="space-y-6">
@@ -6,6 +7,7 @@ export default function BusinessPage() {
         <p className="mb-2 text-sm text-white/70">AppHub for Business</p>
         <h1 className="text-3xl font-extrabold">أفضل Stack جاهز لكل نوع بيزنس</h1>
       </div>
+      <StackBuilder />
       <div className="grid gap-4 md:grid-cols-2">
         {businessStacks.map(stack => (
           <div key={stack.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

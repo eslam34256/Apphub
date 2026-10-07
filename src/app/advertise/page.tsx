@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { getSiteSettings, getWhatsAppLink } from "@/lib/settings";
+import { apps } from "@/data/apps";
+import { WaitlistForm } from "@/components/waitlist-form";
+
+// v39: أرقام صادقة محسوبة من الداتا — أرقام الجمهور التفصيلية بتتقدم في الميديا كيت بس
+const CATEGORY_COUNT = new Set(apps.map(a => a.category)).size;
 
 export default async function AdvertisePage() {
   const settings = await getSiteSettings();
@@ -23,11 +28,14 @@ export default async function AdvertisePage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat icon="👁️" value="50K+" label="مشاهدة شهريًا" />
-        <Stat icon="👥" value="10K+" label="مستخدم نشط" />
-        <Stat icon="🛒" value="3K+" label="تحويل شهريًا" />
-        <Stat icon="⭐" value="4.7" label="تقييم المستخدمين" />
+        <Stat icon="📱" value={`+${apps.length}`} label="تطبيق مُراجع" />
+        <Stat icon="📂" value={`${CATEGORY_COUNT}`} label="فئة" />
+        <Stat icon="📡" value="4" label="رادارات أسعار يومية" />
+        <Stat icon="🌍" value="3" label="دول" />
       </div>
+      <p className="-mt-4 text-center text-xs text-slate-500">
+        أرقام الجمهور التفصيلية (سيرش + سوشيال) بتتقدم في الميديا كيت عند التعاقد — بنعرض أرقام حقيقية بس.
+      </p>
 
       <section>
         <h2 className="mb-6 text-3xl font-extrabold text-center">
@@ -57,24 +65,28 @@ export default async function AdvertisePage() {
             cta="ابدأ بـ 500 ج"
           />
           <PricingCard
-            name="الباقة المميزة"
-            price="1,200"
-            duration="30 يوم"
-            description="الأكثر شيوعًا"
-            features={["5 إعلانات", "أولوية في الظهور", "إحصائيات تفصيلية", "ظهور في النشرة", "كود خصم مخصص", "دعم واتساب"]}
-            cta="جربها لمدة شهر"
+            name="Growth — Sponsored"
+            price="1,500"
+            duration="شهريًا"
+            description="الأكثر اختيارًا"
+            features={["Featured Listing بشارة Sponsored", "ظهور في الرئيسية", "مقال تعريفي واحد", "إحصائيات تفصيلية", "دعم واتساب"]}
+            cta="ابدأ Growth"
             popular
           />
           <PricingCard
-            name="باقة الشركات"
-            price="بالاتفاق"
-            duration="مرن"
-            description="للبراندات الكبرى"
-            features={["إعلانات غير محدودة", "أعلى أولوية", "مدير حساب مخصص", "تقارير أسبوعية", "ظهور في الرئيسية", "Push Notifications"]}
-            cta="تواصل معانا"
-            customLink={getWhatsAppLink(settings.whatsapp_number, "أهلاً، عايز أستفسر عن باقة الشركات")}
+            name="Premium — Sponsored"
+            price="5,000"
+            duration="شهريًا"
+            description="للبراندات اللي عايزة تصدر"
+            features={["كل مزايا Growth", "الظهور في المقارنات والرادارات", "ذكر في النشرة الأسبوعية", "بوست سوشيال ميديا", "تقرير أداء شهري"]}
+            cta="احجز Premium"
           />
         </div>
+        <p className="mt-6 text-center text-sm text-slate-600">
+          🤝 <strong>سياسة الثقة:</strong> أي محتوى مدفوع بيتوسم «Sponsored» بوضوح — جمهورنا يعرف دايمًا إيه المدفوع وإيه الترشيح الحقيقي.
+          <br />
+          <span className="text-xs text-slate-500">الحملات الكاملة (تقرير + مقارنة + نشرة + سوشيال) بأسعار بالاتفاق 10–20 ألف — كلمنا واتساب.</span>
+        </p>
       </section>
 
       <section>
@@ -110,6 +122,11 @@ export default async function AdvertisePage() {
               <span>كلمنا على واتساب</span>
             </a>
           )}
+        </div>
+
+        <div className="mx-auto mt-8 max-w-md rounded-3xl bg-white/10 backdrop-blur border border-white/20 p-5">
+          <p className="mb-3 text-center text-sm font-bold text-white">أو سيب بريدك وهنرجعلك بعرض مفصل 📩</p>
+          <WaitlistForm interest="advertiser" />
         </div>
 
         <div className="flex flex-wrap justify-center gap-4 text-sm text-white/90 mt-6">
