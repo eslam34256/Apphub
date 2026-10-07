@@ -1,5 +1,20 @@
 # 🚀 قائمة الـ Go-Live — AppHub (نفّذ بالترتيب، كل مربع قبل اللي بعده)
 
+## ⚡ المسار السريع (v23-v33 في ملف واحد)
+```bash
+cd <فولدر الريبو عندك>
+git am --abort 2>/dev/null
+git am /home/user/apphub-changes-ALL-v23-v38.patch   # كل الـ commits مرة واحدة (بيشمل الصور)
+git status                 # لازم clean
+git log --oneline -3       # v33 🎨 اللوجو الرسمي الجديد...
+git push origin main       # → Vercel بيبني وينشر
+```
+
+## 💸 خطوة التجارة (v38): نفّذ `docs/SQL-COMMERCE.sql` في Supabase SQL Editor
+(جدولا commerce_events + affiliate_clicks — التتبع شغال بدونهم بس الأرقام مش بتتحفظ)
+
+---
+
 ## المتطلبات عندك أولًا
 - [ ] جهازك فيه git + الوصول للريبو المحلي اللي عليه الباتشات المنزّلة
 - [ ] حساب Supabase (المشروع نفسه اللي بتاخد منه الأنون كي)

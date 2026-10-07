@@ -1,35 +1,40 @@
 "use client";
 
+import { affiliateLinks } from "@/lib/affiliate";
+import { TrackedAffiliateLink } from "@/components/tracked-affiliate-link";
+
 type Props = {
   googlePlay?: string;
   appStore?: string;
   website?: string;
   appName: string;
+  slug?: string;
 };
 
-export function AppStoreButtons({ googlePlay, appStore, website, appName }: Props) {
+/** v38: كل فتحة خارجية متتبعة (store_click) + CTA أفيليات حقيقي لو الشبكة معتمدة */
+export function AppStoreButtons({ googlePlay, appStore, website, appName, slug }: Props) {
   // إذا مفيش روابط، استخدم Google Search
   const defaultGoogleSearch = `https://www.google.com/search?q=${encodeURIComponent(appName + ' app')}`;
-  
+  const aff = slug ? affiliateLinks[slug] : undefined;
+
+  function track(target: string) {
+    try {
+      navigator.sendBeacon("/api/track", JSON.stringify({ event: "store_click", target }));
+    } catch { /* التتبع مايكسرش التجربة أبدًا */ }
+  }
+
   function handleOpenApp() {
-    // اكتشف نوع الجهاز
     const userAgent = navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(userAgent);
     const isAndroid = /android/.test(userAgent);
-    
-    if (isIOS && appStore) {
-      window.open(appStore, "_blank");
-    } else if (isAndroid && googlePlay) {
-      window.open(googlePlay, "_blank");
-    } else if (website) {
-      window.open(website, "_blank");
-    } else if (googlePlay) {
-      window.open(googlePlay, "_blank");
-    } else if (appStore) {
-      window.open(appStore, "_blank");
-    } else {
-      window.open(defaultGoogleSearch, "_blank");
-    }
+    let url = defaultGoogleSearch, kind = "search";
+    if (isIOS && appStore) { url = appStore; kind = "appstore"; }
+    else if (isAndroid && googlePlay) { url = googlePlay; kind = "play"; }
+    else if (website) { url = website; kind = "web"; }
+    else if (googlePlay) { url = googlePlay; kind = "play"; }
+    else if (appStore) { url = appStore; kind = "appstore"; }
+    track(`app:${slug ?? appName}:${kind}`);
+    window.open(url, "_blank");
   }
 
   return (
@@ -48,6 +53,7 @@ export function AppStoreButtons({ googlePlay, appStore, website, appName }: Prop
             href={googlePlay}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => track(`app:${slug ?? appName}:play`)}
             className="flex items-center justify-center gap-2 rounded-lg bg-charcoal-900 text-white px-4 py-3 hover:bg-charcoal-800 transition"
           >
             <span className="text-xl">▶️</span>
@@ -63,6 +69,7 @@ export function AppStoreButtons({ googlePlay, appStore, website, appName }: Prop
             href={appStore}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => track(`app:${slug ?? appName}:appstore`)}
             className="flex items-center justify-center gap-2 rounded-lg bg-charcoal-900 text-white px-4 py-3 hover:bg-charcoal-800 transition"
           >
             <span className="text-xl">🍎</span>
@@ -79,11 +86,18 @@ export function AppStoreButtons({ googlePlay, appStore, website, appName }: Prop
           href={website}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => track(`app:${slug ?? appName}:web`)}
           className="flex items-center justify-center gap-2 w-full rounded-lg bg-cream-100 text-brand-900 px-4 py-3 hover:bg-cream-200 transition font-bold"
         >
           <span>🌐</span>
           <span>زيارة الموقع</span>
         </a>
+      )}
+
+      {aff && (
+        <div className="pt-1">
+          <TrackedAffiliateLink target={`app:${slug}:affiliate`} url={aff.url} label="🛒 اشترك من رابطنا" />
+        </div>
       )}
     </div>
   );

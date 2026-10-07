@@ -120,6 +120,7 @@ export function AppDetailsView({ app }: { app: AppItem }) {
               appStore={app.appStore}
               website={app.website}
               appName={app.name}
+              slug={app.slug}
             />
           </div>
 

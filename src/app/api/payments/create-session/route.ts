@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, PLANS, PlanKey } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as adminClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
-const supabaseAdmin = adminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
   if (isRateLimited(`post:pay-session:${ip}`, 6, 60_000)) {
@@ -12,6 +11,8 @@ export async function POST(request: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error:"غير مسجل" }, { status:401 });
+  const supabaseAdmin = createAdminClient();
+  if (!supabaseAdmin) return NextResponse.json({ ok: false, error: "الدفع مش مهيأ (envs ناقصة)" }, { status: 503 });
   const { plan } = await request.json() as { plan: PlanKey };
   const selectedPlan = PLANS[plan];
   if (!selectedPlan) return NextResponse.json({ error:"باقة غير صحيحة" }, { status:400 });
