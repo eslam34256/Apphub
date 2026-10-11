@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   title: "مركز الرادارات — اشتراكاتك وشداتك وباقتك وأدوات AI في مكان واحد",
   description:
     "رادار الأسعار الأصلي (تاريخ اشتراكات التطبيقات) + رادار شدات ببجي بسعر الوحدة + رادار الباقات بسعر الجيجا + رادار اشتراكات AI بتحويل جنيه لايف — كلهم في صفحة واحدة منظمة.",
-  alternates: { canonical: "https://apphub-eight.vercel.app/price-radar" }
+  alternates: { canonical: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app").replace(/\/+$/, "")}/price-radar` }
 };
 
 const SITE_URL = (

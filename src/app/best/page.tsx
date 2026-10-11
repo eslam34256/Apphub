@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "الأفضل في بلدك — ترشيحات التطبيقات حسب الفئة والدولة",
   description:
     "ترشيحات AppHub المرتبة لأفضل التطبيقات في كل فئة (ستريمنج، أكل، مشاوير، تقسيط...) مخصوصة لكل دولة: مصر والسعودية والإمارات — بالأسعار المحلية والتقييم الحقيقي.",
-  alternates: { canonical: "https://apphub-eight.vercel.app/best" }
+  alternates: { canonical: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app").replace(/\/+$/, "")}/best` }
 };
 
 export default function BestIndexPage() {

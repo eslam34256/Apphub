@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "كل المقارنات — اختار التطبيق الأنسب ليك",
   description:
     "مقارنات تفصيلية بالأسعار والمميزات بين أفضل التطبيقات: ستريمنج، مشاوير، توصيل أكل، تقسيط وأكثر — أو قارن بين أي تطبيقين بنفسك.",
-  alternates: { canonical: "https://apphub-eight.vercel.app/compare" }
+  alternates: { canonical: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://apphub-eight.vercel.app").replace(/\/+$/, "")}/compare` }
 };
 
 export default function CompareIndexPage() {

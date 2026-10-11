@@ -14,6 +14,11 @@ export function NewsletterForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
+    // v41 (Master Audit P1): تحقق شكل البريد في الكلاينت قبل الرحلة للـ DB
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      setError(lang === "ar" ? "اكتب بريد إلكتروني صحيح الأول" : "Enter a valid email first");
+      return;
+    }
 
     setLoading(true);
     setError(null);

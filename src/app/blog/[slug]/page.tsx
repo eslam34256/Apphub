@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { blogPosts } from "@/data/blog-posts";
 import { buildMeta } from "@/lib/seo";
+import { safeJsonLd } from "@/lib/json-ld";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -28,8 +29,22 @@ export default function BlogPostPage({ params }: Props) {
   const post = blogPosts.find(p => p.slug === params.slug);
   if (!post || !post.published) return notFound();
   const related = blogPosts.filter(p => p.published && p.id !== post.id && p.tags.some(t => post.tags.includes(t))).slice(0,3);
+  // v41 (Master Audit P1-SEO): structured data مدعوم بالمحتوى المرئي فقط
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.createdAt,
+    dateModified: post.updatedAt ?? post.createdAt,
+    author: { "@type": "Organization", name: "AppHub" },
+    publisher: { "@type": "Organization", name: "AppHub" },
+    inLanguage: "ar",
+    mainEntityOfPage: `/blog/${post.slug}`
+  };
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(articleLd) }} />
       <div className="rounded-3xl bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap gap-2">{post.tags.map(tag => <span key={tag} className="rounded-full bg-brand-50 px-3 py-1 text-sm text-brand-600">{tag}</span>)}</div>
         <h1 className="mb-2 text-3xl font-extrabold">{post.title}</h1>
