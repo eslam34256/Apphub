@@ -9,6 +9,7 @@
  */
 
 import Link from "next/link";
+import { apps } from "@/data/apps";
 import { AppItem } from "@/lib/types";
 import { useLanguage } from "@/contexts/language-context";
 import { useTranslatedText, useTranslatedArray } from "@/hooks/use-translated-text";
@@ -255,6 +256,25 @@ export function AppDetailsView({ app }: { app: AppItem }) {
           </section>
         )}
 
+        {/* v42: مصدر السعر + تاريخ التحقق + حالة القدم — بس لو الداتا موجودة */}
+        {app.priceVerifiedAt && (
+          <section className="card-elegant p-4 flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full bg-sage-50 text-sage-700 px-3 py-1 font-bold">📡 المصدر: {app.priceSource ?? "رسمي"}</span>
+            <span className="rounded-full bg-cream-100 text-slate-700 px-3 py-1 font-bold">🗓️ آخر تحقق: {app.priceVerifiedAt}</span>
+            {(() => {
+              const days = Math.floor((Date.now() - new Date(app.priceVerifiedAt).getTime()) / 86400000);
+              return days > 90 ? (
+                <span className="rounded-full bg-amber-50 text-amber-700 px-3 py-1 font-bold">⚠️ السعر قديم — بانتظار مراجعة جديدة ({days} يوم)</span>
+              ) : (
+                <span className="rounded-full bg-sage-50 text-sage-700 px-3 py-1 font-bold">✅ مُتحقق منه خلال آخر {days} يوم</span>
+              );
+            })()}
+          </section>
+        )}
+
+        {/* v42: بدائل حقيقية من نفس الفئة — علاقات فعلية مش مختلقة */}
+        <AlternativesSection app={app} />
+
         {/* Reviews */}
         <ReviewsSection appSlug={app.slug} />
 
@@ -262,5 +282,28 @@ export function AppDetailsView({ app }: { app: AppItem }) {
         <CommentsSection appSlug={app.slug} />
       </div>
     </div>
+  );
+}
+
+/** v42 — بدائل من نفس الفئة بأعلى تقييم (علاقة حقيقية، بدون اختلاق) */
+function AlternativesSection({ app }: { app: AppItem }) {
+  const alts = apps
+    .filter(a => a.slug !== app.slug && a.category === app.category)
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 3);
+  if (!alts.length) return null;
+  return (
+    <section className="card-elegant p-6">
+      <h2 className="heading-elegant text-2xl text-brand-900 mb-4">🔄 بدائل تستاهل المقارنة</h2>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {alts.map(a => (
+          <Link key={a.slug} href={`/apps/${a.slug}`} className="rounded-2xl border border-cream-200 bg-white p-4 hover:border-accent-300 transition">
+            <p className="text-2xl">{a.icon}</p>
+            <p className="font-bold mt-1">{a.name}</p>
+            <p className="mt-1 text-xs text-slate-500">⭐ {a.rating} · {a.shortDescription}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

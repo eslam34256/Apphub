@@ -46,6 +46,9 @@ export type AppItem = {
   googlePlay?: string;
   appStore?: string;
   website?: string;
+  /** v42: مصدر السعر الرسمي + تاريخ آخر تحقق — بيظهروا في الصفحة لما يكونوا موجودين بس */
+  priceSource?: string;
+  priceVerifiedAt?: string;
 };
 
 export type DealItem = {

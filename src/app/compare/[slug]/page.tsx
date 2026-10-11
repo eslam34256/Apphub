@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getComparisonBySlug, getComparisonSlugs } from "@/data/comparisons";
 import { comparisonSchemas, SITE_URL } from "@/lib/comparison-schema";
 import { CompareHero } from "@/components/compare/compare-hero";
+import { ShareCompareButton } from "@/components/compare/share-compare";
 import { VerdictCard } from "@/components/compare/verdict-card";
 import { ComparisonTable } from "@/components/compare/comparison-table";
 import { PricingSection } from "@/components/compare/pricing-section";
@@ -73,6 +74,9 @@ export default function ComparisonPage({ params }: PageProps) {
         </nav>
 
         <CompareHero comparison={c} />
+        <div className="flex justify-center -mt-4 mb-2">
+          <ShareCompareButton />
+        </div>
         <VerdictCard comparison={c} />
         <ComparisonTable comparison={c} />
         <PricingSection comparison={c} />

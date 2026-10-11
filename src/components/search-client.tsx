@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { getMonthlyPrice } from "@/lib/helpers";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { apps as staticApps } from "@/data/apps";
@@ -29,6 +30,22 @@ export function SearchClient() {
   });
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "apps" | "deals" | "blog">("all");
+
+  // v42 — فلاتر ما بعد البحث: دولة + مجاني/مدفوع + ترتيب (بتتطبق فورًا على النتائج)
+  const [fCountry, setFCountry] = useState<"all" | "EG" | "SA" | "AE">("all");
+  const [fPrice, setFPrice] = useState<"all" | "free" | "paid">("all");
+  const [fSort, setFSort] = useState<"rel" | "rating" | "price">("rel");
+  const shownApps = useMemo(() => {
+    let list = [...results.apps];
+    if (fCountry !== "all") list = list.filter(a => a.countries.includes(fCountry));
+    const cc = fCountry === "all" ? "EG" : fCountry;
+    if (fPrice !== "all") {
+      list = list.filter(a => (fPrice === "free" ? getMonthlyPrice(a, cc) === 0 : getMonthlyPrice(a, cc) > 0));
+    }
+    if (fSort === "rating") list.sort((a, b) => b.rating - a.rating);
+    if (fSort === "price") list.sort((a, b) => getMonthlyPrice(a, cc) - getMonthlyPrice(b, cc));
+    return list;
+  }, [results.apps, fCountry, fPrice, fSort]);
 
   useEffect(() => {
     if (initialQuery) {
@@ -130,7 +147,7 @@ export function SearchClient() {
     performSearch(query);
   }
 
-  const totalResults = results.apps.length + results.deals.length + results.blog.length;
+  const totalResults = shownApps.length + results.deals.length + results.blog.length;
 
   return (
     <div className="space-y-6">
@@ -214,6 +231,28 @@ export function SearchClient() {
             </p>
           </div>
 
+          {shownApps.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-3 shadow-sm text-xs">
+              <span className="font-bold text-slate-500">تصفية وترتيب:</span>
+              <select value={fCountry} onChange={e => setFCountry(e.target.value as "all" | "EG" | "SA" | "AE")} className="rounded-xl border border-cream-200 px-3 py-2">
+                <option value="all">🌍 كل الدول</option>
+                <option value="EG">مصر</option>
+                <option value="SA">السعودية</option>
+                <option value="AE">الإمارات</option>
+              </select>
+              <select value={fPrice} onChange={e => setFPrice(e.target.value as "all" | "free" | "paid")} className="rounded-xl border border-cream-200 px-3 py-2">
+                <option value="all">💰 مجاني ومدفوع</option>
+                <option value="free">مجاني فقط</option>
+                <option value="paid">مدفوع</option>
+              </select>
+              <select value={fSort} onChange={e => setFSort(e.target.value as "rel" | "rating" | "price")} className="rounded-xl border border-cream-200 px-3 py-2">
+                <option value="rel">الأكثر صلة</option>
+                <option value="rating">الأعلى تقييمًا</option>
+                <option value="price">الأرخص أولًا</option>
+              </select>
+            </div>
+          )}
+
           {/* Tabs */}
           {totalResults > 0 && (
             <div className="flex gap-2 overflow-x-auto">
@@ -222,11 +261,11 @@ export function SearchClient() {
                 onClick={() => setActiveTab("all")}
                 label={`🔍 الكل (${totalResults})`}
               />
-              {results.apps.length > 0 && (
+              {shownApps.length > 0 && (
                 <TabButton
                   active={activeTab === "apps"}
                   onClick={() => setActiveTab("apps")}
-                  label={`📱 تطبيقات (${results.apps.length})`}
+                  label={`📱 تطبيقات (${shownApps.length})`}
                 />
               )}
               {results.deals.length > 0 && (
@@ -247,20 +286,20 @@ export function SearchClient() {
           )}
 
           {/* نتائج التطبيقات */}
-          {(activeTab === "all" || activeTab === "apps") && results.apps.length > 0 && (
+          {(activeTab === "all" || activeTab === "apps") && shownApps.length > 0 && (
             <section>
               <h2 className="mb-4 text-xl font-extrabold">📱 التطبيقات</h2>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {results.apps.slice(0, activeTab === "all" ? 6 : undefined).map((app) => (
+                {shownApps.slice(0, activeTab === "all" ? 6 : undefined).map((app) => (
                   <AppCard key={app.id} app={app} />
                 ))}
               </div>
-              {activeTab === "all" && results.apps.length > 6 && (
+              {activeTab === "all" && shownApps.length > 6 && (
                 <button
                   onClick={() => setActiveTab("apps")}
                   className="mt-4 text-brand-600 hover:underline"
                 >
-                  عرض كل التطبيقات ({results.apps.length}) ←
+                  عرض كل التطبيقات ({shownApps.length}) ←
                 </button>
               )}
             </section>

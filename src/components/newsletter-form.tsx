@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+
 import { useLanguage } from "@/contexts/language-context";
 
 export function NewsletterForm() {
@@ -23,20 +23,24 @@ export function NewsletterForm() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error: dbError } = await supabase
-      .from("newsletter")
-      .insert({ email });
-
-    if (dbError) {
-      if (dbError.code === "23505") {
-        setError(lang === "ar" ? "أنت مسجّل بالفعل" : "You're already subscribed");
+    // v42: التسجيل بقى server-side (validation + rate limiting في الروت)
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() })
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        setError(lang === "ar" ? "محاولات كتير — جرّب بعد دقيقة" : "Too many attempts — try in a minute");
+      } else if (!res.ok && !j.already) {
+        setError(j.error ?? (lang === "ar" ? "حصل خطأ — جرّب لاحقًا" : "Something went wrong"));
       } else {
-        setError(lang === "ar" ? "حصل خطأ" : "An error occurred");
+        setSuccess(true);
+        setEmail("");
       }
-    } else {
-      setSuccess(true);
-      setEmail("");
+    } catch {
+      setError(lang === "ar" ? "مفيش اتصال — جرّب لاحقًا" : "No connection — try later");
     }
 
     setLoading(false);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { makeUnsubscribeToken, SITE_BASE } from "@/lib/unsubscribe-token";
 
 /**
  * كرون يومي: يفحص المتابعات النشطة ويبعت إيميل لو السعر وصل أو اتجاوز الهدف.
@@ -115,7 +116,11 @@ export async function GET(req: NextRequest) {
               newPrice: current,
               currency: w.country === "EG" ? "جنيه" : w.country === "SA" ? "ريال" : "درهم",
               target: w.target_price,
-              unsubscribeUrl: `https://apphub.eg/api/watchlist?id=${w.id}`
+              unsubscribeUrl: (() => {
+                // v42: رابط إلغاء حقيقي من الـ env + توكن HMAC آمن
+                const tok = makeUnsubscribeToken(String(w.id));
+                return tok ? `${SITE_BASE()}/api/watchlist/unsubscribe?id=${w.id}&token=${tok}` : `${SITE_BASE()}/contact`;
+              })()
             })
           );
           if (ok) {

@@ -1,0 +1,10 @@
+{
+  // v42 (قرار موثق في APPHUB_AUDIT): القاعدة دي بتطلق كذبًا مع نصوص عربية
+  // فيها علامات اقتباس داخل JSX text — مفيش خطر XSS (نصوص ثابتة) → معطّلة بضابط.
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "react/no-unescaped-entities": "off"
+  },
+  // أصل base64 ضخم بدون JSX logic — الـ parser بيوقعه، فمتستثنى بضابط
+  "ignorePatterns": ["src/lib/og-font.ts"]
+}

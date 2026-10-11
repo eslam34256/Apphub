@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { consentAllowsTracking } from "@/lib/consent";
 
 /**
  * زر أفيليات متتبع — بشارة إفصاح صريحة «رابط بعمولة» (عقد الأمانة مع الزائر).
@@ -21,6 +22,8 @@ export function TrackedAffiliateLink({
   const [fired, setFired] = useState(false);
 
   function track() {
+    // v42: التتبع الاختياري بيشتغل بموافقة صريحة بس
+    if (!consentAllowsTracking()) return;
     if (fired) return;
     setFired(true);
     try {

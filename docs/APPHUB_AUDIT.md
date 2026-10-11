@@ -41,3 +41,28 @@ Supabase (أساسي) · Stripe/Paymob (مدفوعات) · Telegram bot (تنب�
 
 ## 8) أمان (مُراجع)
 - Server-side authz في /admin و/advertiser-dashboard ✓ · rate-limit على كل POST ✓ · RLS policies في SQL المرفق ✓ · مفيش dangerouslySetInnerHTML بمدخلات مستخدم (JSON-LD بـ safeJsonLd ثابت) ✓ · مفيش أسرار في NEXT_PUBLIC_* ✓ · مفيش open-redirect (روابط الأفيليات hardcoded allowlist) ✓
+
+## 9) تحديث v42 (تنفيذ ملاحظات الـ Master Review)
+**إصلاحات مؤكدة:**
+- Unsubscribe: رابط GET حقيقي `/api/watchlist/unsubscribe?id&token(HMAC-32, timing-safe)` + الدومين من env + صفحة تأكيد عربية + 503 صادق لو DB غايبة
+- النشرة: server-side `/api/newsletter/subscribe` (validation + rate-limit) والفورم بقى بيستدعيه
+- صفحات التطبيقات: مصدر السعر + تاريخ آخر تحقق + حالة «السعر قديم >٩٠ يوم» (بس لو الداتا موجودة) + قسم بدائل من نفس الفئة (علاقات حقيقية)
+- البحث: فلاتر دولة + مجاني/مدفوع + ترتيب (تطبيق فوري على النتائج)
+- المقارنات: زرار «شارك المقارنة» بنسخ الرابط الثابت + رسالة نجاح
+- Consent: بانر قبول الكل/الضروري فقط/إدارة + البوابة مطبقة فعليًا في TrackedAffiliateLink وAppStoreButtons + «تفضيلات الكوكيز» في الفوتر
+- Lint: eslint + next/core-web-vitals مضافين؛ قرار موثق: تعطيل no-unescaped-entities (نصوص عربية) + استثناء og-font.ts (base64)
+
+**تقرير اختبار v42 الفعلي (منفذ على سيرفر محلي بـ CRON_SECRET تجريبي):**
+| الاختبار | النتيجة |
+|---|---|
+| unsubscribe: id باطل / توكن ناقص / توكن غلط | 403 ×3 ✓ |
+| unsubscribe: توكن صحيح بدون DB | 503 صادق (التحقق عدّى) ✓ |
+| newsletter: بريد باطل | 400 ✓ |
+| newsletter: بريد صحيح بدون DB | 503 صادق ✓ |
+| newsletter: ٧ طلبات متتالية | 429 على السابع ✓ |
+| مقارنة في جلسة جديدة + زرار المشاركة | 200 + الزرار SSR ✓ |
+| صفحة تطبيق: شارة تحقق + بدائل | ظاهرة ✓ |
+| تفضيلات الكوكيز في الفوتر | موجودة ✓ |
+| tsc / build / lint | 0 / 152-152 / exit 0 (تحذيرات deps موثقة) |
+
+**غير متحقق runtime (موثق بصدق):** سلوك فلاتر البحث وبانر الـ consent في متصفح حقيقي — مفيش browser automation في بيئة الفحص؛ منطقهم مراجع يدويًا + SSR/build سليمين. الـ unsubscribe 200 النهائي وidempotency بيتحققوا في الإنتاج لما DB متاحة.

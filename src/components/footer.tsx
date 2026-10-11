@@ -213,6 +213,15 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                {/* v42: إعادة فتح بانر الموافقة في أي وقت */}
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("apphub:consent-open"))}
+                  className="text-charcoal-500 hover:text-accent-600 transition"
+                >
+                  🍪 تفضيلات الكوكيز
+                </button>
+              </li>
+              <li>
                 <Link href="/disclosure" className="text-charcoal-500 hover:text-accent-600 transition">
                   {t("nav_disclosure")}
                 </Link>

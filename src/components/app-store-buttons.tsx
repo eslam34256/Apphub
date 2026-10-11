@@ -2,6 +2,7 @@
 
 import { affiliateLinks } from "@/lib/affiliate";
 import { TrackedAffiliateLink } from "@/components/tracked-affiliate-link";
+import { consentAllowsTracking } from "@/lib/consent";
 
 type Props = {
   googlePlay?: string;
@@ -18,6 +19,7 @@ export function AppStoreButtons({ googlePlay, appStore, website, appName, slug }
   const aff = slug ? affiliateLinks[slug] : undefined;
 
   function track(target: string) {
+    if (!consentAllowsTracking()) return; // v42: موافقة أولًا
     try {
       navigator.sendBeacon("/api/track", JSON.stringify({ event: "store_click", target }));
     } catch { /* التتبع مايكسرش التجربة أبدًا */ }
