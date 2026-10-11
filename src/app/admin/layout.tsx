@@ -1,6 +1,9 @@
 import { requireAdmin } from "@/lib/admin-check";
 import Link from "next/link";
 
+// v43: ممنوع SSG لأي صفحة أدمن — التسريب الستاتيك كان الثغرة
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children
 }: {
@@ -18,6 +21,8 @@ export default async function AdminLayout({
         </div>
 
         <SidebarLink href="/admin" icon="📊" label="الرئيسية" />
+        <SidebarLink href="/admin/insights" icon="📈" label="رؤى البيزنس" />
+        <SidebarLink href="/admin/leads" icon="🎯" label="الاستعلامات" />
         <SidebarLink href="/admin/apps" icon="📱" label="التطبيقات" />
         <SidebarLink href="/admin/categories" icon="📂" label="الفئات" />
         <SidebarLink href="/admin/deals" icon="💰" label="العروض" />

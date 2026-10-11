@@ -66,3 +66,9 @@ Supabase (أساسي) · Stripe/Paymob (مدفوعات) · Telegram bot (تنب�
 | tsc / build / lint | 0 / 152-152 / exit 0 (تحذيرات deps موثقة) |
 
 **غير متحقق runtime (موثق بصدق):** سلوك فلاتر البحث وبانر الـ consent في متصفح حقيقي — مفيش browser automation في بيئة الفحص؛ منطقهم مراجع يدويًا + SSR/build سليمين. الـ unsubscribe 200 النهائي وidempotency بيتحققوا في الإنتاج لما DB متاحة.
+
+## 10) v43 — ثغرة P0 مكتشفة في الإنتاج ومصلحة
+**الاكتشاف (اختبار لايف حقيقي):** `/admin` و`/advertiser-dashboard` بيرندروا محتوى لوحة التحكم لـ anonymous بـ 200 — تسريب SSG: النسخ الستاتيك المبنية وقت الـ build والـ redirect runtime مكنش بيحميها.
+**الإصلاح (٣ طبقات):** edge-guard في الـ middleware (مفيش كوكيز جلسة = 307 لـ /auth) + force-dynamic على admin layout وadvertiser-dashboard + requireAdmin متصلّب (أي استثناء = redirect بره).
+**اختبار:** anon → 307→/auth على التلات مسارات · العام 200 · build 154/154.
+**لوحة البيزنس:** /admin/insights (رؤى service_role حقيقية بحالة إعداد صادقة) + /admin/leads (صندوق الاستعلامات) + toggle نشر/إيقاف العروض + شارة عمولة/تحريري.

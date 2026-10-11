@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
+// v43: ممنوع SSG — نفس تسريب الأدمن
+export const dynamic = "force-dynamic";
+
 export default async function AdvertiserDashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();

@@ -3,21 +3,35 @@ import { redirect } from "next/navigation";
 
 export async function requireAdmin() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
+
+  // v43: أي فشل في التحقق = بره، مش استثناء بيكشف الصفحة
+  let user = null;
+  try {
+    const res = await supabase.auth.getUser();
+    user = res.data.user;
+  } catch {
+    redirect("/auth");
+  }
+
   if (!user) redirect("/auth");
-  
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  
-  if (profile?.role !== "admin") {
+
+  let role: string | undefined;
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    role = profile?.role;
+  } catch {
+    redirect("/auth");
+  }
+
+  if (role !== "admin") {
     redirect("/");
   }
-  
-  return { user, role: profile.role };
+
+  return { user, role };
 }
 
 export async function logAdminAction(

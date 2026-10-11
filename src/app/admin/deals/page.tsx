@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { DeleteDealButton } from "@/components/admin/delete-deal-button";
+import { ToggleDealButton } from "@/components/admin/toggle-deal-button";
 
 export default async function AdminDealsPage() {
   const supabase = createClient();
@@ -34,6 +35,7 @@ export default async function AdminDealsPage() {
               <th className="p-3">الخصم</th>
               <th className="p-3">المشاهدات</th>
               <th className="p-3">ينتهي</th>
+              <th className="p-3">الحالة</th>
               <th className="p-3">إجراءات</th>
             </tr>
           </thead>
@@ -46,6 +48,16 @@ export default async function AdminDealsPage() {
                 <td className="p-3">{deal.discount}%</td>
                 <td className="p-3">{deal.views}</td>
                 <td className="p-3 text-xs">{deal.expires_at}</td>
+                <td className="p-3">
+                  <div className="flex flex-col gap-1 items-start">
+                    <ToggleDealButton dealId={deal.id} active={deal.is_active !== false} title={deal.title} />
+                    {deal.affiliate_url ? (
+                      <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[10px] font-bold text-accent-800">💸 بعمولة</span>
+                    ) : (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">تحريري</span>
+                    )}
+                  </div>
+                </td>
                 <td className="p-3">
                   <DeleteDealButton dealId={deal.id} dealTitle={deal.title} />
                 </td>
