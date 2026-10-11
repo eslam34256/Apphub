@@ -72,3 +72,25 @@ Supabase (أساسي) · Stripe/Paymob (مدفوعات) · Telegram bot (تنب�
 **الإصلاح (٣ طبقات):** edge-guard في الـ middleware (مفيش كوكيز جلسة = 307 لـ /auth) + force-dynamic على admin layout وadvertiser-dashboard + requireAdmin متصلّب (أي استثناء = redirect بره).
 **اختبار:** anon → 307→/auth على التلات مسارات · العام 200 · build 154/154.
 **لوحة البيزنس:** /admin/insights (رؤى service_role حقيقية بحالة إعداد صادقة) + /admin/leads (صندوق الاستعلامات) + toggle نشر/إيقاف العروض + شارة عمولة/تحريري.
+
+## 11) v44 — برنامج الأفيليات (شفافية + معمارية آمنة)
+**ما أُضيف:**
+- `/affiliate` صفحة هبوط عربية (Hero بكوبى المواصفة حرفيًا · كيف يعمل · إفصاح بارز · العروض المميزة · للشركات · 6 أسئلة شائعة) + ميتا فريدة + كانونيكال.
+- إعادة تصنيف: السجلات الستاتيك الخمسة بقت `status: pending` — بتتعرض كروابط عادية بدون شارة عمولة لحد الاعتماد (إصلاح أمانة: مفيش توسيم مزيّف).
+- `/api/affiliate/click/[id]`: وجهة من السجل فقط + `isSafeDestination` (https + allowlist) → صفر open redirect؛ pending/paused/rejected = 410؛ التسجيل بموافقة (`?c=1`) فقط.
+- `docs/SQL-AFFILIATE.sql`: جدول `affiliate_links` (idempotent + RLS: service_role فقط) — `affiliate_clicks` مُعاد استخدامه من SQL-COMMERCE.
+- `/admin/affiliate` + `/api/admin/affiliate` (GET/POST/PATCH): إنشاء بحالة pending إجبارية، تفعيل/إيقاف/رفض، كل تغيير في `admin_logs`، لوحة التحويلات صادقة: «غير متاح — لا يوجد تكامل».
+- الفوتر: رابط «برنامج الشراكة» + مفتاح ترجمة.
+**اختبارات منفذة فعليًا (سيرفر محلي بعد build):**
+| الاختبار | النتيجة |
+|---|---|
+| /affiliate: 200 + الهيرو + الإفصاح + الحالة الفارغة الصادقة | ✓ |
+| /admin/affiliate بدون جلسة | 307 → /auth ✓ |
+| /api/admin/affiliate GET/POST/PATCH بدون جلسة | 401 ×3 ✓ |
+| click: رابط معروف لكنه pending | 410 (لا تحويل) ✓ |
+| click: id مجهول / خبيث | 404 ×2 ✓ |
+| وحدة allowlist: 8 حالات (http مرفوض، دومين مش مسموح، javascript، خداع دومين فرعي، حيلة userinfo، خردة) | 8/8 ✓ |
+| صفحة تطبيق بها أفيليات: شارة العمولة | 0 ظهور (لأنها غير معتمدة) ✓ |
+| الرجعية: / /deals /auth /disclosure /contact | كلها 200 ✓ |
+| tsc / build / lint | 0 / 154-154 / exit 0 ✓ |
+**حدود موثقة بصدق:** مسار 302 للروابط الـ active مبيتفعلش محليًا (مفيش روابط نشطة بعد — كل السجلات pending)؛ منطق الـ redirect مراجع يدويًا والـ allowlist مُختبر وظيفيًا. التحويلات بلا أرقام تقديرية لحد ربط شبكة حقيقية.

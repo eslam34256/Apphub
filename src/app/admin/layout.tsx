@@ -27,6 +27,7 @@ export default async function AdminLayout({
         <SidebarLink href="/admin/categories" icon="📂" label="الفئات" />
         <SidebarLink href="/admin/deals" icon="💰" label="العروض" />
         <SidebarLink href="/admin/ads" icon="📢" label="الإعلانات" />
+        <SidebarLink href="/admin/affiliate" icon="🔗" label="الأفيليات" />
         <SidebarLink href="/admin/brands" icon="🏪" label="البراندات" />
         <SidebarLink href="/admin/users" icon="👥" label="المستخدمين" />
         <SidebarLink href="/admin/comments" icon="💬" label="التعليقات" />

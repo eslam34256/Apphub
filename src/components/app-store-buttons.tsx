@@ -98,7 +98,7 @@ export function AppStoreButtons({ googlePlay, appStore, website, appName, slug }
 
       {aff && (
         <div className="pt-1">
-          <TrackedAffiliateLink target={`app:${slug}:affiliate`} url={aff.url} label="🛒 اشترك من رابطنا" />
+          <TrackedAffiliateLink target={`app:${slug}:affiliate`} url={aff.url} label="🛒 اشترك من رابطنا" status={aff.status} />
         </div>
       )}
     </div>
